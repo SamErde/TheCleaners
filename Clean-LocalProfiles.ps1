@@ -2,6 +2,7 @@
 
     A script to find and remove old, unused user profiles in Windows. 
     Exclude special accounts and profiles that should not be removed. 
+    Partially inspired by http://woshub.com/delete-old-user-profiles-gpo-powershell/
 #>
 
 # Get all user profiles that have not been used in 60 days, are not currently loaded, and are not special accounts.
