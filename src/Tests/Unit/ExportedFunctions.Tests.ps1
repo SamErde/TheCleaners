@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------
 Set-Location -Path $PSScriptRoot
 #-------------------------------------------------------------------------
-$ModuleName = 'The Cleaners'
+$ModuleName = 'TheCleaners'
 $PathToManifest = [System.IO.Path]::Combine('..', '..', $ModuleName, "$ModuleName.psd1")
 #-------------------------------------------------------------------------
 if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
@@ -13,7 +13,7 @@ Import-Module $PathToManifest -Force
 
 BeforeAll {
     Set-Location -Path $PSScriptRoot
-    $ModuleName = 'The Cleaners'
+    $ModuleName = 'TheCleaners'
     $PathToManifest = [System.IO.Path]::Combine('..', '..', $ModuleName, "$ModuleName.psd1")
     $manifestContent = Test-ModuleManifest -Path $PathToManifest
     $moduleExported = Get-Command -Module $ModuleName | Select-Object -ExpandProperty Name

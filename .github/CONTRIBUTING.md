@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in contributing to the **The Cleaners Project**.
+Thanks for your interest in contributing to the **TheCleaners Project**.
 
 Whether it's a bug report, new feature, correction, or additional documentation, your feedback and contributions are appreciated.
 
@@ -21,3 +21,4 @@ This project has a [Code of Conduct](CODE_OF_CONDUCT.md).
 ## Licensing
 
 See the [LICENSE](LICENSE.txt) file for our project's licensing.
+

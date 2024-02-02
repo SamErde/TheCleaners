@@ -1,4 +1,4 @@
-# The Cleaners
+# TheCleaners
 
 ## Synopsis
 
@@ -21,7 +21,7 @@
 ### Installation
 
 ```powershell
-# how to install The Cleaners
+# how to install TheCleaners
 
 ```
 
@@ -37,3 +37,4 @@
 ## Author
 
 Sam Erde
+

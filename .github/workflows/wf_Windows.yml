@@ -45,7 +45,7 @@ jobs:
       run: ./actions_bootstrap.ps1
     - name: Test and Build
       shell: powershell
-      run: Invoke-Build -File .\src\The Cleaners.build.ps1
+      run: Invoke-Build -File .\src\TheCleaners.build.ps1
     - name: Upload pester results
       uses: actions/upload-artifact@v3
       with:

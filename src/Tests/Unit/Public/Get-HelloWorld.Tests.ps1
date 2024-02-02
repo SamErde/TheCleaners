@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------
 Set-Location -Path $PSScriptRoot
 #-------------------------------------------------------------------------
-$ModuleName = 'The Cleaners'
+$ModuleName = 'TheCleaners'
 $PathToManifest = [System.IO.Path]::Combine('..', '..', '..', $ModuleName, "$ModuleName.psd1")
 #-------------------------------------------------------------------------
 if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
@@ -11,7 +11,7 @@ if (Get-Module -Name $ModuleName -ErrorAction 'SilentlyContinue') {
 Import-Module $PathToManifest -Force
 #-------------------------------------------------------------------------
 
-InModuleScope 'The Cleaners' {
+InModuleScope 'TheCleaners' {
     Describe 'Get-HellowWorld Public Function Tests' -Tag Unit {
         BeforeAll {
             $WarningPreference = 'SilentlyContinue'

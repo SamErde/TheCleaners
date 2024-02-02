@@ -1,7 +1,7 @@
 # #-------------------------------------------------------------------------
 # Set-Location -Path $PSScriptRoot
 # #-------------------------------------------------------------------------
-# $ModuleName = 'The Cleaners'
+# $ModuleName = 'TheCleaners'
 # #-------------------------------------------------------------------------
 # #if the module is already in memory, remove it
 # Get-Module $ModuleName | Remove-Module -Force

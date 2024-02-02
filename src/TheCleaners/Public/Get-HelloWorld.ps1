@@ -16,9 +16,9 @@
 .NOTES
     General notes
 .COMPONENT
-    The Cleaners
+    TheCleaners
 #>
-function Get-Day {
+function Get-HelloWorld {
     [CmdletBinding()]
     param (
         # [Parameter(Mandatory = $true,
@@ -27,13 +27,8 @@ function Get-Day {
         # [ValidateNotNullOrEmpty()]
         # [string]$YourParameter
     )
-    try {
-        $day = (Get-Date -ErrorAction 'Stop').DayOfWeek
-    }
-    catch {
-        $day = 'Unknown'
-    }
-
-    return $day
-} #Get-Day
+    $dayOfWeek = Get-Day # Get-Day is a private function
+    $message = "Hello, happy $dayOfWeek World!"
+    return $message
+} #Get-HelloWorld
 
