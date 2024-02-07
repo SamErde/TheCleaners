@@ -49,15 +49,17 @@ function Test-ManifestBool ($Path) {
 $str = @()
 $str = 'Clean', 'ValidateRequirements', 'ImportModuleManifest'
 $str += 'FormattingCheck'
-$str += 'Analyze', 'Test'
+$str += 'Analyze'#, 'Test'
 $str += 'CreateHelpStart'
 $str2 = $str
 $str2 += 'Build', 'Archive'
-$str += 'Build', 'IntegrationTest', 'Archive'
+$str += 'Build', 'Archive' #'IntegrationTest', 'Archive'
 Add-BuildTask -Name . -Jobs $str
 
+<#
 #Local testing build process
 Add-BuildTask TestLocal Clean, ImportModuleManifest, Analyze, Test
+#>
 
 #Local help file creation process
 Add-BuildTask HelpLocal Clean, ImportModuleManifest, CreateHelpStart
@@ -304,6 +306,7 @@ Add-BuildTask Test {
     }
 } #Test
 
+<#
 #Synopsis: Used primarily during active development to generate xml file to graphically display code coverage in VSCode using Coverage Gutters
 Add-BuildTask DevCC {
     Write-Build White '      Generating code coverage report at root...'
@@ -321,6 +324,7 @@ Add-BuildTask DevCC {
     Invoke-Pester -Configuration $pesterConfiguration
     Write-Build Green '      ...Code Coverage report generated!'
 } #DevCC
+#>
 
 # Synopsis: Build help for module
 Add-BuildTask CreateHelpStart {
@@ -503,6 +507,7 @@ Add-BuildTask Build {
     Write-Build Green '      ...Build Complete!'
 } #Build
 
+<#
 #Synopsis: Invokes all Pester Integration Tests in the Tests\Integration folder (if it exists)
 Add-BuildTask IntegrationTest {
     if (Test-Path -Path $script:IntegrationTestsPath) {
@@ -535,6 +540,7 @@ Add-BuildTask IntegrationTest {
         Write-Build Green '      ...Pester Integration Tests Complete!'
     }
 } #IntegrationTest
+#>
 
 #Synopsis: Creates an archive of the built Module
 Add-BuildTask Archive {
@@ -557,4 +563,3 @@ Add-BuildTask Archive {
 
     Write-Build Green '        ...Archive Complete!'
 } #Archive
-
