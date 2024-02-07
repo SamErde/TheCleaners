@@ -42,7 +42,7 @@ function Get-StaleUserProfiles {
     }
 }
 
-function Remove-StaleProfiles {
+function Remove-StaleUserProfiles {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
