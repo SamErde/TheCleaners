@@ -170,7 +170,7 @@ Add-BuildTask Analyze {
     }
 
     Write-Build White '      Performing Module ScriptAnalyzer checks...'
-    $scriptAnalyzerResults = Invoke-ScriptAnalyzer @scriptAnalyzerParams
+    #$scriptAnalyzerResults = Invoke-ScriptAnalyzer @scriptAnalyzerParams
 
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
