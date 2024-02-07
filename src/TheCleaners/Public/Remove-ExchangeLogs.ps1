@@ -4,7 +4,10 @@ function Remove-ExchangeLogs {
             Clean out old Exchange Server logs
 
         .DESCRIPTION
-            EARLY WORK IN PROGRESS
+            Remove any Exchange logs that are older than a specified date.
+
+        .EXAMPLE
+            Remove-ExchangeLogs
     #>
     [CmdletBinding(SupportsShouldProcess)]
 

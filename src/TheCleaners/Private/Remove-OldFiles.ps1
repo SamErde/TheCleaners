@@ -4,8 +4,7 @@ function Remove-OldFiles {
             Remove files in a path that are older than the specified number of days.
 
         .DESCRIPTION
-            Remove files in a path that are older than the specified number of days.
-            This function is used by other functions within the module when removing old files.
+            Remove files in a path that are older than the specified number of days. This function is used by other functions within the module when removing old files.
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param (
