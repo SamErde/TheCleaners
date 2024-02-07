@@ -1,26 +1,26 @@
 # THIS IS AN OLD POC SCRIPT THAT NEEDS TO BE SORTED AND TESTED
 
 function Get-StaleUserProfiles {
-<#
-    .SYNOPSIS
-        A script to find old, unused user profiles in Windows.
+    <#
+        .SYNOPSIS
+            A script to find old, unused user profiles in Windows.
 
-    .DESCRIPTION
-        This script finds old, unused profiles in Windows and helps you remove them. It should exclude special accounts
-        and system profiles.
+        .DESCRIPTION
+            This script finds old, unused profiles in Windows and helps you remove them. It should exclude special accounts
+            and system profiles.
 
-    .EXAMPLE
-        $StaleUserProfiles = Get-StaleUserProfiles -ShowSummary
+        .EXAMPLE
+            $StaleUserProfiles = Get-StaleUserProfiles -ShowSummary
 
-        Gets stale user profiles into the StaleUserProfiles variable while also showing a summary.
+            Gets stale user profiles into the StaleUserProfiles variable while also showing a summary.
 
-    .NOTES
-        Author: Sam Erde
-                https://twitter.com/SamErde
-                https://github.com/SamErde
+        .NOTES
+            Author: Sam Erde
+                    https://twitter.com/SamErde
+                    https://github.com/SamErde
 
-        Partially inspired by http://woshub.com/delete-old-user-profiles-gpo-powershell/
-#>
+            Partially inspired by http://woshub.com/delete-old-user-profiles-gpo-powershell/
+    #>
     [CmdletBinding()]
     param (
         [Parameter()]
@@ -29,23 +29,17 @@ function Get-StaleUserProfiles {
     )
 
     # Get all user profiles that have not been used in 60 days, are not currently loaded, and are not special accounts.
-    [array]$StaleUserProfiles = Get-CimInstance -Class Win32_UserProfile | `
-        Where-Object { ($_.LastUseTime -lt (Get-Date).AddDays(-60)) -and (!$_.Special) -and (!$_.Loaded) }
+    [array]$StaleUserProfiles = Get-CimInstance -Class Win32_UserProfile | Where-Object { ($_.LastUseTime -lt (Get-Date).AddDays(-60)) -and (!$_.Special) -and (!$_.Loaded) }
 
-        if ($StaleUserProfiles.Count -lt 1 -or !(StaleUserProfiles)) {
-            Write-Information "No stale user profiles were found." -InformationAction Continue
+    if ($StaleUserProfiles.Count -lt 1 -or !(StaleUserProfiles)) {
+        Write-Information "No stale user profiles were found." -InformationAction Continue
+    } else {
+        if ($ShowSummary) {
+            $StaleUserProfiles | Select-Object LocalPath,SID, @{ Name="Size"; Expression={"{0} MB" -f [math]::Round(((Get-ChildItem $_.LocalPath -Recurse | Measure-Object -Property Length -Sum -ErrorAction Stop).Sum / 1MB))} } | Out-Host
+            Write-Information -InformationAction Continue "NOTE: If you do not have access to a profile folder, the size will show as 0 MB."
         }
-        else {
-            if ($ShowSummary) {
-                $StaleUserProfiles | Select-Object LocalPath,SID, `
-                    @{
-                        Name="Size";
-                        Expression={"{0} MB" -f [math]::Round(((Get-ChildItem $_.LocalPath -Recurse | Measure-Object -Property Length -Sum -ErrorAction Stop).Sum / 1MB))}
-                    } | Out-Host
-                Write-Information -InformationAction Continue "NOTE: If you do not have access to a profile folder, the size will show as 0 MB."
-            }
-            $StaleUserProfiles
-        }
+        $StaleUserProfiles
+    }
 }
 
 function Remove-StaleProfiles {
@@ -67,24 +61,21 @@ function Remove-StaleProfiles {
 
     $AlwaysExcluded ="Public","svc","admin" #Etc
 
-    foreach ($UserProfile in $StaleUserProfiles)
-    {
+    foreach ($UserProfile in $StaleUserProfiles) {
         # Grab properties to use for informative host output.
         $LocalPath = $UserProfile.LocalPath
         $ProfileSID = $UserProfile.SID
 
         # If the user profile's local path does not match anything in $AlwaysExcluded, the profile will be removed.
         # This part of the logic does have some gaps, eg account names that don't match their profile folder name.
-        if (!($AlwaysExcluded -like $LocalPath.Replace("C:\Users\","")))
-            {
-                Write-Host "Removing $LocalPath (SID: $ProfileSID)" -ForegroundColor Yellow
-                Try {
-                    $UserProfile | Remove-CimInstance -ErrorAction Stop
-                }
-                Catch {
-                    Write-Host $Error[0].Exception -ForegroundColor Magenta
-                }
-            } # End if
+        if (!($AlwaysExcluded -like $LocalPath.Replace("C:\Users\",""))) {
+            Write-Host "Removing $LocalPath (SID: $ProfileSID)" -ForegroundColor Yellow
+            try {
+                $UserProfile | Remove-CimInstance -ErrorAction Stop
+            } catch {
+                Write-Host $Error[0].Exception -ForegroundColor Magenta
+            }
+        } # End if
     } # End foreach loop through profiles
 } # End function Remove-StaleProfiles
 
@@ -97,7 +88,7 @@ function TranslateSamToSid ($domain, $samaccountname) {
 
 function TranslateSidToSam ($sid) {
     # Translate SID to samaccountname; use if getting additional account information from AD, such as special group membership
-    $objSID = New-object System.Security.Principal.SecurityIdentifier($sid)
+    $objSID = New-Object System.Security.Principal.SecurityIdentifier($sid)
     $strUser = $objSID.Translate([System.Security.Principal.NTAccount])
     $strUser.Value
 } # End function TranslateSidToSam

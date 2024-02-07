@@ -1,13 +1,13 @@
 function Remove-OldIISLogFiles {
-<#
-    .SYNOPSIS
-    A script to clean out old IIS log files.
+    <#
+        .SYNOPSIS
+            A script to clean out old IIS log files.
 
-    .DESCRIPTION
-    This is a work in progress still. It will attempt to find IIS log folders and clean out files older than [x] days.
-    It checks the default log folder locations first, and if the WebAdministration PowerShell module is available, it
-    will use that to check the specific log file locations for each web site as well.
-#>
+        .DESCRIPTION
+            This is a work in progress still. It will attempt to find IIS log folders and clean out files older than [x] days.
+            It checks the default log folder locations first, and if the WebAdministration PowerShell module is available, it
+            will use that to check the specific log file locations for each web site as well.
+    #>
     [CmdletBinding()]
     param (
         [Parameter()]
@@ -43,8 +43,7 @@ function Remove-OldIISLogFiles {
             $SiteLogFileFolder = $($item.logfile.directory) + "\w3svc" + $($item.id)
             Remove-OldFiles -Path $SiteLogFileFolder -Days $Days
         }
-    }
-    else {
+    } else {
         Write-Information "The WebAdministration module is not installed. Installing it may allow you to target site-specific log file paths." -InformationAction Continue
     }
 }

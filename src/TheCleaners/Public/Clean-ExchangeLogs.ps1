@@ -1,22 +1,22 @@
 function Clean-ExchangeLogs {
-<#
-.SYNOPSIS
-    Clean out old Exchange Server logs
+    <#
+        .SYNOPSIS
+            Clean out old Exchange Server logs
 
-.DESCRIPTION
-    EARLY WORK IN PROGRESS
-#>
+        .DESCRIPTION
+            EARLY WORK IN PROGRESS
+    #>
     $Days = 60
 
     $IISLogPath = "C:\inetpub\logs\LogFiles\"
     $ExchangeInstallPath        = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup).MsiInstallPath
-        $ExchangeLoggingPath    = $ExchangeInstallPath + "Logging\"
-        $ETLLoggingPath         = $ExchangeInstallPath + "Bin\Search\Ceres\Diagnostics\ETLTraces\"
-        $ETLLoggingPath2        = $ExchangeInstallPath + "\Bin\Search\Ceres\Diagnostics\Logs"
-        $MessageTrackingLogs    = $ExchangeInstallPath + "\TransportRoles\Logs\MessageTracking\"
+    $ExchangeLoggingPath    = $ExchangeInstallPath + "Logging\"
+    $ETLLoggingPath         = $ExchangeInstallPath + "Bin\Search\Ceres\Diagnostics\ETLTraces\"
+    $ETLLoggingPath2        = $ExchangeInstallPath + "\Bin\Search\Ceres\Diagnostics\Logs"
+    $MessageTrackingLogs    = $ExchangeInstallPath + "\TransportRoles\Logs\MessageTracking\"
 
     function CleanLogfiles ($TargetFolder) {
-    Write-Host -Debug -ForegroundColor Yellow -BackgroundColor Cyan $TargetFolder
+        Write-Host -Debug -ForegroundColor Yellow -BackgroundColor Cyan $TargetFolder
 
         if (Test-Path $TargetFolder) {
             $Now = Get-Date
