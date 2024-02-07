@@ -9,6 +9,11 @@ function Get-StaleUserProfiles {
         This script finds old, unused profiles in Windows and helps you remove them. It should exclude special accounts
         and system profiles.
 
+    .EXAMPLE
+        $StaleUserProfiles = Get-StaleUserProfiles -ShowSummary
+
+        Gets stale user profiles into the StaleUserProfiles variable while also showing a summary.
+
     .NOTES
         Author: Sam Erde
                 https://twitter.com/SamErde
@@ -42,10 +47,6 @@ function Get-StaleUserProfiles {
             $StaleUserProfiles
         }
 }
-
-$StaleUserProfiles = Get-StaleUserProfiles -ShowSummary
-
-
 
 function Remove-StaleProfiles {
     [CmdletBinding()]
