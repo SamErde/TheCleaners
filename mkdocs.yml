@@ -9,8 +9,8 @@
 
 site_name: TheCleaners
 # site_url:
-# repo_url:
-# repo_name:
+repo_url: https://github.com/SamErde/TheCleaners
+repo_name: TheCleaners
 # edit_uri: edit/main/docs/
 # edit_uri_template:
 site_description: Clean up all of the loose ends in your system with The Cleaners. We take care of temp files, IIS logs, Exchange Server logs, and more! # meta tag to the generated HTML header
