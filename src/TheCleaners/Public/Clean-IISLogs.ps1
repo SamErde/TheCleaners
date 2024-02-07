@@ -7,6 +7,16 @@ function Remove-OldIISLogFiles {
             This is a work in progress still. It will attempt to find IIS log folders and clean out files older than [x] days.
             It checks the default log folder locations first, and if the WebAdministration PowerShell module is available, it
             will use that to check the specific log file locations for each web site as well.
+
+        .EXAMPLE
+            Remove-OldIISLogFiles -Days 60
+
+            Removes all IIS log files that are older than 60 days.
+
+        .NOTES
+            Author: Sam Erde
+                    https://twitter.com/SamErde
+                    https://github.com/SamErde
     #>
     [CmdletBinding()]
     param (

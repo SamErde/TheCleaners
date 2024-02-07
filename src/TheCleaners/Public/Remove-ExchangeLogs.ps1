@@ -7,7 +7,14 @@ function Remove-ExchangeLogs {
             Remove any Exchange logs that are older than a specified date.
 
         .EXAMPLE
-            Remove-ExchangeLogs
+            Remove-ExchangeLogs -Days 60
+
+            This will remove all Exchange logs older than 60 days.
+
+        .NOTES
+            Author: Sam Erde
+                    https://twitter.com/SamErde
+                    https://github.com/SamErde
     #>
     [CmdletBinding(SupportsShouldProcess)]
 
