@@ -1,7 +1,7 @@
 function Remove-ExchangeLogs {
     <#
         .SYNOPSIS
-            Clean out old Exchange Server logs
+            Clean out old Exchange Server logs.
 
         .DESCRIPTION
             Remove any Exchange logs that are older than a specified date.
