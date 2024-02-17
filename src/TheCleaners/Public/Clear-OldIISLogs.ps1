@@ -43,9 +43,9 @@ function Clear-OldIISLogs {
         }
     } else {
         # If the WebAdministration module is not available, check the default log file location
-        Write-Information "The WebAdministration module is not installed. We will check the default IIS log file location at '$DefaultIISLogLocation'." -InformationAction Continue
         $DefaultIISLogLocation = "$env:SystemDrive\inetpub\logs\LogFiles"
-        if (Test-Path -Path $DefaultIISLogLocation) {
+        Write-Information "The WebAdministration module is not installed. We will check the default IIS log file location at '$DefaultIISLogLocation'." -InformationAction Continue
+        if (Test-Path -Path $DefaultIISLogLocation -ErrorAction SilentlyContinue) {
             try {
                 Remove-OldFiles -Path $DefaultIISLogLocation -Days $Days
             }
@@ -53,11 +53,13 @@ function Clear-OldIISLogs {
                 Write-Error -Message $_.Exception.Message -ErrorAction Continue
                 Write-Warning "Failed to remove old log files from the default IIS log file location at '$DefaultIISLogLocation'." -WarningAction Continue
             }
+        } else {
+            Write-Information -MessageData "The default IIS log file location at '$DefaultIISLogLocation' does not exist." -InformationAction Continue
         }
 
         # If the WebAdministration module is not available,try to check the IIS log file location from the registry (requires local admin rights to read this path)
-        $LogDir = Get-ItemProperty -Path 'HKLM:\\System\CurrentControlSet\Services\W3SVC\Parameters' -Name "LogDir" | Select-Object -ExpandProperty LogDir
-        if (Test-Path -Path $LogDir) {
+        $LogDir = Get-ItemProperty -Path 'HKLM:\\System\CurrentControlSet\Services\W3SVC\Parameters' -Name "LogDir" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LogDir
+        if ($LogDir -and (Test-Path -Path $LogDir)) {
             try {
                 Remove-OldFiles -Path $LogDir -Days $Days
             }
@@ -65,6 +67,9 @@ function Clear-OldIISLogs {
                 Write-Error -Message $_.Exception.Message -ErrorAction Continue
                 Write-Warning "Failed to remove old IIS log files from the location specified in the directory ($LogDir)." -WarningAction Continue
             }
+        } else {
+            Write-Information -MessageData "Unable to find an alternate IIS log file location from the registry." -InformationAction Continue
         }
     }
+    # Add a summary of which blocks were run and possibly a count of log files removed.
 }
