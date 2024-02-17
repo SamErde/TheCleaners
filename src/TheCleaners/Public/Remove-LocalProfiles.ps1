@@ -1,11 +1,11 @@
-# THIS IS AN OLD POC SCRIPT THAT NEEDS TO BE SORTED AND TESTED
-
 function Get-StaleUserProfiles {
     <#
         .SYNOPSIS
             A script to find old, unused user profiles in Windows.
 
         .DESCRIPTION
+            # THIS IS AN EARLY POC SCRIPT THAT NEEDS TO BE TESTED FOR PROPER EXCLUSIONS
+
             This script finds old, unused profiles in Windows and helps you remove them. It should exclude special accounts
             and system profiles.
 
