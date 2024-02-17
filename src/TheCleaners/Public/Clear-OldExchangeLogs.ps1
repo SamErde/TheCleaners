@@ -1,4 +1,4 @@
-function Remove-ExchangeLogs {
+function Clear-OldExchangeLogs {
     <#
         .SYNOPSIS
             Clean out old Exchange Server logs.
