@@ -8,7 +8,7 @@
 RootModule = 'TheCleaners.psm1'
 
 # Version number of this module.
-ModuleVersion = '2024.2.2'
+ModuleVersion = '2024.2.18'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -29,7 +29,7 @@ Copyright = '(c) Sam Erde. All rights reserved.'
 Description = 'Clean up all of the loose ends in your system with The Cleaners. We take care of temp files, IIS logs, Exchange Server logs, and more!'
 
 # Minimum version of the PowerShell engine required by this module
-# PowerShellVersion = ''
+# PowerShellVersion = '5.1'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
@@ -91,7 +91,7 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = @('powershell','sysadmin','scripting','IIS','Exchange-Server','Windows-Server')
+        Tags = @('sysadmin','scripting','IIS','Exchange-Server','Windows-Server','utilities','maintenance','automation')
 
         # A URL to the license for this module.
         # LicenseUri = ''
@@ -125,5 +125,3 @@ PrivateData = @{
 # DefaultCommandPrefix = ''
 
 }
-
-
