@@ -49,6 +49,6 @@ Clear-OldIISLogs
 
 ## Author
 
-Sam Erde
+Sam Erde  
 [@SamErde on Twitter/X](https://twitter.com/SamErde)  
 [@SamErde on Linktree](https://linktr.ee/SamErde)
