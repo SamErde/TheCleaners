@@ -1,3 +1,9 @@
+function Remove-OldProfiles {
+    $StaleUserProfiles = Get-StaleUserProfiles
+    Remove-StaleUserProfiles
+    Remove-OldProfiles
+}
+
 function Get-StaleUserProfiles {
     <#
         .SYNOPSIS
