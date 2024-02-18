@@ -71,5 +71,7 @@ function Clear-OldIISLogs {
             Write-Information -MessageData "Unable to find an alternate IIS log file location from the registry." -InformationAction Continue
         }
     }
-    # Add a summary of which blocks were run and possibly a count of log files removed.
+    <#
+        To Do: Add a summary of which blocks were run and possibly a count of log files removed.
+    #>
 }
