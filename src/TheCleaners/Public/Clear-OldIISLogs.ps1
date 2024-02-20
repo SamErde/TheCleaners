@@ -8,6 +8,9 @@ function Clear-OldIISLogs {
             it will use that to check the specific log file locations for each web site. Otherwise, it checks the
             assumed default log folder location and the registry for the IIS log file location.
 
+        .PARAMETER Days
+            The number of days to keep log files. The default is 60 days.
+
         .EXAMPLE
             Remove-OldIISLogFiles -Days 60
 

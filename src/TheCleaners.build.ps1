@@ -50,7 +50,7 @@ $str = @()
 $str = 'Clean', 'ValidateRequirements', 'ImportModuleManifest'
 $str += #'FormattingCheck'
 $str += #'Analyze'#, 'Test'
-$str += #'CreateHelpStart'
+$str += 'CreateHelpStart'
 $str2 = $str
 $str2 += 'Build', 'Archive'
 $str += 'Build', 'Archive' #'IntegrationTest', 'Archive'
@@ -507,7 +507,7 @@ Add-BuildTask Build {
     Write-Build Green '      ...Build Complete!'
 } #Build
 
-<#
+
 #Synopsis: Invokes all Pester Integration Tests in the Tests\Integration folder (if it exists)
 Add-BuildTask IntegrationTest {
     if (Test-Path -Path $script:IntegrationTestsPath) {
@@ -540,7 +540,7 @@ Add-BuildTask IntegrationTest {
         Write-Build Green '      ...Pester Integration Tests Complete!'
     }
 } #IntegrationTest
-#>
+
 
 #Synopsis: Creates an archive of the built Module
 Add-BuildTask Archive {

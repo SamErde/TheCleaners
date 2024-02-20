@@ -1,4 +1,22 @@
 function Remove-OldProfiles {
+    <#
+        .SYNOPSIS
+            Removes old, inactive user profiles from the local system.
+
+        .DESCRIPTION
+            Removes old, inactive user profiles from the local system.
+
+        .EXAMPLE
+            Remove-OldProfiles
+
+            Removes old, inactive user profiles from the local system.
+        .NOTES
+            Author:     Sam Erde
+                        https://twitter.com/SamErde
+                        https://github.com/SamErde
+            Modified:   2024-02-19
+    #>
+
     $StaleUserProfiles = Get-StaleUserProfiles
     Remove-StaleUserProfiles
     Remove-OldProfiles
@@ -86,14 +104,42 @@ function Remove-StaleUserProfiles {
 } # End function Remove-StaleProfiles
 
 function TranslateSamToSid ($domain, $samaccountname) {
-    # Translate samaccountname to SID; use if getting additional account information from AD, such as special group membership
+    <#
+        .SYNOPSIS
+            Translates a samaccountname to a SID.
+        .DESCRIPTION
+            Translates a samaccountname to a SID.
+        .PARAMETER domain
+            The domain to search for the samaccountname.
+        .PARAMETER samaccountname
+            The samaccountname to translate to a SID.
+        .EXAMPLE
+            TranslateSamToSid -domain "contoso" -samaccountname "jdoe"
+
+            Translates the samaccountname "jdoe" to a SID.
+    #>
+    [CmdletBinding()]
+
     $objUser = New-Object System.Security.Principal.NTAccount($domain,$samaccountname)
     $strSID = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
     $strsid.Value
 } # End function TranslateSamToSid
 
 function TranslateSidToSam ($sid) {
-    # Translate SID to samaccountname; use if getting additional account information from AD, such as special group membership
+    <#
+        .SYNOPSIS
+            Translates a SID to a samaccountname.
+        .DESCRIPTION
+            Translates a SID to a samaccountname.
+        .PARAMETER sid
+            The SID to translate to a samaccountname.
+        .EXAMPLE
+            TranslateSidToSam -sid "S-1-5-21-3623811015-3361044348-30300820"
+
+            Translates the SID to a samaccountname.
+    #>
+    [CmdletBinding()]
+
     $objSID = New-Object System.Security.Principal.SecurityIdentifier($sid)
     $strUser = $objSID.Translate([System.Security.Principal.NTAccount])
     $strUser.Value
