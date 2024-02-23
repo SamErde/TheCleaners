@@ -26,7 +26,7 @@ Author = 'Sam Erde'
 Copyright = '(c) Sam Erde. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Clean up all of the loose ends in your system with The Cleaners. We take care of temp files, IIS logs, Exchange Server logs, and more!'
+Description = 'Take care of all those loose ends in your system with The Cleaners. We handle temp files, IIS logs, Exchange Server logs, and more!'
 
 # Minimum version of the PowerShell engine required by this module
 # PowerShellVersion = '5.1'

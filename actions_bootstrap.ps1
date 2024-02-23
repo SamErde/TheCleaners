@@ -53,4 +53,3 @@ foreach ($module in $modulesToInstall) {
         throw
     }
 }
-

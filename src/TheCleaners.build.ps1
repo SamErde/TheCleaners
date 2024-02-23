@@ -1,40 +1,40 @@
 <#
-.SYNOPSIS
-    An Invoke-Build Build file.
-.DESCRIPTION
-    Build steps can include:
-        - ValidateRequirements
-        - ImportModuleManifest
-        - Clean
-        - Analyze
-        - FormattingCheck
-        - Test
-        - DevCC
-        - CreateHelpStart
-        - Build
-        - IntegrationTest
-        - Archive
-.EXAMPLE
-    Invoke-Build
+    .SYNOPSIS
+        An Invoke-Build Build file.
+    .DESCRIPTION
+        Build steps can include:
+            - ValidateRequirements
+            - ImportModuleManifest
+            - Clean
+            - Analyze
+            - FormattingCheck
+            - Test
+            - DevCC
+            - CreateHelpStart
+            - Build
+            - IntegrationTest
+            - Archive
+    .EXAMPLE
+        Invoke-Build
 
-    This will perform the default build Add-BuildTasks: see below for the default Add-BuildTask execution
-.EXAMPLE
-    Invoke-Build -Add-BuildTask Analyze,Test
+        This will perform the default build Add-BuildTasks: see below for the default Add-BuildTask execution
+    .EXAMPLE
+        Invoke-Build -Add-BuildTask Analyze,Test
 
-    This will perform only the Analyze and Test Add-BuildTasks.
-.NOTES
-    This build file by Catesta will pull in configurations from the "<module>.Settings.ps1" file as well, where users can more easily customize the build process if required.
-    https://github.com/nightroman/Invoke-Build
-    https://github.com/nightroman/Invoke-Build/wiki/Build-Scripts-Guidelines
-    If using VSCode you can use the generated tasks.json to execute the various tasks in this build file.
-        Ctrl + P | then type task (add space) - you will then be presented with a list of available tasks to run
-    The 'InstallDependencies' Add-BuildTask isn't present here.
-        Module dependencies are installed at a previous step in the pipeline.
-        If your manifest has module dependencies include all required modules in your CI/CD bootstrap file:
-            AWS - install_modules.ps1
-            Azure - actions_bootstrap.ps1
-            GitHub Actions - actions_bootstrap.ps1
-            AppVeyor  - actions_bootstrap.ps1
+        This will perform only the Analyze and Test Add-BuildTasks.
+    .NOTES
+        This build file by Catesta will pull in configurations from the "<module>.Settings.ps1" file as well, where users can more easily customize the build process if required.
+        https://github.com/nightroman/Invoke-Build
+        https://github.com/nightroman/Invoke-Build/wiki/Build-Scripts-Guidelines
+        If using VSCode you can use the generated tasks.json to execute the various tasks in this build file.
+            Ctrl + P | then type task (add space) - you will then be presented with a list of available tasks to run
+        The 'InstallDependencies' Add-BuildTask isn't present here.
+            Module dependencies are installed at a previous step in the pipeline.
+            If your manifest has module dependencies include all required modules in your CI/CD bootstrap file:
+                AWS - install_modules.ps1
+                Azure - actions_bootstrap.ps1
+                GitHub Actions - actions_bootstrap.ps1
+                AppVeyor  - actions_bootstrap.ps1
 #>
 
 #Include: Settings
@@ -48,18 +48,16 @@ function Test-ManifestBool ($Path) {
 #Default Build
 $str = @()
 $str = 'Clean', 'ValidateRequirements', 'ImportModuleManifest'
-$str += #'FormattingCheck'
-$str += #'Analyze'#, 'Test'
+$str += 'FormattingCheck'
+$str += 'Analyze'#, 'Test'
 $str += 'CreateHelpStart'
 $str2 = $str
 $str2 += 'Build', 'Archive'
 $str += 'Build', 'Archive' #'IntegrationTest', 'Archive'
 Add-BuildTask -Name . -Jobs $str
 
-<#
 #Local testing build process
-Add-BuildTask TestLocal Clean, ImportModuleManifest, Analyze, Test
-#>
+Add-BuildTask TestLocal Clean, ImportModuleManifest, Analyze #, Test
 
 #Local help file creation process
 Add-BuildTask HelpLocal Clean, ImportModuleManifest, CreateHelpStart

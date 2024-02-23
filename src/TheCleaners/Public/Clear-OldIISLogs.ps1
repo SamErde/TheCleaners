@@ -38,8 +38,7 @@ function Clear-OldIISLogs {
             Write-Information -MessageData "Removing old IIS log files from $($Site.name) at $SiteLogFileDirectory." -InformationAction Continue
             try {
                 Remove-OldFiles -Path $SiteLogFileDirectory -Days $Days
-            }
-            catch {
+            } catch {
                 Write-Error -Message $_.Exception.Message -ErrorAction Continue
                 Write-Warning "Failed to remove old IIS log files from $($Site.name) at $SiteLogFileDirectory." -WarningAction Continue
             }
@@ -51,8 +50,7 @@ function Clear-OldIISLogs {
         if (Test-Path -Path $DefaultIISLogLocation -ErrorAction SilentlyContinue) {
             try {
                 Remove-OldFiles -Path $DefaultIISLogLocation -Days $Days
-            }
-            catch {
+            } catch {
                 Write-Error -Message $_.Exception.Message -ErrorAction Continue
                 Write-Warning "Failed to remove old log files from the default IIS log file location at '$DefaultIISLogLocation'." -WarningAction Continue
             }
@@ -65,8 +63,7 @@ function Clear-OldIISLogs {
         if ($LogDir -and (Test-Path -Path $LogDir)) {
             try {
                 Remove-OldFiles -Path $LogDir -Days $Days
-            }
-            catch {
+            } catch {
                 Write-Error -Message $_.Exception.Message -ErrorAction Continue
                 Write-Warning "Failed to remove old IIS log files from the location specified in the directory ($LogDir)." -WarningAction Continue
             }

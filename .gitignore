@@ -4,9 +4,9 @@ cov.xml
 coverage.xml
 # OS generated files #
 ######################
+._*
 .DS_Store
 .DS_Store?
-._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db

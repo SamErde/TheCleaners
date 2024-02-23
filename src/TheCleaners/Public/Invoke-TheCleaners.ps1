@@ -4,7 +4,7 @@
             Calls in the cleaners to clean up the mess in your log folders.
 
         .DESCRIPTION
-            Start the cleaning operation...put documents in the shredder, clean up the mess in the log folders, and make sure the evidence is gone.
+            Start the cleaning operation. Put documents in the shredder, clean up the mess in the log folders, and make sure the evidence is gone.
 
         .EXAMPLE
             Invoke-TheCleaners
