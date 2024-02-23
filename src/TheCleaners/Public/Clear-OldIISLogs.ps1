@@ -4,9 +4,7 @@ function Clear-OldIISLogs {
             A script to clean out old IIS log files.
 
         .DESCRIPTION
-            This script will clean out IIS log files older than [x] days. If the WebAdministration module is available,
-            it will use that to check the specific log file locations for each web site. Otherwise, it checks the
-            assumed default log folder location and the registry for the IIS log file location.
+            This script will clean out IIS log files older than x days.
 
         .PARAMETER Days
             The number of days to keep log files. The default is 60 days.
@@ -21,6 +19,10 @@ function Clear-OldIISLogs {
                         https://twitter.com/SamErde
                         https://github.com/SamErde
             Modified:   2024-02-17
+
+            If the WebAdministration module is available, it will use that to check the specific log file locations for
+            each web site. Otherwise, it checks the assumed default log folder location and the registry for the IIS
+            log file location.
     #>
     [CmdletBinding()]
     param (
