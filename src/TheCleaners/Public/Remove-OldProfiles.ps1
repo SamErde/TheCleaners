@@ -28,10 +28,8 @@ function Get-StaleUserProfiles {
             A script to find old, unused user profiles in Windows.
 
         .DESCRIPTION
-            # THIS IS AN EARLY POC SCRIPT THAT NEEDS TO BE TESTED FOR PROPER EXCLUSIONS
-
-            This script finds old, unused profiles in Windows and helps you remove them. It should exclude special accounts
-            and system profiles.
+            THIS IS AN EARLY POC SCRIPT THAT NEEDS TO BE TESTED FOR PROPER EXCLUSIONS. This script finds old, unused
+            profiles in Windows and helps you remove them. It should exclude special accounts and system profiles.
 
         .EXAMPLE
             $StaleUserProfiles = Get-StaleUserProfiles -ShowSummary
@@ -67,7 +65,31 @@ function Get-StaleUserProfiles {
 }
 
 function Remove-StaleUserProfiles {
+    <#
+        .SYNOPSIS
+            Removes stale user profiles from the local system.
+        .DESCRIPTION
+            Removes stale user profiles from the local system.
+        .PARAMETER StaleUserProfiles
+            The stale user profiles to remove.
+        .EXAMPLE
+            Remove-StaleUserProfiles -StaleUserProfiles $StaleUserProfiles
+
+            Removes the stale user profiles from the local system.
+    #>
     [CmdletBinding()]
+    <#
+        .SYNOPSIS
+            Removes stale user profiles from the local system.
+        .DESCRIPTION
+            Removes stale user profiles from the local system.
+        .PARAMETER StaleUserProfiles
+            The stale user profiles to remove.
+        .EXAMPLE
+            Remove-StaleUserProfiles -StaleUserProfiles $StaleUserProfiles
+
+            Removes the stale user profiles from the local system.
+    #>
     param (
         [Parameter(Mandatory)]
         $StaleUserProfiles
