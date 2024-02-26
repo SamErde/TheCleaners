@@ -433,22 +433,24 @@ Add-BuildTask CreateHelpComplete -After CreateExternalHelp {
     Write-Build Green '      ...CreateHelp Complete!'
 } #CreateHelpStart
 
-# Synopsis: Replace comment based help (CBH) with external help in all public functions for this project
-Add-BuildTask UpdateCBH -After AssetCopy {
-    $ExternalHelp = @"
 <#
-.EXTERNALHELP $($ModuleName)-help.xml
+## Synopsis: Replace comment based help (CBH) with external help in all public functions for this project
+#Add-BuildTask UpdateCBH -After AssetCopy {
+#    $ExternalHelp = @"
+#<#
+#.EXTERNALHELP $($ModuleName)-help.xml
+##>
+#"@
+#
+#    $CBHPattern = "(?ms)(\<#.*\.SYNOPSIS.*?#>)"
+#    Get-ChildItem -Path "$script:ArtifactsPath\Public\*.ps1" -File | ForEach-Object {
+#        $FormattedOutFile = $_.FullName
+#        Write-Output "      Replacing CBH in file: $($FormattedOutFile)"
+#        $UpdatedFile = (Get-Content  $FormattedOutFile -raw) -replace $CBHPattern, $ExternalHelp
+#        $UpdatedFile | Out-File -FilePath $FormattedOutFile -force -Encoding:utf8
+#    }
+#} #UpdateCBH
 #>
-"@
-
-    $CBHPattern = "(?ms)(\<#.*\.SYNOPSIS.*?#>)"
-    Get-ChildItem -Path "$script:ArtifactsPath\Public\*.ps1" -File | ForEach-Object {
-        $FormattedOutFile = $_.FullName
-        Write-Output "      Replacing CBH in file: $($FormattedOutFile)"
-        $UpdatedFile = (Get-Content  $FormattedOutFile -raw) -replace $CBHPattern, $ExternalHelp
-        $UpdatedFile | Out-File -FilePath $FormattedOutFile -force -Encoding:utf8
-    }
-} #UpdateCBH
 
 # Synopsis: Copies module assets to Artifacts folder
 Add-BuildTask AssetCopy -Before Build {
