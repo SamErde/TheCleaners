@@ -6,6 +6,9 @@ function Clear-OldExchangeLogs {
         .DESCRIPTION
             Remove any Exchange logs that are older than a specified date.
 
+        .PARAMETER Days
+            The number of days to keep logs for. Any logs older than this will be removed.
+
         .EXAMPLE
             Remove-ExchangeLogs -Days 60
 
@@ -17,8 +20,12 @@ function Clear-OldExchangeLogs {
                     https://github.com/SamErde
     #>
     [CmdletBinding(SupportsShouldProcess)]
-
-    $Days = 60
+    # Logs older than this number of days will be removed.
+    param (
+        [Parameter()]
+        [int]
+        $Days = 60
+    )
 
     $IISLogPath             = "C:\inetpub\logs\LogFiles\"
     $ExchangeInstallPath    = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup).MsiInstallPath
