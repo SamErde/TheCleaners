@@ -44,9 +44,8 @@ function Clear-OldExchangeLogs {
     Write-Information -MessageData $TargetFolder -InformationAction Continue
 
     if (Test-Path $TargetFolder) {
-        $Now = Get-Date
-        $LastWrite = $Now.AddDays(-$Days)
-        $Files = Get-ChildItem -Path $ExchangeLoggingPath -Recurse | Where-Object { ($_.Name -like "*.log" -or $_.Name -like "*.blg" -or $_.Name -like "*.etl") -and ($_.lastWriteTime -le "$lastwrite") } | Select-Object FullName
+        $LastWrite = (Get-Date).AddDays(-$Days)
+        $Files = Get-ChildItem -Path $ExchangeLoggingPath -Recurse | Where-Object { ($_.Name -like "*.log") -and ($_.lastWriteTime -le "$lastwrite") } | Select-Object FullName
         foreach ($file in $Files) {
             Write-Information "Deleting file $($file.FullName)." -InformationAction Continue
             # Call the Remove-OldFile function
