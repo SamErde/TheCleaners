@@ -12,15 +12,13 @@ Take care of all those loose ends in your system with The Cleaners. We handle te
 
 ## TheCleaners Cmdlets
 ### [Clear-OldExchangeLogs](Clear-OldExchangeLogs.md)
-{{Manually Enter Clear-OldExchangeLogs Description Here}}
+Should be automatically added, right?
 
 ### [Clear-OldIISLogs](Clear-OldIISLogs.md)
-{{Manually Enter Clear-OldIISLogs Description Here}}
+Should be automatically added, right?
 
 ### [Invoke-TheCleaners](Invoke-TheCleaners.md)
-{{Manually Enter Invoke-TheCleaners Description Here}}
+Should be automatically added, right?
 
 ### [Remove-OldProfiles](Remove-OldProfiles.md)
-{{Manually Enter Remove-OldProfiles Description Here}}
-
-
+Should be automatically added, right?
