@@ -1,24 +1,24 @@
+<#
+.SYNOPSIS
+    Clean out old Exchange Server logs.
+
+.DESCRIPTION
+    Remove any Exchange logs that are older than a specified date.
+
+.PARAMETER Days
+    The number of days to keep logs for. Any logs older than this will be removed.
+
+.EXAMPLE
+    Remove-ExchangeLogs -Days 60
+
+    This will remove all Exchange logs older than 60 days.
+
+.NOTES
+    Author: Sam Erde
+            https://twitter.com/SamErde
+            https://github.com/SamErde
+#>
 function Clear-OldExchangeLogs {
-    <#
-        .SYNOPSIS
-            Clean out old Exchange Server logs.
-
-        .DESCRIPTION
-            Remove any Exchange logs that are older than a specified date.
-
-        .PARAMETER Days
-            The number of days to keep logs for. Any logs older than this will be removed.
-
-        .EXAMPLE
-            Remove-ExchangeLogs -Days 60
-
-            This will remove all Exchange logs older than 60 days.
-
-        .NOTES
-            Author: Sam Erde
-                    https://twitter.com/SamErde
-                    https://github.com/SamErde
-    #>
     [CmdletBinding(SupportsShouldProcess)]
     # Logs older than this number of days will be removed.
     param (
