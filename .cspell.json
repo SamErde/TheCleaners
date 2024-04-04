@@ -1,16 +1,17 @@
 {
     "version": "0.2",
     "language": "en",
-    
+
     "words": [
-        "RSAT"
+        "RSAT",
+        "LinkTree"
     ],
 
     "ignoreWords": [
         "stefanzweifel",
         "diffy"
     ],
-    
+
     "flagWords": [
         "yeet"
     ],
