@@ -33,7 +33,7 @@ Copyright = '(c) Sam Erde. All rights reserved.'
 Description = 'A module to help automate the cleanup of old log file and temp files on your systems.'
 
 # Minimum version of the PowerShell engine required by this module
-# PowerShellVersion = ''
+PowerShellVersion = '5.1'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
@@ -69,7 +69,16 @@ Description = 'A module to help automate the cleanup of old log file and temp fi
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Get-HelloWorld')
+FunctionsToExport = @(
+    'Get-HelloWorld',
+    'Clear-OldExchangeLogs',
+    'Clear-OldIISLogs',
+    'Invoke-TheCleaners'
+    #'Get-StaleUserProfiles',
+    #'Remove-StaleUserProfiles',
+    #'TranslateSamToSid',
+    #'TranslateSidToSam'
+)
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
