@@ -101,7 +101,7 @@ function Remove-StaleUserProfiles {
 
     # Walk away if there are no profiles to clean out.
     if ($StaleUserProfiles.Count -lt 1) {
-        Write-Host "There are no profiles to clean out." -ForegroundColor Yellow
+        Write-Information "There are no profiles to clean out." -InformationAction Continue
         break
     } # Only continue if there ARE profiles to clean up.
 
@@ -115,11 +115,11 @@ function Remove-StaleUserProfiles {
         # If the user profile's local path does not match anything in $AlwaysExcluded, the profile will be removed.
         # This part of the logic does have some gaps, eg account names that don't match their profile folder name.
         if (!($AlwaysExcluded -like $LocalPath.Replace("C:\Users\",""))) {
-            Write-Host "Removing $LocalPath (SID: $ProfileSID)" -ForegroundColor Yellow
+            Write-Information "Removing $LocalPath (SID: $ProfileSID)" -InformationAction Continue
             try {
                 $UserProfile | Remove-CimInstance -ErrorAction Stop
             } catch {
-                Write-Host $Error[0].Exception -ForegroundColor Magenta
+                Write-Error $Error[0].Exception
             }
         } # End if
     } # End foreach loop through profiles
