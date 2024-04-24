@@ -16,6 +16,11 @@ function Remove-OldProfiles {
                         https://github.com/SamErde
             Modified:   2024-02-19
     #>
+    [CmdletBinding()]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Remove-OldProfiles')]
+    param (
+
+    )
 
     $StaleUserProfiles = Get-StaleUserProfiles
     Remove-StaleUserProfiles
@@ -44,6 +49,7 @@ function Get-StaleUserProfiles {
             Partially inspired by http://woshub.com/delete-old-user-profiles-gpo-powershell/
     #>
     [CmdletBinding()]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Get-StaleUserProfiles')]
     param (
         [Parameter()]
         [switch]
@@ -78,18 +84,7 @@ function Remove-StaleUserProfiles {
             Removes the stale user profiles from the local system.
     #>
     [CmdletBinding()]
-    <#
-        .SYNOPSIS
-            Removes stale user profiles from the local system.
-        .DESCRIPTION
-            Removes stale user profiles from the local system.
-        .PARAMETER StaleUserProfiles
-            The stale user profiles to remove.
-        .EXAMPLE
-            Remove-StaleUserProfiles -StaleUserProfiles $StaleUserProfiles
-
-            Removes the stale user profiles from the local system.
-    #>
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Remove-StaleUserProfiles')]
     param (
         [Parameter(Mandatory)]
         $StaleUserProfiles

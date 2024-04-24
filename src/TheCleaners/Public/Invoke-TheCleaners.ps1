@@ -18,6 +18,7 @@
 #>
 function Invoke-TheCleaners {
     [CmdletBinding()]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Invoke-TheCleaners')]
     param (
         # Nothing here yet
     )

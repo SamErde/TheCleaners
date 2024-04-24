@@ -25,6 +25,7 @@
 #>
 function Clear-OldIISLogs {
     [CmdletBinding()]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Clear-OldIISLogs')]
     param (
         [Parameter()]
         [int]
