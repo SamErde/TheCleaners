@@ -34,7 +34,7 @@ function Clear-OldIISLogs {
     # Use the WebAdministration module if it is available
     if (Get-Module -Name 'WebAdministration' -ListAvailable) {
         # Get the logfile directory for each web site
-        $WebSites = Get-WebSite
+        $WebSites = Get-Website
         foreach ($site in $WebSites) {
             $SiteLogFileDirectory = ("$($Site.logFile.directory)\W3SVC$($Site.id)").Replace( '%SystemDrive%',$env:SystemDrive )
             Write-Information -MessageData "Removing old IIS log files from $($Site.name) at $SiteLogFileDirectory." -InformationAction Continue
