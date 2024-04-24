@@ -24,23 +24,16 @@ function Remove-OldFiles {
 
         # How many days worth of logs to retain (how far back to filter)
         [int16]
-        $Days = 60,
-
-        # Use this switch to enable recursion and delete old files within subfolders
-        [parameter()]
-        [switch]
-        $Recurse
+        $Days = 60
     )
 
     begin {
-        if (-not $Recurse) {
-            $Recurse = $false
-        }
+
     }
 
     process {
         Write-Verbose -Message "Finding and removing files older than $Days."
-        Get-ChildItem -Path $Path -Recurse:$Recurse | Where-Object {
+        Get-ChildItem -Path $Path -Recurse | Where-Object {
             $_.CreationTime -le ([datetime]::Now.AddDays( -$Days ))
         } | Remove-Item
     }
