@@ -27,31 +27,50 @@ function Clear-OldExchangeLogs {
         $Days = 60
     )
 
-    $IISLogPath             = "C:\inetpub\logs\LogFiles\"
-    $ExchangeInstallPath    = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup).MsiInstallPath
-    $ExchangeLoggingPath    = $ExchangeInstallPath + "Logging\"
-    $ETLLoggingPath         = $ExchangeInstallPath + "Bin\Search\Ceres\Diagnostics\ETLTraces\"
-    $ETLLoggingPath2        = $ExchangeInstallPath + "\Bin\Search\Ceres\Diagnostics\Logs"
-    $MessageTrackingLogs    = $ExchangeInstallPath + "\TransportRoles\Logs\MessageTracking\"
+    begin {
 
-    Test-Path $IISLogPath
-    Test-Path $ExchangeInstallPath
-    Test-Path $ExchangeLoggingPath
-    Test-Path $ETLLoggingPath
-    Test-Path $ETLLoggingPath2
-    Test-Path $MessageTrackingLogs
-
-    Write-Information -MessageData $TargetFolder -InformationAction Continue
-
-    if (Test-Path $TargetFolder) {
-        $LastWrite = (Get-Date).AddDays(-$Days)
-        $Files = Get-ChildItem -Path $ExchangeLoggingPath -Recurse | Where-Object { ($_.Name -like "*.log") -and ($_.lastWriteTime -le "$lastwrite") } | Select-Object FullName
-        foreach ($file in $Files) {
-            Write-Information "Deleting file $($file.FullName)." -InformationAction Continue
-            # Call the Remove-OldFile function
-            # Remove-Item $($file.FullName) -ErrorAction SilentlyContinue
+        try {
+            $ExchangeInstallPath = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup).MsiInstallPath
+        } catch {
+            Write-Warning -WarningAction Continue "The Exchange Server installation path could not be found. Please ensure that Exchange Server is installed on this machine."
+            return
         }
-    } else {
-        Write-Warning -WarningAction Continue "The folder $TargetFolder doesn't exist! Check the folder path!"
+
+        # Define the paths to the Exchange log files
+        $LogLocations = @{
+            ExchangeLoggingPath     = Join-Path -Path $ExchangeInstallPath -ChildPath 'Logging\' -ErrorAction Ignore
+            ETLTracesPath           = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\ETLTraces\' -ErrorAction Ignore
+            DiagnosticLogsPath      = Join-Path -Path $ExchangeInstallPath -ChildPath '\Bin\Search\Ceres\Diagnostics\Logs' -ErrorAction Ignore
+            MessageTrackingLogsPath = Join-Path -Path $ExchangeInstallPath -ChildPath '\TransportRoles\Logs\MessageTracking\' -ErrorAction Ignore
+        }
+
+        $LastWriteDate = (Get-Date).AddDays(-$Days)
+    } # end begin
+
+    process {
+        # Clean up the IIS log files
+        Clear-OldIisLogFiles -Days $Days
+
+        foreach ($LogLocation in $LogLocations.GetEnumerator()) {
+            if (-not (Test-Path -Path $LogLocation.Value)) {
+                Write-Warning -WarningAction Continue "The folder $($LogLocation.Key) doesn't exist. Skipping this folder."
+                continue
+            }
+
+            $OldFiles = Get-ChildItem -Path $($LogLocation.Value) -Recurse |
+                Where-Object { ($_.Name -like "*.log") -and ($_.lastWriteTime -le "$LastWriteDate") } |
+                Select-Object FullName
+
+            foreach ($file in $OldFiles) {
+                if ( $PSCmdlet.ShouldProcess($file.Name) ) {
+                    $file.Delete()
+                }
+            } # end foreach $file
+
+        } # end foreach LogLocation
+    } # end process
+
+    end {
+        # Summarize the count and total size of files removed.
     }
 }
