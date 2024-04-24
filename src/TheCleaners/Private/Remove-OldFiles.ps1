@@ -16,7 +16,7 @@
             https://github.com/SamErde
 #>
 function Remove-OldFiles {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     param (
         # The path containing files to remove
         [string]

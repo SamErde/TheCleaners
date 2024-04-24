@@ -19,7 +19,7 @@
             https://github.com/SamErde
 #>
 function Clear-OldExchangeLogs {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     # Logs older than this number of days will be removed.
     param (
         [Parameter()]
