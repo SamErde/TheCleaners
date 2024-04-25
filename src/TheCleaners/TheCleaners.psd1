@@ -73,8 +73,8 @@ FunctionsToExport = @(
     'Get-HelloWorld',
     'Clear-OldExchangeLogs',
     'Clear-OldIISLogs',
-    'Invoke-TheCleaners',
-    'Get-StaleUserProfiles'
+    'Invoke-TheCleaners'
+    #'Get-StaleUserProfiles'
     #'Remove-StaleUserProfiles'
 )
 
