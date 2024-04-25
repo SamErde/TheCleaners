@@ -12,7 +12,7 @@
 RootModule = 'TheCleaners.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.1'
+ModuleVersion = '0.0.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -30,7 +30,7 @@ CompanyName = 'Unknown'
 Copyright = '(c) Sam Erde. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'A module to help automate the cleanup of old log file and temp files on your systems.'
+Description = 'A module to help automate the cleanup of old log files and temp files on your systems.'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '5.1'
@@ -73,11 +73,9 @@ FunctionsToExport = @(
     'Get-HelloWorld',
     'Clear-OldExchangeLogs',
     'Clear-OldIISLogs',
-    'Invoke-TheCleaners'
-    #'Get-StaleUserProfiles',
-    #'Remove-StaleUserProfiles',
-    #'TranslateSamToSid',
-    #'TranslateSidToSam'
+    'Invoke-TheCleaners',
+    'Get-StaleUserProfiles'
+    #'Remove-StaleUserProfiles'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
