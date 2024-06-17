@@ -19,6 +19,7 @@
     TheCleaners
 #>
 function Get-HelloWorld {
+    [OutputType([String])]
     [CmdletBinding()]
     param (
         # [Parameter(Mandatory = $true,
