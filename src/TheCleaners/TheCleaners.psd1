@@ -12,7 +12,7 @@
 RootModule = 'TheCleaners.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.3'
+ModuleVersion = '0.1.0-preview'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -24,7 +24,7 @@ GUID = '96512386-bbd2-4e95-badd-5d175310bace'
 Author = 'Sam Erde'
 
 # Company or vendor of this module
-CompanyName = 'Unknown'
+# CompanyName = 'Sam Erde'
 
 # Copyright statement for this module
 Copyright = '(c) Sam Erde. All rights reserved.'
@@ -102,10 +102,10 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+        Tags = @('Windows','Windows-Server','PowerShell','sysadmin','maintenance','utility')
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://github.com/SamErde/TheCleaners/blob/main/LICENSE'
 
         # A URL to the main website for this project.
         ProjectUri = 'https://github.com/samerde/TheCleaners'
@@ -117,7 +117,7 @@ PrivateData = @{
         # ReleaseNotes = ''
 
         # Prerelease string of this module
-        # Prerelease = ''
+        Prerelease = 'preview'
 
         # Flag to indicate whether the module requires explicit user acceptance for install/update/save
         # RequireLicenseAcceptance = $false
