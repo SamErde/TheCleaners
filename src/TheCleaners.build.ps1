@@ -174,8 +174,8 @@ Add-BuildTask Analyze {
 
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
-        # Commented out as test on 2024/04/04
-        # throw '      One or more PSScriptAnalyzer errors/warnings where found.'
+        ##### Commented out as test on 2024/04/04 #####
+        throw '      One or more PSScriptAnalyzer errors/warnings where found.'
     } else {
         Write-Build Green '      ...Module Analyze Complete!'
     }
@@ -198,7 +198,8 @@ Add-BuildTask AnalyzeTests -After Analyze {
 
         if ($scriptAnalyzerResults) {
             $scriptAnalyzerResults | Format-Table
-            # throw '      One or more PSScriptAnalyzer errors/warnings where found.'
+            ##### Commented out for testing #####
+            throw '      One or more PSScriptAnalyzer errors/warnings where found.'
         }
         else {
             Write-Build Green '      ...Test Analyze Complete!'
@@ -223,7 +224,8 @@ Add-BuildTask FormattingCheck {
 
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
-        # throw '      PSScriptAnalyzer code formatting check did not adhere to {0} standards' -f $scriptAnalyzerParams.Setting
+        ##### Commented out for testing #####
+        throw '      PSScriptAnalyzer code formatting check did not adhere to {0} standards' -f $scriptAnalyzerParams.Setting
     }
     else {
         Write-Build Green '      ...Formatting Analyze Complete!'
@@ -393,8 +395,8 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
 
     Write-Build Gray '           Checking for missing documentation in md files...'
     $MissingDocumentation = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "({{.*}})"
-    # Testing on 2024/04/04 per https://github.com/techthoughts2/Catesta/issues/48
-    #$MissingDocumentation = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "({{.*}})"|?{$_ -notlike "*ProgressAction*"}
+    ##### Testing on 2024/04/04 per https://github.com/techthoughts2/Catesta/issues/48 ####
+    $MissingDocumentation = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "({{.*}})"|?{$_ -notlike "*ProgressAction*"}
     if ($MissingDocumentation.Count -gt 0) {
         Write-Build Yellow '             The documentation that got generated resulted in missing sections which should be filled out.'
         Write-Build Yellow '             Please review the following sections in your comment based help, fill out missing information and rerun this build:'
@@ -445,7 +447,6 @@ Add-BuildTask UpdateCBH -After AssetCopy {
     Get-ChildItem -Path "$script:ArtifactsPath\Public\*.ps1" -File | ForEach-Object {
         $FormattedOutFile = $_.FullName
         Write-Output "      Replacing CBH in file: $($FormattedOutFile)"
-        # Commented out on 2024/04/04
         $UpdatedFile = (Get-Content  $FormattedOutFile -raw) -replace $CBHPattern, $ExternalHelp
         $UpdatedFile | Out-File -FilePath $FormattedOutFile -force -Encoding:utf8
     }
