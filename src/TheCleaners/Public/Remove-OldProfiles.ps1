@@ -1,20 +1,24 @@
 function Remove-OldProfiles {
     <#
-        .SYNOPSIS
-            Removes old, inactive user profiles from the local system.
+    .SYNOPSIS
+        Removes old, inactive user profiles from the local system.
 
-        .DESCRIPTION
-            Removes old, inactive user profiles from the local system.
+    .DESCRIPTION
+        Removes old, inactive user profiles from the local system.
 
-        .EXAMPLE
-            Remove-OldProfiles
+    .EXAMPLE
+        Remove-OldProfiles
 
-            Removes old, inactive user profiles from the local system.
-        .NOTES
-            Author:     Sam Erde
-                        https://twitter.com/SamErde
-                        https://github.com/SamErde
-            Modified:   2024-02-19
+        Removes old, inactive user profiles from the local system.
+
+    .NOTES
+        Author:     Sam Erde
+                    https://twitter.com/SamErde
+                    https://github.com/SamErde
+        Modified:   2024-02-19
+
+    .COMPONENT
+        TheCleaners
     #>
     [CmdletBinding()]
     [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Remove-OldProfiles')]
@@ -22,9 +26,9 @@ function Remove-OldProfiles {
 
     )
 
-    $StaleUserProfiles = Get-StaleUserProfiles
-    Remove-StaleUserProfiles
-    Remove-OldProfiles
+    #$StaleUserProfiles = Get-StaleUserProfiles
+    #Remove-StaleUserProfiles
+    #Remove-OldProfiles
 }
 
 function Remove-StaleUserProfiles {

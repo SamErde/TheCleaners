@@ -20,6 +20,8 @@ function Clear-WindowsTemp {
                     https://github.com/SamErde
         Modified:   2024-08-12
 
+    .COMPONENT
+        TheCleaners
     #>
     [CmdletBinding()]
     param (

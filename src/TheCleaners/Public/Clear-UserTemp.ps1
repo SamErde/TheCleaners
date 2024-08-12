@@ -1,23 +1,26 @@
 function Clear-UserTemp {
-<#
+    <#
     .SYNOPSIS
-    Clean old temp files from user profiles.
+        Clean old temp files from user profiles.
 
     .DESCRIPTION
-    Remove temp files older than 60 days from users' local temp folder.
+        Remove temp files older than 60 days from users' local temp folder.
 
     .PARAMETER Days
-    How many days worth of temp files to keep. This can help avoid getting errors when trying to delete temp files that are still in use.
+        How many days worth of temp files to keep. This can help avoid getting errors when trying to delete temp files that are still in use.
 
     .EXAMPLE
-    Clear-UserTemp -Days 30
+        Clear-UserTemp -Days 30
 
     .NOTES
         Author:     Sam Erde
         https://twitter.com/SamErde
         https://github.com/SamErde
         Modified:   2024-08-12
-#>
+
+    .COMPONENT
+        TheCleaners
+    #>
     [CmdletBinding()]
     param (
         # How many days worth of temp files to retain (how far back to filter).

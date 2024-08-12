@@ -1,22 +1,25 @@
-﻿<#
-.SYNOPSIS
-    Calls in TheCleaners to clean up the mess in your log folders.
+﻿function Invoke-TheCleaners {
+    <#
+    .SYNOPSIS
+        Calls in TheCleaners to clean up the mess in your log folders.
 
-.DESCRIPTION
-    Start the cleaning operation. Put documents in the shredder, clean up the mess in the log folders, and make sure the evidence is gone.
+    .DESCRIPTION
+        Start the cleaning operation. Put documents in the shredder, clean up the mess in the log folders, and make sure the evidence is gone.
 
-.EXAMPLE
-    Invoke-TheCleaners
+    .EXAMPLE
+        Invoke-TheCleaners
 
-    View the menu of services that TheCleaners provide.
+        View the menu of services that TheCleaners provide.
 
-.NOTES
-    Author:     Sam Erde
-                https://twitter.com/SamErde
-                https://github.com/SamErde
-    Modified:   2024-02-19
-#>
-function Invoke-TheCleaners {
+    .NOTES
+        Author:     Sam Erde
+                    https://twitter.com/SamErde
+                    https://github.com/SamErde
+        Modified:   2024-02-19
+
+    .COMPONENT
+        TheCleaners
+    #>
     [CmdletBinding()]
     [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Invoke-TheCleaners')]
     param (
