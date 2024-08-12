@@ -21,7 +21,7 @@
         TheCleaners
     #>
     [CmdletBinding()]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
+    #[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns','Invoke-TheCleaners')]
     param (
         # Nothing here yet
     )
