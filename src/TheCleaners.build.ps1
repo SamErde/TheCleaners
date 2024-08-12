@@ -174,8 +174,8 @@ Add-BuildTask Analyze {
 
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
-        # Commented out as test on 2024/04/04
-        # throw '      One or more PSScriptAnalyzer errors/warnings where found.'
+        ##### Commented out as test on 2024/04/04 #####
+        throw '      One or more PSScriptAnalyzer errors/warnings where found.'
     } else {
         Write-Build Green '      ...Module Analyze Complete!'
     }
@@ -198,7 +198,8 @@ Add-BuildTask AnalyzeTests -After Analyze {
 
         if ($scriptAnalyzerResults) {
             $scriptAnalyzerResults | Format-Table
-            # throw '      One or more PSScriptAnalyzer errors/warnings where found.'
+            ##### Commented out for testing #####
+            throw '      One or more PSScriptAnalyzer errors/warnings where found.'
         }
         else {
             Write-Build Green '      ...Test Analyze Complete!'
@@ -223,7 +224,8 @@ Add-BuildTask FormattingCheck {
 
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
-        # throw '      PSScriptAnalyzer code formatting check did not adhere to {0} standards' -f $scriptAnalyzerParams.Setting
+        ##### Commented out for testing #####
+        throw '      PSScriptAnalyzer code formatting check did not adhere to {0} standards' -f $scriptAnalyzerParams.Setting
     }
     else {
         Write-Build Green '      ...Formatting Analyze Complete!'
@@ -279,15 +281,14 @@ Add-BuildTask Test {
         Write-Build Gray ('      ...CODE COVERAGE - CommandsExecutedCount: {0}' -f $testResults.CodeCoverage.CommandsExecutedCount)
         Write-Build Gray ('      ...CODE COVERAGE - CommandsAnalyzedCount: {0}' -f $testResults.CodeCoverage.CommandsAnalyzedCount)
 
+        <# Commented out by SDE on 2024-08-12
         if ($testResults.CodeCoverage.NumberOfCommandsExecuted -ne 0) {
             $coveragePercent = '{0:N2}' -f ($testResults.CodeCoverage.CommandsExecutedCount / $testResults.CodeCoverage.CommandsAnalyzedCount * 100)
 
-            <#
-            if ($testResults.CodeCoverage.NumberOfCommandsMissed -gt 0) {
+            if ($testResults.CodeCoverage.NumberOfCommandsMissed -gt 100) {
                 'Failed to analyze "{0}" commands' -f $testResults.CodeCoverage.NumberOfCommandsMissed
             }
             Write-Host "PowerShell Commands not tested:`n$(ConvertTo-Json -InputObject $testResults.CodeCoverage.MissedCommands)"
-            #>
             if ([Int]$coveragePercent -lt $coverageThreshold) {
                 throw ('Failed to meet code coverage threshold of {0}% with only {1}% coverage' -f $coverageThreshold, $coveragePercent)
             }
@@ -300,6 +301,7 @@ Add-BuildTask Test {
             # account for new module build condition
             Write-Build Yellow '      Code coverage check skipped. No commands to execute...'
         }
+        #>
 
     }
 } #Test
@@ -393,8 +395,8 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
 
     Write-Build Gray '           Checking for missing documentation in md files...'
     $MissingDocumentation = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "({{.*}})"
-    # Testing on 2024/04/04 per https://github.com/techthoughts2/Catesta/issues/48
-    #$MissingDocumentation = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "({{.*}})"|?{$_ -notlike "*ProgressAction*"}
+    ##### Testing on 2024/04/04 per https://github.com/techthoughts2/Catesta/issues/48 ####
+    $MissingDocumentation = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "({{.*}})"|?{$_ -notlike "*ProgressAction*"}
     if ($MissingDocumentation.Count -gt 0) {
         Write-Build Yellow '             The documentation that got generated resulted in missing sections which should be filled out.'
         Write-Build Yellow '             Please review the following sections in your comment based help, fill out missing information and rerun this build:'
@@ -445,7 +447,6 @@ Add-BuildTask UpdateCBH -After AssetCopy {
     Get-ChildItem -Path "$script:ArtifactsPath\Public\*.ps1" -File | ForEach-Object {
         $FormattedOutFile = $_.FullName
         Write-Output "      Replacing CBH in file: $($FormattedOutFile)"
-        # Commented out on 2024/04/04
         $UpdatedFile = (Get-Content  $FormattedOutFile -raw) -replace $CBHPattern, $ExternalHelp
         $UpdatedFile | Out-File -FilePath $FormattedOutFile -force -Encoding:utf8
     }

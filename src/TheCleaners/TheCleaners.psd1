@@ -12,7 +12,7 @@
 RootModule = 'TheCleaners.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.0'
+ModuleVersion = '0.0.4'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -24,7 +24,11 @@ GUID = '96512386-bbd2-4e95-badd-5d175310bace'
 Author = 'Sam Erde'
 
 # Company or vendor of this module
+<<<<<<< HEAD
 # CompanyName = 'Sam Erde'
+=======
+CompanyName = 'Sam Erde'
+>>>>>>> ef5621f0d6c0570b8e8255ca714d89143ed8fd01
 
 # Copyright statement for this module
 Copyright = '(c) Sam Erde. All rights reserved.'
@@ -70,12 +74,11 @@ PowerShellVersion = '5.1'
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
-    'Get-HelloWorld',
     'Clear-OldExchangeLogs',
     'Clear-OldIISLogs',
-    'Invoke-TheCleaners'
-    #'Get-StaleUserProfiles'
-    #'Remove-StaleUserProfiles'
+    'Clear-UserTemp',
+    'Clear-WindowsTemp',
+    'Get-StaleUserProfile'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -102,10 +105,17 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
+<<<<<<< HEAD
         Tags = @('Windows','Windows-Server','PowerShell','sysadmin','maintenance','utility')
 
         # A URL to the license for this module.
         LicenseUri = 'https://github.com/SamErde/TheCleaners/blob/main/LICENSE'
+=======
+        Tags = @('Windows','Utility','IIS','Exchange','ExchangeServer')
+
+        # A URL to the license for this module.
+        LicenseUri = 'https://github.com/samerde/thecleaners/license'
+>>>>>>> ef5621f0d6c0570b8e8255ca714d89143ed8fd01
 
         # A URL to the main website for this project.
         ProjectUri = 'https://github.com/samerde/TheCleaners'
