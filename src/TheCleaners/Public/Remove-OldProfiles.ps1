@@ -20,8 +20,9 @@ function Remove-OldProfiles {
     .COMPONENT
         TheCleaners
     #>
-    [CmdletBinding()]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Remove-OldProfiles')]
+    [CmdletBinding(SupportsShouldProcess = $false)]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions')]
     param (
 
     )
@@ -44,8 +45,9 @@ function Remove-StaleUserProfiles {
 
             Removes the stale user profiles from the local system.
     #>
-    [CmdletBinding()]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Remove-StaleUserProfiles')]
+    [CmdletBinding(SupportsShouldProcess = $false)]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions')]
     param (
         [Parameter(Mandatory)]
         $StaleUserProfiles

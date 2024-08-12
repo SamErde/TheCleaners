@@ -23,7 +23,7 @@ function Get-StaleUserProfiles {
         TheCleaners
     #>
     [CmdletBinding()]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Get-StaleUserProfiles')]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
     param (
         [Parameter()]
         [switch]

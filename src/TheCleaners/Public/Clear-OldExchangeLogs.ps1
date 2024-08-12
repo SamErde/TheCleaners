@@ -23,7 +23,7 @@ function Clear-OldExchangeLogs {
         TheCleaners
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Clear-OldExchangeLogs')]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
     # Logs older than this number of days will be removed.
     param (
         [Parameter()]

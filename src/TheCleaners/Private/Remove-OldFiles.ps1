@@ -17,7 +17,8 @@
 #>
 function Remove-OldFiles {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', 'Remove-OldFiles')]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('Remove-OldFiles')]
     param (
         # The path containing files to remove
         [string]
