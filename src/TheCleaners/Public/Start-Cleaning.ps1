@@ -1,4 +1,4 @@
-﻿function Invoke-TheCleaners {
+﻿function Start-Cleaning {
     <#
     .SYNOPSIS
         Calls in TheCleaners to clean up the mess in your log folders.
@@ -7,7 +7,7 @@
         Start the cleaning operation. Put documents in the shredder, clean up the mess in the log folders, and make sure the evidence is gone.
 
     .EXAMPLE
-        Invoke-TheCleaners
+        Start-Cleaning
 
         View the menu of services that TheCleaners provide.
 
@@ -21,7 +21,7 @@
         TheCleaners
     #>
     [CmdletBinding()]
-    #[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns','Invoke-TheCleaners')]
+    #[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns','Start-Cleaning')]
     param (
         # Nothing here yet
     )

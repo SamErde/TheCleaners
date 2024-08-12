@@ -20,7 +20,7 @@ A script to clean out old IIS log files.
 ### [Get-HelloWorld](Get-HelloWorld.md)
 Short description
 
-### [Invoke-TheCleaners](Invoke-TheCleaners.md)
+### [Start-Cleaning](Start-Cleaning.md)
 Calls in TheCleaners to clean up the mess in your log folders.
 
 
