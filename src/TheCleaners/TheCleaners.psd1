@@ -12,7 +12,7 @@
 RootModule = 'TheCleaners.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.3'
+ModuleVersion = '0.0.4'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -24,7 +24,7 @@ GUID = '96512386-bbd2-4e95-badd-5d175310bace'
 Author = 'Sam Erde'
 
 # Company or vendor of this module
-CompanyName = 'Unknown'
+CompanyName = 'Sam Erde'
 
 # Copyright statement for this module
 Copyright = '(c) Sam Erde. All rights reserved.'
@@ -70,12 +70,14 @@ PowerShellVersion = '5.1'
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
-    'Get-HelloWorld',
     'Clear-OldExchangeLogs',
     'Clear-OldIISLogs',
-    'Invoke-TheCleaners'
-    #'Get-StaleUserProfiles'
+    'Invoke-TheCleaners',
+    'Clear-UserTemp',
+    'Clear-WindowsTemp',
+    'Get-StaleUserProfiles'
     #'Remove-StaleUserProfiles'
+    #'Get-HelloWorld'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -102,10 +104,10 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+        Tags = @('Windows','Utility','IIS','Exchange','ExchangeServer')
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://github.com/samerde/thecleaners/license'
 
         # A URL to the main website for this project.
         ProjectUri = 'https://github.com/samerde/TheCleaners'
