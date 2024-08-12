@@ -1,27 +1,26 @@
-<#
-.SYNOPSIS
-    A script to clean out old Windows Temp files.
-
-.DESCRIPTION
-    This script will clean out Windows Temp files older than x days.
-
-.PARAMETER Days
-    The number of days to keep temp files. The default is 60 days.
-
-.EXAMPLE
-    Clear-WindowsTemp -Days 60
-
-    Removes all Windows Temp files that are older than 60 days.
-
-.NOTES
-    Author:     Sam Erde
-                https://twitter.com/SamErde
-                https://github.com/SamErde
-    Modified:   2024-04-21
-
-#>
-
 function Clear-WindowsTemp {
+    <#
+    .SYNOPSIS
+        A script to clean out old Windows Temp files.
+
+    .DESCRIPTION
+        This script will clean out Windows Temp files older than x days.
+
+    .PARAMETER Days
+        The number of days to keep temp files. The default is 60 days.
+
+    .EXAMPLE
+        Clear-WindowsTemp -Days 60
+
+        Removes all Windows Temp files that are older than 60 days.
+
+    .NOTES
+        Author:     Sam Erde
+                    https://twitter.com/SamErde
+                    https://github.com/SamErde
+        Modified:   2024-08-12
+
+    #>
     [CmdletBinding()]
     param (
         # How many days worth of temp files to retain (how far back to filter).
