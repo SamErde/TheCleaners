@@ -12,7 +12,7 @@
 RootModule = 'TheCleaners.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.4'
+ModuleVersion = '0.0.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -74,7 +74,8 @@ FunctionsToExport = @(
     'Clear-OldIISLogs',
     'Clear-UserTemp',
     'Clear-WindowsTemp',
-    'Get-StaleUserProfile'
+    'Get-StaleUserProfile',
+    'Start-Cleaning'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -101,12 +102,12 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = @('Windows','Windows-Server','PowerShell','sysadmin','maintenance','utility')
+        Tags = @('Windows','WindowsServer','Windows-Server','PowerShell','SysAdmin','Maintenance','Utility','Utilities','Exchange','ExchangeServer','IIS')
         # A URL to the license for this module.
         LicenseUri = 'https://github.com/SamErde/TheCleaners/blob/main/LICENSE'
 
         # A URL to the main website for this project.
-        ProjectUri = 'https://github.com/samerde/TheCleaners'
+        ProjectUri = 'https://github.com/SamErde/TheCleaners'
 
         # A URL to an icon representing this module.
         # IconUri = ''

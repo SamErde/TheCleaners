@@ -5,47 +5,31 @@ online version:
 schema: 2.0.0
 ---
 
-# Clear-OldExchangeLogs
+# Start-Cleaning
 
 ## SYNOPSIS
-Clean out old Exchange Server logs.
+Calls in TheCleaners to clean up the mess in your log folders.
 
 ## SYNTAX
 
 ```
-Clear-OldExchangeLogs [[-Days] <Int32>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Start-Cleaning [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Remove any Exchange logs that are older than a specified date.
+Start the cleaning operation.
+Put documents in the shredder, clean up the mess in the log folders, and make sure the evidence is gone.
 
 ## EXAMPLES
 
 ### EXAMPLE 1
 ```
-Clear-OldExchangeLogs -Days 60
+Start-Cleaning
 ```
 
-This will remove all Exchange logs older than 60 days.
+View the menu of services that TheCleaners provide.
 
 ## PARAMETERS
-
-### -Days
-The number of days to keep logs for.
-Any logs older than this will be removed.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 1
-Default value: 60
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -WhatIf
 Shows what would happen if the cmdlet runs.
@@ -87,8 +71,9 @@ For more information, see about_CommonParameters (http://go.microsoft.com/fwlink
 ## OUTPUTS
 
 ## NOTES
-Author: Sam Erde
-        https://twitter.com/SamErde
-        https://github.com/SamErde
+Author:     Sam Erde
+            https://twitter.com/SamErde
+            https://github.com/SamErde
+Modified:   2024-02-19
 
 ## RELATED LINKS

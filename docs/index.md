@@ -2,26 +2,28 @@
 
 ## Synopsis
 
-<!-- Enter a synopsis -->
+A module to help automate the cleanup of old log files and temp files on your systems.
 
 ## Description
 
-<!-- Enter a description -->
+A module to help automate the cleanup of old log files and temp files on your systems.
 
 ## Why
 
-<!-- Short reason you created the project -->
+Save time, save money!
 
 ## Getting Started
 
 ### Prerequisites
 
-<!-- list any prerequisites -->
+IIS: WebManagement Module
+Exchange: Exchange Management Tools
 
 ### Installation
 
 ```powershell
 # how to install TheCleaners
+Install-Module -Name 'TheCleaners'
 
 ```
 
@@ -31,6 +33,7 @@
 
 ```powershell
 # command showing how to use your project
+Start-Cleaning
 
 ```
 

@@ -10,7 +10,7 @@ function Clear-OldIISLogs {
         The number of days to keep log files. The default is 60 days.
 
     .EXAMPLE
-        Remove-OldIISLogFiles -Days 60
+        Clear-OldIISLogFiles -Days 60
 
         Removes all IIS log files that are older than 60 days.
 
@@ -28,7 +28,7 @@ function Clear-OldIISLogs {
         TheCleaners
     #>
     [CmdletBinding()]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns','Clear-OldIISLogs')]
     param (
         [Parameter()]
         [int]

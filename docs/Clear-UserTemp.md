@@ -5,37 +5,35 @@ online version:
 schema: 2.0.0
 ---
 
-# Clear-OldIISLogs
+# Clear-UserTemp
 
 ## SYNOPSIS
-A script to clean out old IIS log files.
+Clean old temp files from user profiles.
 
 ## SYNTAX
 
 ```
-Clear-OldIISLogs [[-Days] <Int32>] [<CommonParameters>]
+Clear-UserTemp [[-Days] <Int16>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-This script will clean out IIS log files older than x days.
+Remove temp files older than 60 days from users' local temp folder.
 
 ## EXAMPLES
 
 ### EXAMPLE 1
 ```
-Clear-OldIISLogFiles -Days 60
+Clear-UserTemp -Days 30
 ```
-
-Removes all IIS log files that are older than 60 days.
 
 ## PARAMETERS
 
 ### -Days
-The number of days to keep log files.
-The default is 60 days.
+How many days worth of temp files to keep.
+This can help avoid getting errors when trying to delete temp files that are still in use.
 
 ```yaml
-Type: Int32
+Type: Int16
 Parameter Sets: (All)
 Aliases:
 
@@ -56,13 +54,8 @@ For more information, see about_CommonParameters (http://go.microsoft.com/fwlink
 
 ## NOTES
 Author:     Sam Erde
-            https://twitter.com/SamErde
-            https://github.com/SamErde
-Modified:   2024-02-17
-
-If the WebAdministration module is available, it will use that to check the specific log file locations for
-each web site.
-Otherwise, it checks the assumed default log folder location and the registry for the IIS
-log file location.
+https://twitter.com/SamErde
+https://github.com/SamErde
+Modified:   2024-08-12
 
 ## RELATED LINKS

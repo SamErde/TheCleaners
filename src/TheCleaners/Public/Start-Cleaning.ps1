@@ -20,8 +20,8 @@
     .COMPONENT
         TheCleaners
     #>
-    [CmdletBinding()]
-    #[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns','Start-Cleaning')]
+    [CmdletBinding(SupportsShouldProcess)]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns','Start-Cleaning')]
     param (
         # Nothing here yet
     )
@@ -43,6 +43,9 @@
         Write-Output "TheCleaners are here to help you clean up that crime scene in your log folders."
         Write-Output "This function hasn't been implemented yet."
         Get-Command -Module TheCleaners
+        if ( $PSCmdlet.ShouldProcess() ) {
+            # Nothing to do
+        }
     }
 
     end {

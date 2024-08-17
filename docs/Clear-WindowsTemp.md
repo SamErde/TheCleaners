@@ -5,37 +5,37 @@ online version:
 schema: 2.0.0
 ---
 
-# Clear-OldIISLogs
+# Clear-WindowsTemp
 
 ## SYNOPSIS
-A script to clean out old IIS log files.
+A script to clean out old Windows Temp files.
 
 ## SYNTAX
 
 ```
-Clear-OldIISLogs [[-Days] <Int32>] [<CommonParameters>]
+Clear-WindowsTemp [[-Days] <Int16>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-This script will clean out IIS log files older than x days.
+This script will clean out Windows Temp files older than x days.
 
 ## EXAMPLES
 
 ### EXAMPLE 1
 ```
-Clear-OldIISLogFiles -Days 60
+Clear-WindowsTemp -Days 60
 ```
 
-Removes all IIS log files that are older than 60 days.
+Removes all Windows Temp files that are older than 60 days.
 
 ## PARAMETERS
 
 ### -Days
-The number of days to keep log files.
+The number of days to keep temp files.
 The default is 60 days.
 
 ```yaml
-Type: Int32
+Type: Int16
 Parameter Sets: (All)
 Aliases:
 
@@ -58,11 +58,6 @@ For more information, see about_CommonParameters (http://go.microsoft.com/fwlink
 Author:     Sam Erde
             https://twitter.com/SamErde
             https://github.com/SamErde
-Modified:   2024-02-17
-
-If the WebAdministration module is available, it will use that to check the specific log file locations for
-each web site.
-Otherwise, it checks the assumed default log folder location and the registry for the IIS
-log file location.
+Modified:   2024-08-12
 
 ## RELATED LINKS
