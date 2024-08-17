@@ -21,7 +21,7 @@
         TheCleaners
     #>
     [CmdletBinding(SupportsShouldProcess)]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns','Start-Cleaning')]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
     param (
         # Nothing here yet
     )
