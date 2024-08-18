@@ -7,24 +7,24 @@
 # https://github.com/mkdocs/mkdocs/blob/master/mkdocs.yml
 # mkdocs.yml
 
-site_name: TheCleaners
-site_url: https://day3bits.com/TheCleaners
-repo_url: https://github.com/SamErde/TheCleaners
-repo_name: TheCleaners
+site_name: 'TheCleaners'
+site_url: 'https://day3bits.com/TheCleaners'
+repo_url: 'https://github.com/SamErde/TheCleaners'
+repo_name: 'TheCleaners'
 # edit_uri: edit/main/docs/
 # edit_uri_template:
-site_description: Clean up all of the loose ends in your system with TheCleaners. We take care of temp files, IIS logs, Exchange Server logs, and more! # meta tag to the generated HTML header
-site_author: Sam Erde # meta tag to the generated HTML header
-copyright: '(c) 2024 Sam Erde'
+site_description: 'Clean up all of the loose ends in your system with TheCleaners. We take care of temp files, IIS logs, Exchange Server logs, and more!' # meta tag to the generated HTML header
+site_author: 'Sam Erde' # meta tag to the generated HTML header
+copyright: '(C) 2024 Sam Erde'
 # remote_branch:
 # remote_name:
-docs_dir: docs
+docs_dir: 'docs'
 # site_dir:
 # extra_css:
 # extra_javascript:
 # extra_templates:
 # extra:
-theme: readthedocs
+theme: 'MkDocs'
 # theme:
 #     name: readthedocs
 #     locale: en
