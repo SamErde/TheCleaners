@@ -10,7 +10,9 @@ A module to help automate the cleanup of old log files and temp files on your sy
 
 ## Why
 
-For all those hours spent manually clearing old IIS logs, Exchange logs, and temp files when a server disk gets low on space. For those teammates who get woken up at night while on call because a disk hit 90% full. For the fun of writing something useful in PowerShell that will hopefully make somebody's day easier!
+For all those hours spent manually clearing old IIS logs, Exchange logs, and temp files when a server disk gets low on space.  
+For those teammates who get woken up at night while on call because a disk hit 90% full.  
+For the fun of writing something useful in PowerShell that will hopefully make somebody's day easier!
 
 ## Getting Started
 
