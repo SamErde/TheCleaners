@@ -30,7 +30,7 @@ CompanyName = 'Sam Erde'
 Copyright = '(c) Sam Erde. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'A module to help automate the cleanup of old log files and temp files on your systems.'
+Description = 'The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '5.1'
