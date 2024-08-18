@@ -25,6 +25,7 @@ docs_dir: 'docs'
 # extra_templates:
 # extra:
 theme: mkdocs
+  user_color_mode_toggle: https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#color-palette-toggle
 # theme:
 #     name: readthedocs
 #     locale: en
@@ -34,7 +35,7 @@ theme: mkdocs
     # include_sidebar: true
 nav:
   - Home: 'index.md'
-    - Functions:
+    - Functions: ''
       - 'Start-Cleaning': 'Start-Cleaning.md'
       - 'Clear-OldExchangeLogs': 'Clear-OldExchangeLogs.md'
       - 'Clear-OldIISLogs': 'Clear-OldIISLogs.md'
