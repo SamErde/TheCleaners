@@ -2,7 +2,7 @@
 
 ## Synopsis
 
-The Cleaners will clean up your server for you!
+The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!
 
 ## Description
 
