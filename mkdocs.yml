@@ -47,7 +47,7 @@ theme:
     # include_sidebar: true
 nav:
   - Home: 'index.md'
-    - Functions: ''
-      - 'Start-Cleaning': 'Start-Cleaning.md'
-      - 'Clear-OldExchangeLogs': 'Clear-OldExchangeLogs.md'
-      - 'Clear-OldIISLogs': 'Clear-OldIISLogs.md'
+    Functions:
+    - 'Start-Cleaning': 'Start-Cleaning.md'
+    - 'Clear-OldExchangeLogs': 'Clear-OldExchangeLogs.md'
+    - 'Clear-OldIISLogs': 'Clear-OldIISLogs.md'
