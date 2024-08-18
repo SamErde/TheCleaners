@@ -34,7 +34,6 @@ theme: readthedocs
     # include_sidebar: true
 nav:
   - Home: 'index.md'
-    - Functions
-      - Function1: 'Start-Cleaning.md'
-      - Function2: 'Clear-OldExchangeLogs.md'
-      - Function3: 'Clear-OldIISLogs.md'
+  - 'Start-Cleaning': 'Start-Cleaning.md'
+  - 'Clear-OldExchangeLogs': 'Clear-OldExchangeLogs.md'
+  - 'Clear-OldIISLogs': 'Clear-OldIISLogs.md'
