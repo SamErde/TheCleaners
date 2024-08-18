@@ -7,13 +7,13 @@
 # https://github.com/mkdocs/mkdocs/blob/master/mkdocs.yml
 # mkdocs.yml
 
-site_name: 'TheCleaners'
+site_name: 'The Cleaners PowerShell Module'
 site_url: 'https://day3bits.com/TheCleaners'
 repo_url: 'https://github.com/SamErde/TheCleaners'
-repo_name: 'TheCleaners'
+repo_name: 'The Cleaners'
 # edit_uri: edit/main/docs/
 # edit_uri_template:
-site_description: 'Clean up all of the loose ends in your system with TheCleaners. We take care of temp files, IIS logs, Exchange Server logs, and more!' # meta tag to the generated HTML header
+site_description: 'The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!' # meta tag to the generated HTML header
 site_author: 'Sam Erde' # meta tag to the generated HTML header
 copyright: '(C) 2024 Sam Erde'
 # remote_branch:
@@ -27,21 +27,20 @@ docs_dir: 'docs'
 theme: 
   name: material
   palette: 
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
     # Palette toggle for light mode
     - scheme: default
       toggle:
         icon: material/brightness-7 
         name: Switch to dark mode
 
-    # Palette toggle for dark mode
-    - scheme: slate
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-# theme:
-#     name: readthedocs
-#     locale: en
-    # custom_dir: my_theme_customizations/
-    # static_templates:
-    #     - sitemap.html
-    # include_sidebar: true
+nav:
+  - Home: 'index.md'
+  - Functions:
+    - 'Start-Cleaning': 'Start-Cleaning.md'
+    - 'Clear-OldExchangeLogs': 'Clear-OldExchangeLogs.md'
+    - 'Clear-OldIISLogs': 'Clear-OldIISLogs.md'
