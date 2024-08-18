@@ -24,7 +24,7 @@ docs_dir: 'docs'
 # extra_javascript:
 # extra_templates:
 # extra:
-theme: 'MkDocs'
+theme: mkdocs
 # theme:
 #     name: readthedocs
 #     locale: en
