@@ -8,7 +8,7 @@
 # mkdocs.yml
 
 site_name: TheCleaners
-# site_url:
+site_url: https://day3bits.com/TheCleaners
 repo_url: https://github.com/SamErde/TheCleaners
 repo_name: TheCleaners
 # edit_uri: edit/main/docs/
@@ -24,7 +24,7 @@ docs_dir: docs
 # extra_javascript:
 # extra_templates:
 # extra:
-theme: readthedocs
+theme: material
 # theme:
 #     name: readthedocs
 #     locale: en
@@ -35,5 +35,7 @@ theme: readthedocs
 nav:
   - Home: index.md
   - Change Log: CHANGELOG.md
-  # - Functions:
-  #   - Function1: functions/function1.md
+    - Functions:
+      - Function1: Start-Cleaning.md
+      - Function2: Clear-OldExchangeLogs.md
+      - Function3: Clear-OldIISLogs.md
