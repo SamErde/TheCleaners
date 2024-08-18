@@ -2,15 +2,15 @@
 
 ## Synopsis
 
-<!-- Enter a synopsis -->
+The Cleaners will clean up your server for you!
 
 ## Description
 
-<!-- Enter a description -->
+A module to help automate the cleanup of old log files and temp files on your systems.
 
 ## Why
 
-<!-- Short reason you created the project -->
+For all those hours spent manually clearing old IIS logs, Exchange logs, and temp files when a server disk gets low on space. For those teammates who get woken up at night while on call because a disk hit 90% full. For the fun of writing something useful in PowerShell that will hopefully make somebody's day easier!
 
 ## Getting Started
 
@@ -21,7 +21,8 @@
 ### Installation
 
 ```powershell
-# how to install TheCleaners
+# How to install TheCleaners
+Install-Module -Name 'TheCleaners' -Scope CurrentUser
 
 ```
 
@@ -30,7 +31,7 @@
 #### Example1
 
 ```powershell
-# command showing how to use your project
+Start-Cleaning
 
 ```
 
