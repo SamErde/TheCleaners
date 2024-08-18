@@ -24,7 +24,8 @@ docs_dir: 'docs'
 # extra_javascript:
 # extra_templates:
 # extra:
-theme: material
+theme: 
+  name: material
   palette: 
     # Palette toggle for light mode
     - scheme: default
