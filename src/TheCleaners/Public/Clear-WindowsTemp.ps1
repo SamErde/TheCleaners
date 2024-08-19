@@ -24,6 +24,7 @@ function Clear-WindowsTemp {
         TheCleaners
     #>
     [CmdletBinding()]
+    #[Alias('Clean-WindowsTemp')]
     param (
         # How many days worth of temp files to retain (how far back to filter).
         [int16]

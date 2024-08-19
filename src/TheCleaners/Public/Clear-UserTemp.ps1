@@ -22,6 +22,7 @@ function Clear-UserTemp {
         TheCleaners
     #>
     [CmdletBinding()]
+    #[Alias('Clean-UserTemp')]
     param (
         # How many days worth of temp files to retain (how far back to filter).
         [int16]
