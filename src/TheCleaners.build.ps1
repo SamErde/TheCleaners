@@ -38,7 +38,7 @@
 #>
 
 #Include: Settings
-$ModuleName = (Split-Path -Path $BuildFile -Leaf).Split('.')[0]
+$ModuleName = [regex]::Match((Get-Item $BuildFile).Name, '^(.*)\.build\.ps1$').Groups[1].Value
 . "./$ModuleName.Settings.ps1"
 
 function Test-ManifestBool ($Path) {
@@ -67,7 +67,7 @@ Add-BuildTask BuildNoIntegration -Jobs $str2
 
 # Pre-build variables to be used by other portions of the script
 Enter-Build {
-    $script:ModuleName = (Split-Path -Path $BuildFile -Leaf).Split('.')[0]
+    $script:ModuleName = [regex]::Match((Get-Item $BuildFile).Name, '^(.*)\.build\.ps1$').Groups[1].Value
 
     # Identify other required paths
     $script:ModuleSourcePath = Join-Path -Path $BuildRoot -ChildPath $script:ModuleName
@@ -176,7 +176,8 @@ Add-BuildTask Analyze {
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
         throw '      One or more PSScriptAnalyzer errors/warnings where found.'
-    } else {
+    }
+    else {
         Write-Build Green '      ...Module Analyze Complete!'
     }
 } #Analyze
@@ -188,7 +189,7 @@ Add-BuildTask AnalyzeTests -After Analyze {
         $scriptAnalyzerParams = @{
             Path        = $script:TestsPath
             Setting     = 'PSScriptAnalyzerSettings.psd1'
-            ExcludeRule = @('UseToExportFieldsInManifest','PSUseDeclaredVarsMoreThanAssignments')
+            ExcludeRule = @('PSUseDeclaredVarsMoreThanAssignments','PSUseSingularNouns')
             Recurse     = $true
             Verbose     = $false
         }
@@ -251,10 +252,8 @@ Add-BuildTask Test {
         $pesterConfiguration.run.Path = $script:UnitTestsPath
         $pesterConfiguration.Run.PassThru = $true
         $pesterConfiguration.Run.Exit = $false
-        #$pesterConfiguration.CodeCoverage.Enabled = $false
         $pesterConfiguration.CodeCoverage.Enabled = $true
-        ##### Add $PSScriptRoot\ to ensure working path regardless of where the build is invoked from.
-        $pesterConfiguration.CodeCoverage.Path = "$PSScriptRoot\..\..\..\$ModuleName\*\*.ps1"
+        $pesterConfiguration.CodeCoverage.Path = "..\..\..\$ModuleName\*\*.ps1"
         $pesterConfiguration.CodeCoverage.CoveragePercentTarget = $script:coverageThreshold
         $pesterConfiguration.CodeCoverage.OutputPath = "$codeCovPath\CodeCoverage.xml"
         $pesterConfiguration.CodeCoverage.OutputFormat = 'JaCoCo'
@@ -285,10 +284,12 @@ Add-BuildTask Test {
         if ($testResults.CodeCoverage.NumberOfCommandsExecuted -ne 0) {
             $coveragePercent = '{0:N2}' -f ($testResults.CodeCoverage.CommandsExecutedCount / $testResults.CodeCoverage.CommandsAnalyzedCount * 100)
 
-            if ($testResults.CodeCoverage.NumberOfCommandsMissed -gt 100) {
+            <#
+            if ($testResults.CodeCoverage.NumberOfCommandsMissed -gt 0) {
                 'Failed to analyze "{0}" commands' -f $testResults.CodeCoverage.NumberOfCommandsMissed
             }
             Write-Host "PowerShell Commands not tested:`n$(ConvertTo-Json -InputObject $testResults.CodeCoverage.MissedCommands)"
+            #>
             if ([Int]$coveragePercent -lt $coverageThreshold) {
                 throw ('Failed to meet code coverage threshold of {0}% with only {1}% coverage' -f $coverageThreshold, $coveragePercent)
             }
@@ -316,14 +317,12 @@ Add-BuildTask DevCC {
     $pesterConfiguration.CodeCoverage.Enabled = $true
     $pesterConfiguration.CodeCoverage.Path = "$PSScriptRoot\$ModuleName\*\*.ps1"
     $pesterConfiguration.CodeCoverage.CoveragePercentTarget = $script:coverageThreshold
-    ##### Add $PSScriptRoot\ to ensure it runs.
-    $pesterConfiguration.CodeCoverage.OutputPath = "$PSScriptRoot\..\..\..\cov.xml"
+    $pesterConfiguration.CodeCoverage.OutputPath = '..\..\..\cov.xml'
     $pesterConfiguration.CodeCoverage.OutputFormat = 'CoverageGutters'
 
     Invoke-Pester -Configuration $pesterConfiguration
     Write-Build Green '      ...Code Coverage report generated!'
 } #DevCC
-# SKIP PERSTER AND CODE COVERAGE TESTS#>
 #endregion PesterAndCodeCoverage
 
 # Synopsis: Build help for module
@@ -331,7 +330,7 @@ Add-BuildTask CreateHelpStart {
     Write-Build White '      Performing all help related actions.'
 
     Write-Build Gray '           Importing platyPS v0.12.0 ...'
-    # platyPS -RequiredVersion 0.12.0 -Force -ErrorAction #Stop
+    Import-Module platyPS -RequiredVersion 0.12.0 -ErrorAction Stop
     Write-Build Gray '           ...platyPS imported successfully.'
 } #CreateHelpStart
 
@@ -343,7 +342,7 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
         Module         = $ModuleName
         OutputFolder   = "$script:ArtifactsPath\docs\"
         Force          = $true
-        WithModulePage = $false
+        WithModulePage = $true
         Locale         = 'en-US'
         FwLink         = "NA"
         HelpVersion    = $script:ModuleVersion
@@ -374,8 +373,7 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
         $ModulePageFileContent = $ModulePageFileContent -replace $TextToReplace, $ReplacementText
     }
 
-    #Updated encoding parameter to resolve error
-    $ModulePageFileContent | Out-File $ModulePage -Force -Encoding ([System.Text.Encoding]::UTF8)
+    $ModulePageFileContent | Out-File $ModulePage -Force -Encoding:utf8
     Write-Build Gray '           ...Markdown replacements complete.'
 
     Write-Build Gray '           Verifying GUID...'
@@ -398,7 +396,6 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
 
     Write-Build Gray '           Checking for missing documentation in md files...'
     $MissingDocumentation = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "({{.*}})"
-    $MissingDocumentation = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "({{.*}})"| Where-Object {$_ -notlike "*ProgressAction*"}
     if ($MissingDocumentation.Count -gt 0) {
         Write-Build Yellow '             The documentation that got generated resulted in missing sections which should be filled out.'
         Write-Build Yellow '             Please review the following sections in your comment based help, fill out missing information and rerun this build:'
@@ -450,8 +447,7 @@ Add-BuildTask UpdateCBH -After AssetCopy {
         $FormattedOutFile = $_.FullName
         Write-Output "      Replacing CBH in file: $($FormattedOutFile)"
         $UpdatedFile = (Get-Content  $FormattedOutFile -raw) -replace $CBHPattern, $ExternalHelp
-        #Updated encoding parameter to resolve warning
-        $UpdatedFile | Out-File -FilePath $FormattedOutFile -force -Encoding ([System.Text.Encoding]::UTF8)
+        $UpdatedFile | Out-File -FilePath $FormattedOutFile -force -Encoding:utf8
     }
 } #UpdateCBH
 
@@ -481,8 +477,7 @@ Add-BuildTask Build {
         $null = $scriptContent.AppendLine('')
         $null = $scriptContent.AppendLine('')
     }
-    #Updated encoding parameter to resolve warning
-    $scriptContent.ToString() | Out-File -FilePath $script:BuildModuleRootFile -Encoding ([System.Text.Encoding]::UTF8) -Force
+    $scriptContent.ToString() | Out-File -FilePath $script:BuildModuleRootFile -Encoding utf8 -Force
     Write-Build Gray '        ...Module creation complete.'
 
     Write-Build Gray '        Cleaning up leftover artifacts...'
