@@ -189,7 +189,7 @@ Add-BuildTask AnalyzeTests -After Analyze {
         $scriptAnalyzerParams = @{
             Path        = $script:TestsPath
             Setting     = 'PSScriptAnalyzerSettings.psd1'
-            ExcludeRule = @('PSUseDeclaredVarsMoreThanAssignments','PSUseSingularNouns')
+            ExcludeRule = @('PSUseDeclaredVarsMoreThanAssignments','PSUseSingularNouns','PSUseToExportFieldsInManifest')
             Recurse     = $true
             Verbose     = $false
         }
