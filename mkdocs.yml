@@ -5,26 +5,42 @@
 # https://mkdocs.readthedocs.io/en/0.15.2/user-guide/styling-your-docs/
 # https://example-mkdocs-basic.readthedocs.io/en/latest/
 # https://github.com/mkdocs/mkdocs/blob/master/mkdocs.yml
+# https://squidfunk.github.io/mkdocs-material/creating-your-site/
 # mkdocs.yml
 
 site_name: 'The Cleaners PowerShell Module'
 site_url: 'https://day3bits.com/TheCleaners'
 repo_url: 'https://github.com/SamErde/TheCleaners'
-repo_name: 'The Cleaners'
+repo_name: 'TheCleaners'
 # edit_uri: edit/main/docs/
 # edit_uri_template:
 site_description: 'The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!' # meta tag to the generated HTML header
 site_author: 'Sam Erde' # meta tag to the generated HTML header
-copyright: '(C) 2024 Sam Erde'
+copyright: '2024 Sam Erde'
 # remote_branch:
 # remote_name:
-docs_dir: 'docs'
+docs_dir: docs
 # site_dir:
 # extra_css:
 # extra_javascript:
+# markdown_extensions:
+  # Python Markdown
+  # - admonition
+  # - toc:
+  #     permalink: true
+  # code highlighting
+  # - pymdownx.highlight:
+  #     use_pygments: true
+  # - pymdownx.highlight:
+  #     anchor_linenums: true
+  # - pymdownx.inlinehilite
+  # - pymdownx.snippets
+  # - pymdownx.superfences
+
 # extra_templates:
 # extra:
-theme: 
+
+theme:
   name: material
   palette:
 
@@ -36,7 +52,7 @@ theme:
 
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
-      scheme: default 
+      scheme: default
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
@@ -48,9 +64,25 @@ theme:
         icon: material/brightness-4
         name: Switch to system preference
 
+  language: en
+  # custom_dir: overrides
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.path
+  # favicon:
+  # icon:
+  #   repo:
+  # font:
+  #   text: Work Sans
+  # logo:
+
 nav:
   - Home: 'index.md'
   - Functions:
     - 'Start-Cleaning': 'Start-Cleaning.md'
     - 'Clear-OldExchangeLogs': 'Clear-OldExchangeLogs.md'
     - 'Clear-OldIISLogs': 'Clear-OldIISLogs.md'
+    - 'Clear-UserTemp': 'Clear-UserTemp.md'
+    - 'Clear-WindowsTemp': 'Clear-WindowsTemp.md'
+    - 'Get-StaleUserProfile': 'Get-StaleUserProfile.md'
