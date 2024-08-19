@@ -27,7 +27,7 @@ Author = 'Sam Erde'
 CompanyName = 'Sam Erde'
 
 # Copyright statement for this module
-Copyright = '(c) Sam Erde. All rights reserved.'
+Copyright = '(c) 2024 Sam Erde. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!'
@@ -70,8 +70,8 @@ PowerShellVersion = '5.1'
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
-    'Clear-OldExchangeLogs',
-    'Clear-OldIISLogs',
+    'Clear-OldExchangeLog',
+    'Clear-OldIISLog',
     'Clear-UserTemp',
     'Clear-WindowsTemp',
     'Get-StaleUserProfile',
