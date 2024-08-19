@@ -1,28 +1,30 @@
-function TranslateSidToSam ($sid) {
+function TranslateSidToSam {
     <#
     .SYNOPSIS
-        Translates a SID to a samaccountname.
+        Translates a SID to a SamAccountName.
 
     .DESCRIPTION
-        Translates a SID to a samaccountname.
+        Translates a SID to a SamAccountName.
 
-    .PARAMETER sid
-        The SID to translate to a samaccountname.
+    .PARAMETER SID
+        The SID to translate to a SamAccountName.
 
     .EXAMPLE
-        TranslateSidToSam -sid "S-1-5-21-3623811015-3361044348-30300820"
+        TranslateSidToSam -SID "S-1-5-21-3623811015-3361044348-30300820"
 
-        Translates the SID to a samaccountname.
-
-    .NOTES
-        This is an OLD script that I want to loop back and freshen up. It works, but isn't pretty.
+        Translates the SID to a SamAccountName.
 
     .COMPONENT
         TheCleaners
     #>
     [CmdletBinding()]
+    param (
+        # The SID as a string or a SID object.
+        [Parameter(Mandatory)]
+        $SID
+    )
 
-    $objSID = New-Object System.Security.Principal.SecurityIdentifier($sid)
-    $strUser = $objSID.Translate([System.Security.Principal.NTAccount])
-    $strUser.Value
+    $SID = New-Object System.Security.Principal.SecurityIdentifier($SID)
+    $User = $SID.Translate([System.Security.Principal.NTAccount])
+    $User.Value
 } # End function TranslateSidToSam

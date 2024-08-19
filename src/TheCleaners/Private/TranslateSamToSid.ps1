@@ -1,4 +1,4 @@
-function TranslateSamToSid ($domain, $samaccountname) {
+function TranslateSamToSid {
     <#
     .SYNOPSIS
         Translates a samaccountname to a SID.
@@ -7,25 +7,31 @@ function TranslateSamToSid ($domain, $samaccountname) {
         Translates a samaccountname to a SID.
 
     .PARAMETER domain
-        The domain to search for the samaccountname.
+        The domain to search for the SamAccountName.
 
-    .PARAMETER samaccountname
-        The samaccountname to translate to a SID.
+    .PARAMETER SamAccountName
+        The SamAccountName to translate to a SID.
 
     .EXAMPLE
-        TranslateSamToSid -domain "contoso" -samaccountname "jdoe"
+        TranslateSamToSid -Domain "contoso" -SamAccountName "jdoe"
 
-        Translates the samaccountname "jdoe" to a SID.
-
-    .NOTES
-        This is an OLD script that I want to loop back and freshen up. It works, but isn't pretty.
+        Translates the SamAccountName "jdoe" to a SID.
 
     .COMPONENT
         TheCleaners
     #>
     [CmdletBinding()]
+    param (
+        # The Domain
+        [Parameter(Mandatory)]
+        [string]$Domain,
 
-    $objUser = New-Object System.Security.Principal.NTAccount($domain,$samaccountname)
-    $strSID = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
-    $strsid.Value
+        # The SamAccountName
+        [Parameter(Mandatory)]
+        [string]$SamAccountName
+    )
+
+    $User = New-Object System.Security.Principal.NTAccount($Domain,$SamAccountName)
+    $SID = $User.Translate([System.Security.Principal.SecurityIdentifier])
+    $SID.Value
 } # End function TranslateSamToSid

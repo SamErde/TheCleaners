@@ -6,6 +6,9 @@
     .DESCRIPTION
         Start the cleaning operation. Put documents in the shredder, clean up the mess in the log folders, and make sure the evidence is gone.
 
+    .PARAMETER NoLogo
+        Do not display the logo.
+
     .EXAMPLE
         Start-Cleaning
 
@@ -15,15 +18,16 @@
         Author:     Sam Erde
                     https://twitter.com/SamErde
                     https://github.com/SamErde
-        Modified:   2024-02-19
+        Modified:   2024-08-19
 
     .COMPONENT
         TheCleaners
     #>
     [CmdletBinding(SupportsShouldProcess)]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
     param (
-        # Nothing here yet
+        # Do not show a logo
+        [switch]
+        $NoLogo
     )
 
     begin {
@@ -39,12 +43,13 @@
     }
 
     process {
-        Write-Output $Logo
-        Write-Output "TheCleaners are here to help you clean up that crime scene in your log folders."
-        Write-Output "This function hasn't been implemented yet."
+        if (-not $NoLogo) {
+            Write-Output $Logo
+        }
+        Write-Output "The Cleaners are here to help you clean up your log folders."
         Get-Command -Module TheCleaners
-        if ( $PSCmdlet.ShouldProcess() ) {
-            # Nothing to do
+        if ( $PSCmdlet.ShouldProcess($Logo) ) {
+            Write-Verbose "This is here because platyPS chokes on the suppression of ShouldProcess."
         }
     }
 
