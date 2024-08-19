@@ -1,4 +1,4 @@
-function Clear-OldExchangeLogs {
+function Clear-OldExchangeLog {
     <#
     .SYNOPSIS
         Clean out old Exchange Server logs.
@@ -10,7 +10,7 @@ function Clear-OldExchangeLogs {
         The number of days to keep logs for. Any logs older than this will be removed.
 
     .EXAMPLE
-        Clear-OldExchangeLogs -Days 60
+        Clear-OldExchangeLog -Days 60
 
         This will remove all Exchange logs older than 60 days.
 
@@ -23,7 +23,8 @@ function Clear-OldExchangeLogs {
         TheCleaners
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
+    [Alias('Clean-ExchangeLog')]
+    #[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
     # Logs older than this number of days will be removed.
     param (
         [Parameter()]
