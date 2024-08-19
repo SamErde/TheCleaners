@@ -343,7 +343,7 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
         Module         = $ModuleName
         OutputFolder   = "$script:ArtifactsPath\docs\"
         Force          = $true
-        WithModulePage = $true
+        WithModulePage = $false
         Locale         = 'en-US'
         FwLink         = "NA"
         HelpVersion    = $script:ModuleVersion
