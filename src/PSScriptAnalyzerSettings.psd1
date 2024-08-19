@@ -1,7 +1,7 @@
 @{
     #________________________________________
     #IncludeDefaultRules
-    IncludeDefaultRules = $false
+    IncludeDefaultRules = $true
     #________________________________________
     #Severity
     #Specify Severity when you want to limit generated diagnostic records to a specific subset: [ Error | Warning | Information ]
@@ -19,8 +19,8 @@
     #ExcludeRules
     #Specify ExcludeRules when you want to exclude a certain rule from the the default set of rules.
     ExcludeRules = @(
-        'UseToExportFieldsInManifest',
-        'PSUseDeclaredVarsMoreThanAssignments'
+        'PSUseDeclaredVarsMoreThanAssignments',
+        'PSUseSingularNouns'
     )
     #________________________________________
     #Rules
