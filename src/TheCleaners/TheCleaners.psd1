@@ -27,7 +27,7 @@ Author = 'Sam Erde'
 CompanyName = 'Sam Erde'
 
 # Copyright statement for this module
-Copyright = '(c) 2024 Sam Erde. All rights reserved.'
+Copyright = '2024 Sam Erde. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!'
