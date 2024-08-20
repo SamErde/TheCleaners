@@ -16,6 +16,8 @@ The Cleaners do the dirty work in your servers for you. We take care of temp fil
 
 ## Getting Started
 
+Note: These docs can also be found at [TheCleaners.ReadTheDocs.io/](https://thecleaners.readthedocs.io/)!
+
 ### Prerequisites
 
 <!-- list any prerequisites -->
