@@ -1,4 +1,4 @@
-function Show-TCLogo {
+﻿function Show-TCLogo {
     <#
     .SYNOPSIS
     Show an ASCII art logo for The Cleaners.
