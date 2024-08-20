@@ -52,3 +52,6 @@ jobs:
         name: zip-archive
         path: .\src\Archive
         if-no-files-found: warn
+    - name: Update README
+      shell: pwsh
+      run: Copy-Item /docs/TheCleaners.md /README.md
