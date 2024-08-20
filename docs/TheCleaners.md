@@ -2,7 +2,7 @@
 Module Name: TheCleaners
 Module Guid: 96512386-bbd2-4e95-badd-5d175310bace
 Download Help Link: NA
-Help Version: 0.0.8
+Help Version: 0.0.9
 Locale: en-US
 ---
 
