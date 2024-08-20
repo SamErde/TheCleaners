@@ -55,11 +55,6 @@ For more information, see about_CommonParameters (http://go.microsoft.com/fwlink
 ## OUTPUTS
 
 ## NOTES
-Author:     Sam Erde
-            https://twitter.com/SamErde
-            https://github.com/SamErde
-Modified:   2024-02-17
-
 If the WebAdministration module is available, it will use that to check the specific log file locations for
 each web site.
 Otherwise, it checks the assumed default log folder location and the registry for the IIS

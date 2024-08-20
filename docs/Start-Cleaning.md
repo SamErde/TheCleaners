@@ -13,8 +13,7 @@ Show the commands you can give The Cleaners.
 ## SYNTAX
 
 ```
-Start-Cleaning [-NoLogo] [-Dedication] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Start-Cleaning [-Dedication] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -31,21 +30,6 @@ View the menu of services that TheCleaners provide.
 
 ## PARAMETERS
 
-### -NoLogo
-Do not display the logo.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Dedication
 Show dedication
 
@@ -57,37 +41,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
