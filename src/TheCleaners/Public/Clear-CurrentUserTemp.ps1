@@ -12,9 +12,6 @@ function Clear-CurrentUserTemp {
     .PARAMETER TimeOut
         A time limit (seconds) for the looping operation that removes empty directories. The default is 30.
 
-    .PARAMETER Force
-        Force the cleanup operation to continue. (Not yet used.)
-
     .EXAMPLE
         Clear-CurrentUserTemp -Days 30
 
@@ -37,12 +34,7 @@ function Clear-CurrentUserTemp {
         [Parameter()]
         [ValidateRange(1, [int16]::MaxValue)] # Ensure it is a positive number.
         [Int16]
-        $TimeOut = 30,
-
-        # Force the cleanup operation. (Not yet used.)
-        [Parameter()]
-        [switch]
-        $Force
+        $TimeOut = 30
     )
 
     if ($IsLinux) {
