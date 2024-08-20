@@ -16,26 +16,29 @@ The Cleaners do the dirty work in your servers for you. We take care of temp fil
 
 ## Getting Started
 
-Note: These docs can also be found at [TheCleaners.ReadTheDocs.io/](https://thecleaners.readthedocs.io/)!
-
 ### Prerequisites
 
-<!-- list any prerequisites -->
-- PowerShell or Windows PowerShell 5.1
+PowerShell or Windows PowerShell 5.1
+
+There are no other strict dependencies, but the following can make things a little easier:
+
+- IIS: WebManagement Module
+- Exchange: Exchange Management Tools
 
 ### Installation
 
 ```powershell
 # How to install TheCleaners
-Install-Module -Name 'TheCleaners' -Scope CurrentUser
-
+Install-Module -Name 'TheCleaners'
 ```
 
-### Quick start
+### Quick Start
 
 #### Example1
 
 ```powershell
+# See what jobs TheCleaners can do for you.
 Start-Cleaning
-
 ```
+
+These docs can also be found at [TheCleaners.ReadTheDocs.io/](https://thecleaners.readthedocs.io/).
