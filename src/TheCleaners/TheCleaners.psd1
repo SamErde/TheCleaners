@@ -72,7 +72,7 @@ PowerShellVersion = '5.1'
 FunctionsToExport = @(
     'Clear-OldExchangeLog',
     'Clear-OldIISLog',
-    'Clear-UserTemp',
+    'Clear-CurrentUserTemp',
     'Clear-WindowsTemp',
     'Get-StaleUserProfile',
     'Start-Cleaning'
