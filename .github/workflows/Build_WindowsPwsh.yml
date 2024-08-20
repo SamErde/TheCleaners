@@ -54,4 +54,4 @@ jobs:
         if-no-files-found: warn
     - name: Update README
       shell: pwsh
-      run: Copy-Item /docs/TheCleaners.md /README.md
+      run: Copy-Item ./docs/index.md ./README.md
