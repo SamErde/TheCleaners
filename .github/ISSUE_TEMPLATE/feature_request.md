@@ -8,13 +8,13 @@ assignees: ''
 ---
 
 ### Description
-<!--- Replace this line with a clear and concise description of what the problem is. Ex. I'm always frustrated when [...] -->
+<!--- Provide a clear and concise description of what the problem is. Ex. I'm always frustrated when [...] -->
 
 ### Describe the solution you'd like
-<!--- Replace this line with a clear and concise description of what you want to happen. -->
+<!--- Please give a clear and concise description of what you want to happen. -->
 
 ### Describe any alternatives you've considered
-<!--- Replace this line with a clear and concise description of any alternative solutions or features you've considered. -->
+<!--- Optionally include a clear and concise description of any alternative solutions or features you've considered. -->
 
 ### Additional context
-<!--- Replace this line with any other context or screenshots about the feature request. -->
+<!--- Include any other helpful context or screenshots about the feature request. -->
