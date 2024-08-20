@@ -29,10 +29,10 @@
     Show-TCLogo
 
     if ($Dedication) {
-        Write-Host "`n`tThis is dedicated to the friends that I spent years working and`n`tlearning PowerShell with. Cheers to Alex, Lyle, Jon, and Rick! " -ForegroundColor Yellow -NoNewline
+        Write-Host "`nThis is dedicated to the friends that I spent years working with`nand learning PowerShell with. Cheers to Alex, Lyle, Jon, & Rick! " -ForegroundColor Yellow -NoNewline
         Write-Host "❤️ `n" -ForegroundColor Red
     }
 
-    Write-Output "The Cleaners are here to help you clean up your log folders! 🧹"
+    Write-Output "The Cleaners are here to help you clean up your log folders! 🧹`n"
     Get-Command -Module TheCleaners
 }

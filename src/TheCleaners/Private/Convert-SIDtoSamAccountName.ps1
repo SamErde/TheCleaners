@@ -1,4 +1,4 @@
-function TranslateSidToSam {
+function Convert-SIDtoSamAccountName {
     <#
     .SYNOPSIS
         Translates a SID to a SamAccountName.
@@ -10,7 +10,7 @@ function TranslateSidToSam {
         The SID to translate to a SamAccountName.
 
     .EXAMPLE
-        TranslateSidToSam -SID "S-1-5-21-3623811015-3361044348-30300820"
+        Convert-SIDtoSamAccountName -SID "S-1-5-21-3623811015-3361044348-30300820"
 
         Translates the SID to a SamAccountName.
 
@@ -27,4 +27,4 @@ function TranslateSidToSam {
     $SID = New-Object System.Security.Principal.SecurityIdentifier($SID)
     $User = $SID.Translate([System.Security.Principal.NTAccount])
     $User.Value
-} # End function TranslateSidToSam
+} # End function Convert-SIDtoSamAccountName
