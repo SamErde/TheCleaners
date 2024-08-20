@@ -17,39 +17,20 @@
     .COMPONENT
         TheCleaners
     #>
-    [CmdletBinding(SupportsShouldProcess)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
     param (
-        # Do not show a logo
-        [switch]
-        $NoLogo,
-
         # Show dedication
         [Parameter()]
         [switch]
         $Dedication
     )
 
-    $Logo = @'
-        ╭━━━━┳╮╱╱╱╱╱╭━━━┳╮
-        ┃╭╮╭╮┃┃╱╱╱╱╱┃╭━╮┃┃
-        ╰╯┃┃╰┫╰━┳━━╮┃┃╱╰┫┃╭━━┳━━┳━╮ ╭━━┳━┳━━╮
-        ╱╱┃┃╱┃╭╮┃┃━┫┃┃╱╭┫┃|┃━┫╭╮┃╭╮╮┃|━┫╭┫━━┫
-        ╱╱┃┃╱┃┃┃┃┃━┫┃╰━╯┃╰┫┃━┫╭╮┃||┃┃|━┫|┣━━┃
-        ╱╱╰╯╱╰╯╰┻━━╯╰━━━┻━┻━━┻╯╰┻╯╰┻┻━━┻╯╰━━╯
-
-'@
-
-    if (-not $NoLogo) {
-        Write-Output $Logo
-    }
+    Show-TCLogo
 
     if ($Dedication) {
-        Write-Output "This module is dedicated to the old SEs I ""grew up"" and learned PowerShell with: Alex, Lyle, Jon, and Rick. ❤️`n"
+        Write-Output "This module is dedicated to the old SEs I ""grew up"" and learned PowerShell with. Cheers to Alex, Lyle, Jon, and Rick! ❤️`n"
     }
 
     Write-Output "The Cleaners are here to help you clean up your log folders! 🧹"
     Get-Command -Module TheCleaners
-    if ( $PSCmdlet.ShouldProcess($Logo) ) {
-        Write-Verbose "This is here because platyPS chokes on the suppression of ShouldProcess."
-    }
 }
