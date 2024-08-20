@@ -44,7 +44,7 @@
         Write-Host '╭━━━┳╮' -ForegroundColor DarkCyan #NewLine
         Write-Host '    ┃╭╮╭╮┃┃' -ForegroundColor DarkCyan -NoNewline
         Write-Host '╱╱╱╱╱' -ForegroundColor Yellow -NoNewline
-        Write-Host '┃╭━╮┃┃' -ForegroundColor DarkCyan -NoNewLine #NewLine
+        Write-Host '┃╭━╮┃┃' -ForegroundColor DarkCyan -NoNewline #NewLine
         Write-Host " v$Version" -ForegroundColor Yellow
         Write-Host '    ╰╯┃┃╰┫╰━┳━━╮┃┃' -ForegroundColor DarkCyan -NoNewline
         Write-Host '/' -ForegroundColor Yellow -NoNewline
