@@ -23,24 +23,29 @@
         $Plain
     )
 
+    $Version = (Import-PowerShellDataFile -Path $PSScriptRoot\..\TheCleaners.psd1).ModuleVersion
+
     if ($Plain.IsPresent) {
-        $Logo = @'
+        $Logo = @"
+
         ╭━━━━┳╮╱╱╱╱╱╭━━━┳╮
-        ┃╭╮╭╮┃┃╱╱╱╱╱┃╭━╮┃┃
+        ┃╭╮╭╮┃┃╱╱╱╱╱┃╭━╮┃┃ v$Version
         ╰╯┃┃╰┫╰━┳━━╮┃┃╱╰┫┃╭━━┳━━┳━╮ ╭━━┳━┳━━╮
         ╱╱┃┃╱┃╭╮┃┃━┫┃┃╱╭┫┃|┃━┫╭╮┃╭╮╮┃|━┫╭┫━━┫
         ╱╱┃┃╱┃┃┃┃┃━┫┃╰━╯┃╰┫┃━┫╭╮┃||┃┃|━┫|┣━━┃
         ╱╱╰╯╱╰╯╰┻━━╯╰━━━┻━┻━━┻╯╰┻╯╰┻┻━━┻╯╰━━╯
 
-'@
+"@
         return $Logo
     } else {
+        Write-Host ''
         Write-Host '    ╭━━━━┳╮' -ForegroundColor DarkCyan -NoNewline
         Write-Host '╱╱╱╱╱' -ForegroundColor Yellow -NoNewline
         Write-Host '╭━━━┳╮' -ForegroundColor DarkCyan #NewLine
         Write-Host '    ┃╭╮╭╮┃┃' -ForegroundColor DarkCyan -NoNewline
         Write-Host '╱╱╱╱╱' -ForegroundColor Yellow -NoNewline
-        Write-Host '┃╭━╮┃┃' -ForegroundColor DarkCyan #NewLine
+        Write-Host '┃╭━╮┃┃' -ForegroundColor DarkCyan -NoNewLine #NewLine
+        Write-Host " v$Version" -ForegroundColor Yellow
         Write-Host '    ╰╯┃┃╰┫╰━┳━━╮┃┃' -ForegroundColor DarkCyan -NoNewline
         Write-Host '/' -ForegroundColor Yellow -NoNewline
         Write-Host '╰┫┃╭━━┳━━┳━╮' -ForegroundColor DarkCyan -NoNewline
