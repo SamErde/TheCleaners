@@ -39,9 +39,3 @@ Install-Module -Name 'TheCleaners' -Scope CurrentUser
 Start-Cleaning
 
 ```
-
-## Author
-
-Sam Erde
-Twitter: [@SamErde](https://twitter.com/SamErde)
-
