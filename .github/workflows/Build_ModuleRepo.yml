@@ -7,7 +7,7 @@
 # https://github.com/actions/upload-artifact#where-does-the-upload-go
 
 # Requirement: git-auto-commit-action only runs on Linux-based platforms.
-name: TheCleaners-Ubuntu-pwsh
+name: Build TheCleaners Module (Ubuntu pwsh)
 on:
   pull_request:
     paths-ignore:
