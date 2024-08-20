@@ -13,11 +13,10 @@ A script to find old, unused user profiles in Windows.
 ## SYNTAX
 
 ```
-Get-StaleUserProfile [-ShowSummary] [<CommonParameters>]
+Get-StaleUserProfile [[-Days] <Int16>] [-ShowSummary] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-THIS IS AN EARLY POC SCRIPT THAT NEEDS TO BE TESTED FOR PROPER EXCLUSIONS.
 This script finds old, unused profiles in Windows and helps you remove them.
 It should exclude special accounts and system profiles.
 
@@ -31,6 +30,22 @@ $StaleUserProfile = Get-StaleUserProfile -ShowSummary
 Gets stale user profiles into the StaleUserProfiles variable while also showing a summary.
 
 ## PARAMETERS
+
+### -Days
+Number of days to consider a profile stale.
+The default is 90.
+
+```yaml
+Type: Int16
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: 90
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -ShowSummary
 Show a summary of the stale profiles found.
@@ -56,10 +71,6 @@ For more information, see about_CommonParameters (http://go.microsoft.com/fwlink
 ## OUTPUTS
 
 ## NOTES
-Author: Sam Erde
-        https://twitter.com/SamErde
-        https://github.com/SamErde
-
 Partially inspired by http://woshub.com/delete-old-user-profiles-gpo-powershell/
 
 ## RELATED LINKS

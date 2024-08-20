@@ -11,14 +11,14 @@ Locale: en-US
 The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!
 
 ## TheCleaners Cmdlets
+### [Clear-CurrentUserTemp](Clear-CurrentUserTemp.md)
+Clean old temp files from user profiles.
+
 ### [Clear-OldExchangeLog](Clear-OldExchangeLog.md)
 Clean out old Exchange Server logs.
 
 ### [Clear-OldIISLog](Clear-OldIISLog.md)
 A script to clean out old IIS log files.
-
-### [Clear-UserTemp](Clear-UserTemp.md)
-Clean old temp files from user profiles.
 
 ### [Clear-WindowsTemp](Clear-WindowsTemp.md)
 A script to clean out old Windows Temp files.
@@ -27,6 +27,6 @@ A script to clean out old Windows Temp files.
 A script to find old, unused user profiles in Windows.
 
 ### [Start-Cleaning](Start-Cleaning.md)
-Calls in The Cleaners to tame the mess in your log folders.
+Show the commands you can give The Cleaners.
 
 

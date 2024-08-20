@@ -8,17 +8,17 @@ schema: 2.0.0
 # Start-Cleaning
 
 ## SYNOPSIS
-Calls in The Cleaners to tame the mess in your log folders.
+Show the commands you can give The Cleaners.
 
 ## SYNTAX
 
 ```
-Start-Cleaning [-NoLogo] [-WhatIf] [-Confirm] [<CommonParameters>]
+Start-Cleaning [-NoLogo] [-Dedication] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Start the cleaning operation.
-Put documents in the shredder, clean up the mess in the log folders, and make sure the evidence is gone.
+Get started with a menu of services The Cleaners can offer.
 
 ## EXAMPLES
 
@@ -33,6 +33,21 @@ View the menu of services that TheCleaners provide.
 
 ### -NoLogo
 Do not display the logo.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Dedication
+Show dedication
 
 ```yaml
 Type: SwitchParameter
@@ -86,9 +101,5 @@ For more information, see about_CommonParameters (http://go.microsoft.com/fwlink
 ## OUTPUTS
 
 ## NOTES
-Author:     Sam Erde
-            https://twitter.com/SamErde
-            https://github.com/SamErde
-Modified:   2024-08-19
 
 ## RELATED LINKS

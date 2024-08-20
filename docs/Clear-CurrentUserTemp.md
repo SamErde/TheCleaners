@@ -5,35 +5,38 @@ online version:
 schema: 2.0.0
 ---
 
-# Clear-WindowsTemp
+# Clear-CurrentUserTemp
 
 ## SYNOPSIS
-A script to clean out old Windows Temp files.
+Clean old temp files from user profiles.
 
 ## SYNTAX
 
 ```
-Clear-WindowsTemp [[-Days] <Int16>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Clear-CurrentUserTemp [[-Days] <Int16>] [[-TimeOut] <Int16>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-This script will clean out Windows Temp files older than x days.
+Remove temp files older than a given number of days from the user's local temp folder.
 
 ## EXAMPLES
 
 ### EXAMPLE 1
 ```
-Clear-WindowsTemp -Days 60
+Clear-CurrentUserTemp -Days 30
 ```
 
-Removes all Windows Temp files that are older than 60 days.
+### EXAMPLE 2
+```
+Clean-CurrentUserTemp -Days 21 -TimeOut 30
+```
 
 ## PARAMETERS
 
 ### -Days
-The number of days to keep temp files.
-The default is 30 days.
+Remove temp files that are $Days days old or older.
+The default is 30.
 
 ```yaml
 Type: Int16
@@ -42,6 +45,22 @@ Aliases:
 
 Required: False
 Position: 1
+Default value: 30
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TimeOut
+A time limit (seconds) for the looping operation that removes empty directories.
+The default is 30.
+
+```yaml
+Type: Int16
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
 Default value: 30
 Accept pipeline input: False
 Accept wildcard characters: False
