@@ -5,7 +5,7 @@
 # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-powershell
 # https://github.com/actions/upload-artifact#where-does-the-upload-go
-name: TheCleaners-Windows-pwsh
+name: TheCleaners-Ubuntu-pwsh
 on:
   pull_request:
     paths-ignore:
@@ -18,7 +18,7 @@ on:
 jobs:
   test:
     name: Run Tests
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
     steps:
@@ -52,6 +52,12 @@ jobs:
         name: zip-archive
         path: .\src\Archive
         if-no-files-found: warn
+
     - name: Update README
       shell: pwsh
       run: Copy-Item ./docs/index.md ./README.md
+    - name: Commit Changes to Repo
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: 'Automated action: update README from markdown docs'
+        file_pattern: "README.md"
