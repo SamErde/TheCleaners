@@ -28,7 +28,8 @@
     Show-TCLogo
 
     if ($Dedication) {
-        Write-Output "This module is dedicated to the old SEs I ""grew up"" and learned PowerShell with. Cheers to Alex, Lyle, Jon, and Rick! ❤️`n"
+        Write-Host "`n`tThis is dedicated to the friends that I spent years working and`n`tlearning PowerShell with. Cheers to Alex, Lyle, Jon, and Rick! " -ForegroundColor Yellow -NoNewline
+        Write-Host "❤️ `n" -ForegroundColor Red
     }
 
     Write-Output "The Cleaners are here to help you clean up your log folders! 🧹"
