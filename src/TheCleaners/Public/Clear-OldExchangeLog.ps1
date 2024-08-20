@@ -1,3 +1,8 @@
+###################################################################################
+#                                                                                 #
+# WARNING: This script is still being developed and tested. Use at your own risk. #
+#                                                                                 #
+###################################################################################
 function Clear-OldExchangeLog {
     <#
     .SYNOPSIS
@@ -13,11 +18,6 @@ function Clear-OldExchangeLog {
         Clear-OldExchangeLog -Days 60
 
         This will remove all Exchange logs older than 60 days.
-
-    .NOTES
-        Author: Sam Erde
-                https://twitter.com/SamErde
-                https://github.com/SamErde
 
     .COMPONENT
         TheCleaners

@@ -1,3 +1,8 @@
+###################################################################################
+#                                                                                 #
+# WARNING: This script is still being developed and tested. Use at your own risk. #
+#                                                                                 #
+###################################################################################
 function Clear-OldIISLog {
     <#
     .SYNOPSIS
@@ -15,11 +20,6 @@ function Clear-OldIISLog {
         Removes all IIS log files that are older than 60 days.
 
     .NOTES
-        Author:     Sam Erde
-                    https://twitter.com/SamErde
-                    https://github.com/SamErde
-        Modified:   2024-02-17
-
         If the WebAdministration module is available, it will use that to check the specific log file locations for
         each web site. Otherwise, it checks the assumed default log folder location and the registry for the IIS
         log file location.
@@ -44,7 +44,7 @@ function Clear-OldIISLog {
             $SiteLogFileDirectory = ("$($Site.logFile.directory)\W3SVC$($Site.id)").Replace( '%SystemDrive%',$env:SystemDrive )
             Write-Information -MessageData "Removing old IIS log files from $($Site.name) at $SiteLogFileDirectory." -InformationAction Continue
             try {
-                Remove-OldFiles -Path $SiteLogFileDirectory -Days $Days
+                Remove-OldFiles -Path $SiteLogFileDirectory -Days $Days -WhatIf
             } catch {
                 Write-Error -Message $_.Exception.Message -ErrorAction Continue
                 Write-Warning "Failed to remove old IIS log files from $($Site.name) at $SiteLogFileDirectory." -WarningAction Continue
