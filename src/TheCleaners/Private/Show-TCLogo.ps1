@@ -29,7 +29,7 @@
         $Logo = @"
 
         ╭━━━━┳╮╱╱╱╱╱╭━━━┳╮
-        ┃╭╮╭╮┃┃╱╱╱╱╱┃╭━╮┃┃ v$Version
+        ┃╭╮╭╮┃┃╱╱╱╱╱┃╭━╮┃┃          v$Version
         ╰╯┃┃╰┫╰━┳━━╮┃┃╱╰┫┃╭━━┳━━┳━╮ ╭━━┳━┳━━╮
         ╱╱┃┃╱┃╭╮┃┃━┫┃┃╱╭┫┃|┃━┫╭╮┃╭╮╮┃|━┫╭┫━━┫
         ╱╱┃┃╱┃┃┃┃┃━┫┃╰━╯┃╰┫┃━┫╭╮┃||┃┃|━┫|┣━━┃
@@ -65,5 +65,6 @@
         Write-Host '┃┃' -ForegroundColor DarkCyan -NoNewline
         Write-Host '/' -ForegroundColor Yellow -NoNewline
         Write-Host '╰╯╰┻━━╯╰━━━┻━┻━━┻╯╰┻╯╰┻┻━━┻╯╰━━╯' -ForegroundColor DarkCyan #NewLine
+        Write-Host ''
     }
 }
