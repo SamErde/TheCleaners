@@ -9,16 +9,10 @@
     Remove-OldFiles -Path "C:\Windows\Temp" -Days 60 -Recurse
 
     Removes all files older than 60 does in C:\Windows\Temp with recursion to clean subfolders.
-
-.NOTES
-    Author: Sam Erde
-            https://twitter.com/SamErde
-            https://github.com/SamErde
 #>
 function Remove-OldFiles {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('Remove-OldFiles')]
     param (
         # The path containing files to remove
         [string]
