@@ -1,4 +1,4 @@
-# TheCleaners
+# The Cleaners
 
 ## Synopsis
 
@@ -6,37 +6,39 @@ A module to help automate the cleanup of old log files and temp files on your sy
 
 ## Description
 
-A module to help automate the cleanup of old log files and temp files on your systems.
+The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!
 
 ## Why
 
-Save time, save money!
+- For all those hours spent manually clearing old IIS logs, Exchange logs, and temp files when a server disk gets low on space.  
+- For those teammates who get woken up at night while on call because a disk hit 90% full.  
+- For the fun of writing something useful in PowerShell that will hopefully make somebody's day easier!
 
 ## Getting Started
 
 ### Prerequisites
 
-IIS: WebManagement Module
-Exchange: Exchange Management Tools
+PowerShell or Windows PowerShell 5.1
+
+There are no other strict dependencies, but the following can make things a little easier:
+
+- IIS: WebManagement Module
+- Exchange: Exchange Management Tools
 
 ### Installation
 
 ```powershell
-# how to install TheCleaners
+# How to install TheCleaners
 Install-Module -Name 'TheCleaners'
-
 ```
 
-### Quick start
+### Quick Start
 
 #### Example1
 
 ```powershell
-# command showing how to use your project
+# See what jobs TheCleaners can do for you.
 Start-Cleaning
-
 ```
 
-## Author
-
-Sam Erde
+These docs can also be found at [TheCleaners.ReadTheDocs.io/](https://thecleaners.readthedocs.io/).
