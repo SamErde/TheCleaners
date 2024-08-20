@@ -2,11 +2,7 @@
 
 ## Reporting a Vulnerability
 
-<!--- Use this section to tell people how to report a vulnerability.
-
-Tell them where to go, how often they can expect to get an update on a reported vulnerability, what to expect if the vulnerability is accepted or declined, etc. -->
-
-If you discover a vulnerability in TheCleaners, please follow the _following process_:
+If you discover a vulnerability in **The Cleaners**, please follow the _following process_:
 
 1. Open a generic bug issue advising you have discovered a vulnerability.
    - Avoid sharing specifics or details of the vulnerability in an open GitHub issue.
@@ -16,4 +12,3 @@ If you discover a vulnerability in TheCleaners, please follow the _following pro
    Please **do not disclose the vulnerability publicly** until a fix is released!
 
 4. Once we have either a) published a fix, or b) declined to address the vulnerability for whatever reason, you are free to publicly disclose it.
-
