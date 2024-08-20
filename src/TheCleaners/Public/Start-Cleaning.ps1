@@ -21,7 +21,12 @@
     param (
         # Do not show a logo
         [switch]
-        $NoLogo
+        $NoLogo,
+
+        # Show dedication
+        [Parameter()]
+        [switch]
+        $Dedication
     )
 
     $Logo = @'
@@ -37,7 +42,12 @@
     if (-not $NoLogo) {
         Write-Output $Logo
     }
-    Write-Output "The Cleaners are here to help you clean up your log folders."
+
+    if ($Dedication) {
+        Write-Output "This module is dedicated to the old SEs I ""grew up"" and learned PowerShell with: Alex, Lyle, Jon, and Rick. ❤️`n"
+    }
+
+    Write-Output "The Cleaners are here to help you clean up your log folders! 🧹"
     Get-Command -Module TheCleaners
     if ( $PSCmdlet.ShouldProcess($Logo) ) {
         Write-Verbose "This is here because platyPS chokes on the suppression of ShouldProcess."
