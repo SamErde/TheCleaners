@@ -52,4 +52,3 @@ jobs:
         name: zip-archive
         path: .\src\Archive
         if-no-files-found: warn
-
