@@ -26,13 +26,12 @@
         $Dedication
     )
 
-    Show-TCLogo
-
     if ($Dedication) {
         Write-Host "`nThis is dedicated to the friends that I spent years working with`nand learning PowerShell with. Cheers to Alex, Lyle, Jon, & Rick! " -ForegroundColor Yellow -NoNewline
-        Write-Host "❤️ `n" -ForegroundColor Red
+        Write-Host "❤️`n" -ForegroundColor Red
     }
 
-    Write-Output "The Cleaners are here to help you clean up your log folders! 🧹`n"
-    Get-Command -Module TheCleaners
+    Show-TCLogo
+
+    Get-Command -Module TheCleaners | Select-Object @{Name = 'The Cleaners Offer These Services: 🧹'; Expression = { $_.Name } }
 }
