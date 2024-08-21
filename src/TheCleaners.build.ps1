@@ -141,8 +141,7 @@ Add-BuildTask ImportModuleManifest {
     Write-Build White '      Attempting to load the project module.'
     try {
         Import-Module $script:ModuleManifestFile -Force -PassThru -ErrorAction Stop
-    }
-    catch {
+    } catch {
         throw 'Unable to load the project module'
     }
     Write-Build Green "      ...$script:ModuleName imported successfully"
@@ -176,8 +175,7 @@ Add-BuildTask Analyze {
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
         throw '      One or more PSScriptAnalyzer errors/warnings where found.'
-    }
-    else {
+    } else {
         Write-Build Green '      ...Module Analyze Complete!'
     }
 } #Analyze
@@ -189,7 +187,7 @@ Add-BuildTask AnalyzeTests -After Analyze {
         $scriptAnalyzerParams = @{
             Path        = $script:TestsPath
             Setting     = 'PSScriptAnalyzerSettings.psd1'
-            ExcludeRule = @('PSUseDeclaredVarsMoreThanAssignments','PSUseSingularNouns','PSUseToExportFieldsInManifest')
+            ExcludeRule = @('PSUseDeclaredVarsMoreThanAssignments', 'PSUseSingularNouns', 'PSUseToExportFieldsInManifest')
             Recurse     = $true
             Verbose     = $false
         }
@@ -200,8 +198,7 @@ Add-BuildTask AnalyzeTests -After Analyze {
         if ($scriptAnalyzerResults) {
             $scriptAnalyzerResults | Format-Table
             throw '      One or more PSScriptAnalyzer errors/warnings where found.'
-        }
-        else {
+        } else {
             Write-Build Green '      ...Test Analyze Complete!'
         }
     }
@@ -220,13 +217,12 @@ Add-BuildTask FormattingCheck {
 
 
     Write-Build White '      Performing script formatting checks...'
-    $scriptAnalyzerResults = Get-ChildItem -Path $script:ModuleSourcePath -Exclude "*.psd1" | Invoke-ScriptAnalyzer @scriptAnalyzerParams
+    $scriptAnalyzerResults = Get-ChildItem -Path $script:ModuleSourcePath -Exclude '*.psd1' | Invoke-ScriptAnalyzer @scriptAnalyzerParams
 
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
         throw '      PSScriptAnalyzer code formatting check did not adhere to {0} standards' -f $scriptAnalyzerParams.Setting
-    }
-    else {
+    } else {
         Write-Build Green '      ...Formatting Analyze Complete!'
     }
 } #FormattingCheck
@@ -292,13 +288,11 @@ Add-BuildTask Test {
             #>
             if ([Int]$coveragePercent -lt $coverageThreshold) {
                 throw ('Failed to meet code coverage threshold of {0}% with only {1}% coverage' -f $coverageThreshold, $coveragePercent)
-            }
-            else {
+            } else {
                 Write-Build Cyan "      $('Covered {0}% of {1} analyzed commands in {2} files.' -f $coveragePercent,$testResults.CodeCoverage.CommandsAnalyzedCount,$testResults.CodeCoverage.FilesAnalyzedCount)"
                 Write-Build Green '      ...Pester Unit Tests Complete!'
             }
-        }
-        else {
+        } else {
             # account for new module build condition
             Write-Build Yellow '      Code coverage check skipped. No commands to execute...'
         }
@@ -344,7 +338,7 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
         Force          = $true
         WithModulePage = $true
         Locale         = 'en-US'
-        FwLink         = "NA"
+        FwLink         = 'NA'
         HelpVersion    = $script:ModuleVersion
     }
 
@@ -377,7 +371,7 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
     Write-Build Gray '           ...Markdown replacements complete.'
 
     Write-Build Gray '           Verifying GUID...'
-    $MissingGUID = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "(00000000-0000-0000-0000-000000000000)"
+    $MissingGUID = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern '(00000000-0000-0000-0000-000000000000)'
     if ($MissingGUID.Count -gt 0) {
         Write-Build Yellow '             The documentation that got generated resulted in a generic GUID. Check the GUID entry of your module manifest.'
         throw 'Missing GUID. Please review and rebuild.'
@@ -395,7 +389,7 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
     }
 
     Write-Build Gray '           Checking for missing documentation in md files...'
-    $MissingDocumentation = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "({{.*}})"
+    $MissingDocumentation = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern '({{.*}})'
     if ($MissingDocumentation.Count -gt 0) {
         Write-Build Yellow '             The documentation that got generated resulted in missing sections which should be filled out.'
         Write-Build Yellow '             Please review the following sections in your comment based help, fill out missing information and rerun this build:'
@@ -407,7 +401,7 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
 
     Write-Build Gray '           Checking for missing SYNOPSIS in md files...'
     $fSynopsisOutput = @()
-    $synopsisEval = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern "^## SYNOPSIS$" -Context 0, 1
+    $synopsisEval = Select-String -Path "$script:ArtifactsPath\docs\*.md" -Pattern '^## SYNOPSIS$' -Context 0, 1
     $synopsisEval | ForEach-Object {
         $chAC = $_.Context.DisplayPostContext.ToCharArray()
         if ($null -eq $chAC) {
@@ -415,7 +409,7 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
         }
     }
     if ($fSynopsisOutput) {
-        Write-Build Yellow "             The following files are missing SYNOPSIS:"
+        Write-Build Yellow '             The following files are missing SYNOPSIS:'
         $fSynopsisOutput
         throw 'SYNOPSIS information missing. Please review.'
     }
@@ -442,12 +436,12 @@ Add-BuildTask UpdateCBH -After AssetCopy {
 #>
 "@
 
-    $CBHPattern = "(?ms)(\<#.*\.SYNOPSIS.*?#>)"
+    $CBHPattern = '(?ms)(\<#.*\.SYNOPSIS.*?#>)'
     Get-ChildItem -Path "$script:ArtifactsPath\Public\*.ps1" -File | ForEach-Object {
         $FormattedOutFile = $_.FullName
         Write-Output "      Replacing CBH in file: $($FormattedOutFile)"
-        $UpdatedFile = (Get-Content  $FormattedOutFile -raw) -replace $CBHPattern, $ExternalHelp
-        $UpdatedFile | Out-File -FilePath $FormattedOutFile -force -Encoding:utf8
+        $UpdatedFile = (Get-Content $FormattedOutFile -Raw) -replace $CBHPattern, $ExternalHelp
+        $UpdatedFile | Out-File -FilePath $FormattedOutFile -Force -Encoding:utf8
     }
 } #UpdateCBH
 
@@ -550,7 +544,7 @@ Add-BuildTask Archive {
 
     $null = New-Item -Path $archivePath -ItemType Directory -Force
 
-    $zipFileName = '{0}_{1}_{2}.{3}.zip' -f $script:ModuleName, $script:ModuleVersion, ([DateTime]::UtcNow.ToString("yyyyMMdd")), ([DateTime]::UtcNow.ToString("hhmmss"))
+    $zipFileName = '{0}_{1}_{2}.{3}.zip' -f $script:ModuleName, $script:ModuleVersion, ([DateTime]::UtcNow.ToString('yyyyMMdd')), ([DateTime]::UtcNow.ToString('hhmmss'))
     $zipFile = Join-Path -Path $archivePath -ChildPath $zipFileName
 
     if ($PSEdition -eq 'Desktop') {

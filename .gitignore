@@ -1,9 +1,9 @@
+# Project Files
 Archive
 Artifacts
 cov.xml
 coverage.xml
-# OS generated files #
-######################
+# OS Files
 .DS_Store
 .DS_Store?
 ._*
