@@ -30,8 +30,6 @@ $modulesToInstall = New-Object System.Collections.Generic.List[object]
             ModuleVersion = '0.12.0'
         }))
 
-
-
 'Installing PowerShell Modules'
 foreach ($module in $modulesToInstall) {
     $installSplat = @{
@@ -43,21 +41,18 @@ foreach ($module in $modulesToInstall) {
         ErrorAction        = 'Stop'
     }
     try {
-        if ($module.ModuleName -eq 'Pester' -and $IsWindows) {
+        if ($module.ModuleName -eq 'Pester' -and ($IsWindows -or $PSVersionTable.PSVersion -ge [version]'5.1')) {
             # special case for Pester certificate mismatch with older Pester versions - https://github.com/pester/Pester/issues/2389
             # this only affects windows builds
             Install-Module @installSplat -SkipPublisherCheck
-        }
-        else {
+        } else {
             Install-Module @installSplat
         }
         Import-Module -Name $module.ModuleName -ErrorAction Stop
         '  - Successfully installed {0}' -f $module.ModuleName
-    }
-    catch {
+    } catch {
         $message = 'Failed to install {0}' -f $module.ModuleName
         "  - $message"
         throw
     }
 }
-
