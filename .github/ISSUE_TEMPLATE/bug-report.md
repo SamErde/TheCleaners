@@ -1,9 +1,9 @@
 ---
-name: Bug report
+name: Bug Report
 about: Submit a new bug
 title: Bug report
-labels: 'bug'
-assignees: ''
+labels: bug
+assignees: SamErde
 
 ---
 
