@@ -1,5 +1,14 @@
 # The Cleaners
 
+<!-- badges-start -->
+[![GitHub stars](https://img.shields.io/github/stars/samerde/powershell?cacheSeconds=3600)](https://github.com/samerde/TheCleaners/stargazers/)
+[![GitHub contributors](https://img.shields.io/github/contributors/samerde/powershell.svg)](https://github.com/samerde/TheCleaners/graphs/contributors/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ae92f0d929de494690e712b68fb3b52c)](https://app.codacy.com/gh/SamErde/TheCleaners/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/TheCleaners?include_prereleases)
+![PowerShell Gallery Downloads](https://img.shields.io/powershellgallery/dt/TheCleaners)
+<!-- badges-end -->
+
 ## Synopsis
 
 A module to help automate the cleanup of old log files and temp files on your systems.
