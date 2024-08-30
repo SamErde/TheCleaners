@@ -2,13 +2,14 @@
 
 <!-- badges-start -->
 [![GitHub stars](https://img.shields.io/github/stars/samerde/TheCleaners?cacheSeconds=3600)](https://github.com/samerde/TheCleaners/stargazers/)
-[![GitHub contributors](https://img.shields.io/github/contributors/samerde/TheCleaners.svg)](https://github.com/samerde/TheCleaners/graphs/contributors/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ae92f0d929de494690e712b68fb3b52c)](https://app.codacy.com/gh/SamErde/TheCleaners/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SamErde/TheCleaners/.github%2Fworkflows%2FBuild_ModuleRepo.yml)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SamErde/TheCleaners/.github%2Fworkflows%2FDeploy_MkDocs.yml?label=MkDocs) 
 ![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/TheCleaners?include_prereleases)
 ![PowerShell Gallery Downloads](https://img.shields.io/powershellgallery/dt/TheCleaners)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+
+[![GitHub contributors](https://img.shields.io/github/contributors/samerde/TheCleaners.svg)](https://github.com/samerde/TheCleaners/graphs/contributors/)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ae92f0d929de494690e712b68fb3b52c)](https://app.codacy.com/gh/SamErde/TheCleaners/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SamErde/TheCleaners/.github%2Fworkflows%2FBuild%20ModuleRepo.yml)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SamErde/TheCleaners/.github%2Fworkflows%2FDeploy%20MkDocs.yml?label=MkDocs)
 <!-- badges-end -->
 
 ## Synopsis
@@ -21,8 +22,8 @@ The Cleaners do the dirty work in your servers for you. We take care of temp fil
 
 ## Why
 
-- For all those hours spent manually clearing old IIS logs, Exchange logs, and temp files when a server disk gets low on space.  
-- For those teammates who get woken up at night while on call because a disk hit 90% full.  
+- For all those hours spent manually clearing old IIS logs, Exchange logs, and temp files when a server disk gets low on space.
+- For those teammates who get woken up at night while on call because a disk hit 90% full.
 - For the fun of writing something useful in PowerShell that will hopefully make somebody's day easier!
 
 ## Getting Started
