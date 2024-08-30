@@ -1,10 +1,12 @@
 name: Deploy MkDocs to GitHub Pages
 
 on:
-  workflow_dispatch:
-  #push:
-  #  branches:
-  #    - main  # or the branch you want to deploy from
+  push:
+    branches:
+      - main  # The branch you want to deploy from
+    paths:  # Only deploy MkDocs when the contents of the docs folder change or when this workflow changes.
+      - 'docs/**'
+      - '.github/workflows/Deploy MkDocs.yml'
 
 jobs:
   build:
@@ -15,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'  # specify the Python version
 
@@ -36,5 +38,5 @@ jobs:
       - name: Commit Changes to Repo
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'Automated action: copy ModuleName.md from docs to repo README'
+          commit_message: 'Copy MkDocs index to README'
           file_pattern: "README.md"
