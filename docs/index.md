@@ -13,6 +13,8 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SamErde/TheCleaners/.github%2Fworkflows%2FDeploy%20MkDocs.yml?label=MkDocs)
 <!-- badges-end -->
 
+<img src="https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-CodeHoodie.png" width="400" />
+
 ## Synopsis
 
 A module to help automate the cleanup of old log files and temp files on your systems.
