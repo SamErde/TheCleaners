@@ -112,7 +112,7 @@
             ProjectUri = 'https://github.com/SamErde/TheCleaners'
 
             # A URL to an icon representing this module.
-            IconUri = 'https://raw.githubusercontent.com/SamErde/TheCleaners/media/TheCleaners-CodeHoodieNoBG.png'
+            IconUri = 'https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-CodeHoodieNoBG.png'
 
             # ReleaseNotes of this module
             # ReleaseNotes = ''
