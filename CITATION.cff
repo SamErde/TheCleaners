@@ -1,0 +1,29 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: TheCleaners
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Sam
+    family-names: Erde
+    email: sam@day3bits.com
+repository-code: 'https://github.com/SamErde/TheCleaners'
+url: 'https://day3bits.com/TheCleaners'
+repository-artifact: 'https://www.powershellgallery.com/packages/TheCleaners'
+abstract: A PowerShell module to clean the loose ends from your Windows Servers.
+keywords:
+  - PowerShell
+  - Windows
+  - Windows-Server
+  - Exchange-Server
+  - IIS
+  - Internet-Information-Server
+  - sysadmin
+  - Systems-Administration
+  - Utility
+  - Utilities
+license: MIT
