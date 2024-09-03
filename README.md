@@ -44,7 +44,7 @@ There are no other strict dependencies, but the following can make things a litt
 
 ```powershell
 # How to install TheCleaners
-Install-Module -Name 'TheCleaners'
+Install-Module -Name TheCleaners -AllowPrerelease
 ```
 
 ### Quick Start
