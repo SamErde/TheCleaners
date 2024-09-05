@@ -8,34 +8,34 @@
 # https://squidfunk.github.io/mkdocs-material/creating-your-site/
 # mkdocs.yml
 
-site_name: 'The Cleaners PowerShell Module'
-site_url: 'https://day3bits.com/TheCleaners'
-repo_url: 'https://github.com/SamErde/TheCleaners'
-repo_name: 'TheCleaners'
+site_name: "The Cleaners PowerShell Module"
+site_url: "https://day3bits.com/TheCleaners"
+repo_url: "https://github.com/SamErde/TheCleaners"
+repo_name: "TheCleaners"
 # edit_uri: edit/main/docs/
 # edit_uri_template:
-site_description: 'The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!' # meta tag to the generated HTML header
-site_author: 'Sam Erde' # meta tag to the generated HTML header
-copyright: '2024 Sam Erde'
+site_description: "The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!" # meta tag to the generated HTML header
+site_author: "Sam Erde" # meta tag to the generated HTML header
+copyright: "(c) 2024 Sam Erde"
 # remote_branch:
 # remote_name:
-docs_dir: docs
+docs_dir: "docs"
 # site_dir:
 # extra_css:
 # extra_javascript:
 # markdown_extensions:
-  # Python Markdown
-  # - admonition
-  # - toc:
-  #     permalink: true
-  # code highlighting
-  # - pymdownx.highlight:
-  #     use_pygments: true
-  # - pymdownx.highlight:
-  #     anchor_linenums: true
-  # - pymdownx.inlinehilite
-  # - pymdownx.snippets
-  # - pymdownx.superfences
+# Python Markdown
+# - admonition
+# - toc:
+#     permalink: true
+# code highlighting
+# - pymdownx.highlight:
+#     use_pygments: true
+# - pymdownx.highlight:
+#     anchor_linenums: true
+# - pymdownx.inlinehilite
+# - pymdownx.snippets
+# - pymdownx.superfences
 
 # extra_templates:
 # extra:
@@ -43,7 +43,6 @@ docs_dir: docs
 theme:
   name: material
   palette:
-
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
       toggle:
@@ -78,11 +77,11 @@ theme:
   # logo:
 
 nav:
-  - Home: 'index.md'
+  - Home: "index.md"
   - Functions:
-    - 'Start-Cleaning': 'Start-Cleaning.md'
-    - 'Clear-OldExchangeLogs': 'Clear-OldExchangeLogs.md'
-    - 'Clear-OldIISLogs': 'Clear-OldIISLogs.md'
-    - 'Clear-UserTemp': 'Clear-UserTemp.md'
-    - 'Clear-WindowsTemp': 'Clear-WindowsTemp.md'
-    - 'Get-StaleUserProfile': 'Get-StaleUserProfile.md'
+      - "Start-Cleaning": "Start-Cleaning.md"
+      - "Clear-OldExchangeLogs": "Clear-OldExchangeLogs.md"
+      - "Clear-OldIISLogs": "Clear-OldIISLogs.md"
+      - "Clear-UserTemp": "Clear-UserTemp.md"
+      - "Clear-WindowsTemp": "Clear-WindowsTemp.md"
+      - "Get-StaleUserProfile": "Get-StaleUserProfile.md"
