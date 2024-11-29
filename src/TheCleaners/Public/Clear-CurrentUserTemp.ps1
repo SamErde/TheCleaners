@@ -21,7 +21,7 @@ function Clear-CurrentUserTemp {
     .COMPONENT
         TheCleaners
     #>
-    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')]
+    [CmdletBinding(SupportsShouldProcess)]
     [Alias('Clean-CurrentUserTemp')]
     param (
         # Remove temp files that are $Days days old or older.
@@ -63,7 +63,7 @@ function Clear-CurrentUserTemp {
     foreach ($file in $OldFiles) {
         if ( $PSCmdlet.ShouldProcess("Removing $($file.FullName)", $file.FullName, 'Remove-Item') ) {
             try {
-                Remove-Item -Path $file.FullName -Confirm:$false
+                Remove-Item $file -Confirm:$false -ErrorAction Stop
                 Write-Verbose -Message "Removed file: $($file.FullName)"
             } catch {
                 Write-Output "  $($Error[-1].Exception.Message)"
