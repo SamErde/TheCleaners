@@ -43,13 +43,14 @@ function Clear-WindowsTemp {
     Write-Output "Found $($OldFiles.Count) files and directories older than $Days days in the system temp folder.`n"
 
     foreach ($file in $OldFiles) {
-        if ( $PSCmdlet.ShouldProcess($file.FullName, 'Remove file') ) {
+        if ( $PSCmdlet.ShouldProcess("Removing $($file.FullName)", $file.FullName, 'Remove-Item') ) {
             try {
-                Remove-Item -Path $file.FullName -Force -ErrorAction Stop
+                Remove-Item $file -Confirm:$false -ErrorAction Stop
                 Write-Verbose -Message "Removed file: $($file.FullName)"
             } catch {
                 Write-Output "  $($Error[-1].Exception.Message)"
             }
         }
     }
+
 }
