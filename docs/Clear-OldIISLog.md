@@ -13,7 +13,7 @@ A script to clean out old IIS log files.
 ## SYNTAX
 
 ```
-Clear-OldIISLog [[-Days] <Int32>] [<CommonParameters>]
+Clear-OldIISLog [[-Days] <Int16>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -32,10 +32,10 @@ Removes all IIS log files that are older than 60 days.
 
 ### -Days
 The number of days to keep log files.
-The default is 60 days.
+The default is 30 days.
 
 ```yaml
-Type: Int32
+Type: Int16
 Parameter Sets: (All)
 Aliases:
 
@@ -59,5 +59,7 @@ If the WebAdministration module is available, it will use that to check the spec
 each web site.
 Otherwise, it checks the assumed default log folder location and the registry for the IIS
 log file location.
+
+To Do: Add a summary of which blocks were run and possibly a count of log files removed.
 
 ## RELATED LINKS
