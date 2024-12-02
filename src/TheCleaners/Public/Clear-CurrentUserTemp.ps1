@@ -17,9 +17,6 @@ function Clear-CurrentUserTemp {
 
     .EXAMPLE
         Clean-CurrentUserTemp -Days 21 -TimeOut 30
-
-    .COMPONENT
-        TheCleaners
     #>
     [CmdletBinding(SupportsShouldProcess)]
     [Alias('Clean-CurrentUserTemp')]
