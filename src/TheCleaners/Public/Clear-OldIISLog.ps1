@@ -1,8 +1,3 @@
-###################################################################################
-#                                                                                 #
-# WARNING: This script is still being developed and tested. Use at your own risk. #
-#                                                                                 #
-###################################################################################
 function Clear-OldIISLog {
     <#
     .SYNOPSIS
@@ -12,7 +7,7 @@ function Clear-OldIISLog {
         This script will clean out IIS log files older than x days.
 
     .PARAMETER Days
-        The number of days to keep log files. The default is 60 days.
+        The number of days to keep log files. The default is 30 days.
 
     .EXAMPLE
         Clear-OldIISLogFile -Days 60
@@ -24,15 +19,16 @@ function Clear-OldIISLog {
         each web site. Otherwise, it checks the assumed default log folder location and the registry for the IIS
         log file location.
 
-    .COMPONENT
-        TheCleaners
+        To Do: Add a summary of which blocks were run and possibly a count of log files removed.
+
     #>
     [CmdletBinding()]
     [Alias('Clean-IISLog')]
     #[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
     param (
         [Parameter()]
-        [int]
+        [ValidateRange(1, [int16]::MaxValue)] # Ensure it is a positive number.
+        [int16]
         $Days = 60
     )
 
@@ -41,7 +37,7 @@ function Clear-OldIISLog {
         # Get the logfile directory for each web site
         $WebSites = Get-Website
         foreach ($site in $WebSites) {
-            $SiteLogFileDirectory = ("$($Site.logFile.directory)\W3SVC$($Site.id)").Replace( '%SystemDrive%',$env:SystemDrive )
+            $SiteLogFileDirectory = ("$($Site.logFile.directory)\W3SVC$($Site.id)").Replace( '%SystemDrive%', $env:SystemDrive )
             Write-Information -MessageData "Removing old IIS log files from $($Site.name) at $SiteLogFileDirectory." -InformationAction Continue
             try {
                 Remove-OldFiles -Path $SiteLogFileDirectory -Days $Days -WhatIf
@@ -66,7 +62,7 @@ function Clear-OldIISLog {
         }
 
         # If the WebAdministration module is not available,try to check the IIS log file location from the registry (requires local admin rights to read this path)
-        $LogDir = Get-ItemProperty -Path 'HKLM:\\System\CurrentControlSet\Services\W3SVC\Parameters' -Name "LogDir" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LogDir
+        $LogDir = Get-ItemProperty -Path 'HKLM:\\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LogDir
         if ($LogDir -and (Test-Path -Path $LogDir)) {
             try {
                 Remove-OldFiles -Path $LogDir -Days $Days
@@ -75,10 +71,8 @@ function Clear-OldIISLog {
                 Write-Warning "Failed to remove old IIS log files from the location specified in the directory ($LogDir)." -WarningAction Continue
             }
         } else {
-            Write-Information -MessageData "Unable to find an alternate IIS log file location from the registry." -InformationAction Continue
+            Write-Information -MessageData 'Unable to find an alternate IIS log file location from the registry.' -InformationAction Continue
         }
     }
-    <#
-        To Do: Add a summary of which blocks were run and possibly a count of log files removed.
-    #>
+
 }
