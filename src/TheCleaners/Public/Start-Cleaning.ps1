@@ -28,7 +28,7 @@
 
     if ($Dedication) {
         Write-Host "`nThis is dedicated to the friends that I spent years working with`nand learning PowerShell with. Cheers to Alex, Lyle, Jon, & Rick! " -ForegroundColor Yellow -NoNewline
-        Write-Host "❤️`n" -ForegroundColor Red
+        Write-Host "❤️`n" -ForegroundColor Red ; Write-Host ''
     }
 
     Show-TCLogo
