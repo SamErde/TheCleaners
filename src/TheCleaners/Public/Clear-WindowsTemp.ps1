@@ -14,8 +14,6 @@ function Clear-WindowsTemp {
 
         Removes all Windows Temp files that are older than 60 days.
 
-    .COMPONENT
-        TheCleaners
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')]
     [Alias('Clean-WindowsTemp')]
