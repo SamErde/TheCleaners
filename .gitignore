@@ -1,13 +1,18 @@
-# Project Files
+# Project Files #
 Archive
 Artifacts
 cov.xml
 coverage.xml
-# OS Files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
+Ignore
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+### OS ###
 Thumbs.db
+.DS_Store

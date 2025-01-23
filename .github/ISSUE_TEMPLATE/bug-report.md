@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Submit a new bug
-title: Bug report
+title: '🪲 Bug report'
 labels: bug
 assignees: SamErde
 

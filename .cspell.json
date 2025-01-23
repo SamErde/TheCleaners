@@ -1,0 +1,37 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "import": [
+    "@cspell/dict-powershell/cspell-ext.json",
+    "@cspell/dict-csharp/cspell-ext.json"
+  ],
+  "words": ["distros", "LCID", "MSIX", "RSAT"],
+  "ignoreWords": [
+    "msstore",
+    "choco",
+    "Chocolately's",
+    "sarif",
+    "psscriptanalyzer",
+    "JDHIT",
+    "POWERSHELLGALLERY",
+    "stefanzweifel",
+    "ohmyposh",
+    "pozil",
+    "antonyurchenko",
+    "Salzach",
+    "Usergroup",
+    "Fira",
+    "softwareupdate",
+    "mailaddress",
+    "wuauserv"
+  ],
+  "flagWords": [],
+  "patterns": [
+    {
+      "name": "ALL-CAPS-WORDS",
+      "pattern": "/\b[A-Z0-9]+\b/g",
+      "description": "Any word in ALL CAPS."
+    }
+  ],
+  "ignoreRegExpList": ["ALL-CAPS-WORDS", "Email", "github.com/", "@"]
+}

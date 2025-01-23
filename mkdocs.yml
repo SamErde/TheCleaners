@@ -11,12 +11,12 @@
 site_name: "The Cleaners PowerShell Module"
 site_url: "https://day3bits.com/TheCleaners"
 repo_url: "https://github.com/SamErde/TheCleaners"
-repo_name: "TheCleaners"
+repo_name: "SamErde/TheCleaners"
 # edit_uri: edit/main/docs/
 # edit_uri_template:
 site_description: "The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!" # meta tag to the generated HTML header
 site_author: "Sam Erde" # meta tag to the generated HTML header
-copyright: "(c) 2024 Sam Erde"
+copyright: "(c) 2025 Sam Erde"
 # remote_branch:
 # remote_name:
 docs_dir: "docs"
@@ -42,6 +42,10 @@ docs_dir: "docs"
 
 theme:
   name: material
+  highlightjs: true
+  hljs_languages:
+    - yaml
+    - powershell
   palette:
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
@@ -69,6 +73,13 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.path
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - toc.follow
+    - toc.integrate
   # favicon:
   # icon:
   #   repo:
