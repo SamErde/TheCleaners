@@ -11,4 +11,5 @@ If you discover a vulnerability in **The Cleaners**, please follow the _followin
 
    Please **do not disclose the vulnerability publicly** until a fix is released!
 
-4. Once we have either a) published a fix, or b) declined to address the vulnerability for whatever reason, you are free to publicly disclose it.
+4. Once we have either a) published a fix, or b) declined to address the vulnerability for
+whatever reason, you are free to publicly disclose it.

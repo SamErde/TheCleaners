@@ -82,11 +82,9 @@ function Add-MissingCommonParameterToMarkdown {
                     if ($CommonParameter.StartsWith('-')) {
                         if ($CommonParameter.EndsWith(',')) {
                             $CleanParam = $CommonParameter.Substring(0, $CommonParameter.Length - 1)
-                        }
-                        elseif ($p.EndsWith('.')) {
+                        } elseif ($p.EndsWith('.')) {
                             $CleanParam = $CommonParameter.Substring(0, $CommonParameter.Length - 1)
-                        }
-                        else {
+                        } else {
                             $CleanParam = $CommonParameter
                         }
                         $CommonParameters += $CleanParam
@@ -96,7 +94,7 @@ function Add-MissingCommonParameterToMarkdown {
                     $CommonParameters += $NewParameter
                 }
                 $CommonParameters[-1] = "and $($CommonParameters[-1]). "
-                return "This cmdlet supports the common parameters: " + (($CommonParameters | Sort-Object) -join ', ')
+                return 'This cmdlet supports the common parameters: ' + (($CommonParameters | Sort-Object) -join ', ')
             }
             $newContent = $content -replace $pattern, $replacement
             if ($null -ne (Compare-Object -ReferenceObject $content -DifferenceObject $newContent)) {
