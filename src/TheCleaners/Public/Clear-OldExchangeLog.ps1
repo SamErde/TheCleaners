@@ -63,8 +63,7 @@ function Clear-OldExchangeLog {
             }
 
             $OldFiles = Get-ChildItem -Path $($LogLocation.Value) -Recurse |
-                Where-Object { ($_.Name -like '*.log') -and ($_.lastWriteTime -le "$LastWriteDate") } |
-                    Select-Object FullName
+                Where-Object { ($_.Name -like '*.log') -and ($_.lastWriteTime -le "$LastWriteDate") } | Select-Object FullName
 
             foreach ($file in $OldFiles) {
                 if ( $PSCmdlet.ShouldProcess($file.Name) ) {
