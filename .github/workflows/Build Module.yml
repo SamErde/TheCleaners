@@ -5,53 +5,79 @@
 # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-powershell
 # https://github.com/actions/upload-artifact#where-does-the-upload-go
-name: Build TheCleaners Module
+
+name: 👷 👷 Build TheCleaners Module
 on:
   pull_request:
+    branches:
+      - main
+      - prerelease
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - 'src/Drafts/**'
   push:
     paths:
-      - 'src/**'
-      - '.github/workflows/Build Module.yml'
-    #paths-ignore:
+      - 'src/**/TheCleaners/**'
+      # Ignore Paths that begin with an '!'
+      - '!**.md'
+      - '!docs/**'
+      - '!src/Drafts/**'
+    #paths-ignore: # Cannot use both paths and paths-ignore simultaneously.
     #  - '**.md'
     #  - 'docs/**'
+    #  - 'src/Drafts/**'
+  workflow_dispatch:
+
 jobs:
   test:
-    name: Run Tests
-    runs-on: windows-latest
+    name: 🧪 Run Tests
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+
     steps:
-    - name: Check out repository
+
+    - name: ✅ Checkout Repository
       uses: actions/checkout@v4
-    - name: Display the path
+
+    - name: 📁 Display the Path
       shell: pwsh
       run: echo ${env:PATH}
-    - name: Version Display
+
+    - name: 🔢 Display the Version
       shell: pwsh
       run: $PSVersionTable
-    # uncomment below to explore what modules/variables/env variables are available in the build image
-    # - name: Modules and Variables Display
-    #   shell: pwsh
-    #   run: Get-Module -ListAvailable; (Get-Variable).GetEnumerator() | Sort-Object Name | Out-String; (Get-ChildItem env:*).GetEnumerator() | Sort-Object Name | Out-String
-    - name: Bootstrap
+
+    # Uncomment below to explore what modules/variables/env variables are available in the build image
+    - name: 📦 Modules and Variables Display
+      shell: pwsh
+      run: Get-Module -ListAvailable; (Get-Variable).GetEnumerator() | Sort-Object Name | Out-String; (Get-ChildItem env:*).GetEnumerator() | Sort-Object Name | Out-String
+
+    - name: 🥾 Bootstrap
       shell: pwsh
       run: ./actions_bootstrap.ps1
-    - name: Test and Build
+
+    - name: 👷‍♂️ Test and Build
       shell: pwsh
       run: Invoke-Build -File .\src\TheCleaners.build.ps1
-    - name: Upload pester results
+
+    - name: 🧪 Upload Pester Results
       uses: actions/upload-artifact@v4
       with:
         name: pester-results
         path: .\src\Artifacts\testOutput
         if-no-files-found: warn
-    - name: Upload zip module archive build
+
+    - name: 📦 Upload Build
       uses: actions/upload-artifact@v4
       with:
         name: zip-archive
         path: .\src\Archive
         if-no-files-found: warn
+        # git-auto-commit-action only runs on Linux-based platforms.
+
+    - name: 💾 Commit Changes
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: 'Commit Build'
