@@ -84,28 +84,30 @@
         PSData = @{
 
             # Tags applied to this module. These help with module discovery in online galleries.
-            Tags       = @('Windows', 'WindowsServer', 'Windows-Server', 'PowerShell', 'SysAdmin', 'Maintenance', 'Utility', 'Utilities', 'Exchange', 'ExchangeServer', 'IIS')
+            Tags                       = @('Windows', 'WindowsServer', 'Windows-Server', 'PowerShell', 'SysAdmin', 'Maintenance', 'Utility', 'Utilities', 'Exchange', 'ExchangeServer', 'IIS')
 
             # A URL to the license for this module.
-            LicenseUri = 'https://github.com/SamErde/TheCleaners/blob/main/LICENSE'
+            LicenseUri                 = 'https://github.com/SamErde/TheCleaners/blob/main/LICENSE'
 
             # A URL to the main website for this project.
-            ProjectUri = 'https://github.com/SamErde/TheCleaners'
+            ProjectUri                 = 'https://github.com/SamErde/TheCleaners'
 
             # A URL to an icon representing this module.
-            IconUri    = 'https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-Icon.png'
+            IconUri                    = 'https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-Icon.png'
 
             # ReleaseNotes of this module
             # ReleaseNotes = ''
 
             # Prerelease string of this module
-            Prerelease = 'alpha'
+            Prerelease                 = 'alpha'
 
             # Flag to indicate whether the module requires explicit user acceptance for install/update/save
             # RequireLicenseAcceptance = $false
 
             # External dependent modules of this module
-            # ExternalModuleDependencies = @()
+            ExternalModuleDependencies = @(
+                'WebAdministration'
+            )
 
         } # End of PSData hashtable
 
