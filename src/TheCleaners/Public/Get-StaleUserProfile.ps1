@@ -38,11 +38,11 @@ function Get-StaleUserProfile {
     # Might need to check last modified date using NTFS: foreach ($profile in $StaleUserProfiles) { Get-Item -Path $($_.LocalPath).LastWriteTime }
 
     if ($StaleUserProfiles.Count -lt 1 -or !(StaleUserProfiles)) {
-        Write-Information "No stale user profiles were found." -InformationAction Continue
+        Write-Information 'No stale user profiles were found.' -InformationAction Continue
     } else {
         if ($ShowSummary) {
-            $StaleUserProfiles | Select-Object LocalPath,SID, @{ Name="Size"; Expression={"{0} MB" -f [math]::Round(((Get-ChildItem $_.LocalPath -Recurse | Measure-Object -Property Length -Sum -ErrorAction Stop).Sum / 1MB))} } | Out-Host
-            Write-Information -InformationAction Continue "NOTE: If you do not have access to a profile folder, the size will show as 0 MB."
+            $StaleUserProfiles | Select-Object LocalPath, SID, @{ Name = 'Size'; Expression = { '{0} MB' -f [math]::Round(((Get-ChildItem $_.LocalPath -Recurse | Measure-Object -Property Length -Sum -ErrorAction Stop).Sum / 1MB)) } } | Out-Host
+            Write-Information -InformationAction Continue 'NOTE: If you do not have access to a profile folder, the size will show as 0 MB.'
         }
         $StaleUserProfiles
     }

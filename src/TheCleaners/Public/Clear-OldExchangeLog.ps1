@@ -37,7 +37,7 @@ function Clear-OldExchangeLog {
         try {
             $ExchangeInstallPath = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup).MsiInstallPath
         } catch {
-            Write-Warning -WarningAction Continue "The Exchange Server installation path could not be found. Please ensure that Exchange Server is installed on this machine."
+            Write-Warning -WarningAction Continue 'The Exchange Server installation path could not be found. Please ensure that Exchange Server is installed on this machine.'
             return
         }
 
@@ -63,8 +63,8 @@ function Clear-OldExchangeLog {
             }
 
             $OldFiles = Get-ChildItem -Path $($LogLocation.Value) -Recurse |
-                Where-Object { ($_.Name -like "*.log") -and ($_.lastWriteTime -le "$LastWriteDate") } |
-                Select-Object FullName
+                Where-Object { ($_.Name -like '*.log') -and ($_.lastWriteTime -le "$LastWriteDate") } |
+                    Select-Object FullName
 
             foreach ($file in $OldFiles) {
                 if ( $PSCmdlet.ShouldProcess($file.Name) ) {
