@@ -1,7 +1,3 @@
-<!-- markdownlint-disable first-line-heading -->
-<!-- markdownlint-disable blanks-around-headings -->
-<!-- markdownlint-disable no-inline-html -->
-<!-- markdownlint-disable MD024 -->
 # The Cleaners
 
 <!-- badges-start -->
@@ -17,7 +13,7 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SamErde/TheCleaners/.github%2Fworkflows%2FDeploy%20MkDocs.yml?label=MkDocs)
 <!-- badges-end -->
 
-<img src="https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-CodeHoodieNoBG.png" alt="A logo for The Cleaners that shows an illustration of a 'hacker' wearing a hoodie and holding a box of cleaning supplies. There is a PowerShell logo on the box. Where the hacker's face should be, there is just a black console with code on it." width="400" />
+<img src="https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-CodeHoodieNoBG.png" width="400" />
 
 ## Synopsis
 
