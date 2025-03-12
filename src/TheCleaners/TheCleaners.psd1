@@ -4,7 +4,7 @@
     RootModule           = 'TheCleaners.psm1'
 
     # Version number of this module.
-    ModuleVersion        = '0.0.14'
+    ModuleVersion        = '0.0.15'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Core', 'Desktop')
@@ -34,7 +34,9 @@
     # RequiredAssemblies = @()
 
     # Script files (.ps1) that are run in the caller's environment prior to importing this module.
-    # ScriptsToProcess = @()
+    ScriptsToProcess     = @(
+        'Invoke-TheCleaners.ps1'
+    )
 
     # Type files (.ps1xml) to be loaded when importing this module
     # TypesToProcess = @()
@@ -99,7 +101,7 @@
             # ReleaseNotes = ''
 
             # Prerelease string of this module
-            Prerelease                 = 'alpha'
+            Prerelease                 = 'beta'
 
             # Flag to indicate whether the module requires explicit user acceptance for install/update/save
             # RequireLicenseAcceptance = $false
