@@ -7,7 +7,7 @@ on:
     paths:  # Only deploy MkDocs when the contents of the docs folder change or when this workflow changes.
       - 'docs/**'
       - '.github/workflows/Deploy MkDocs.yml'
-      - './mkdocs.yml'
+      - '.github//mkdocs.yml'
   workflow_dispatch:
 
 jobs:
