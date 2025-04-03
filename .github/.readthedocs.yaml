@@ -13,7 +13,7 @@ build:
     python: "3.12"
 
 mkdocs:
-  configuration: mkdocs.yml
+  configuration: .github/mkdocs.yml
 
 python:
   install:
