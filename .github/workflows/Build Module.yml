@@ -18,7 +18,7 @@ on:
       - 'src/Drafts/**'
   push:
     paths:
-      - 'src/**/TheCleaners/**'
+      - 'src/**/${{ github.event.repository.name }}/**''
       # Ignore Paths that begin with an '!'
       - '!**.md'
       - '!docs/**'
@@ -40,14 +40,6 @@ jobs:
 
     - name: ✅ Checkout Repository
       uses: actions/checkout@v4
-
-    - name: 📁 Display the Path
-      shell: pwsh
-      run: echo ${env:PATH}
-
-    - name: 🔢 Display the Version
-      shell: pwsh
-      run: $PSVersionTable
 
     # Uncomment below to explore what modules/variables/env variables are available in the build image
     - name: 📦 Modules and Variables Display
