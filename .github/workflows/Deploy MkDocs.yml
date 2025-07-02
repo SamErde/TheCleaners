@@ -1,18 +1,30 @@
 name: 📖 Deploy MkDocs to GitHub Pages
 
 on:
+
+  # Run when changes are made to the contents of the docs folder, the MkDocs config, or this workflow.
   push:
     branches:
-      - main  # The branch you want to deploy from
-    paths:  # Only deploy MkDocs when the contents of the docs folder change or when this workflow changes.
+      - main
+    paths:
       - 'docs/**'
       - '.github/workflows/Deploy MkDocs.yml'
-      - '.github//mkdocs.yml'
+      - '.github/mkdocs.yml'
+
+  # Allow manual triggering of the workflow.
   workflow_dispatch:
 
 jobs:
+
   build:
+    permissions:
+      contents: write
+      pull-requests: write
+
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
 
     steps:
       - name: ✅ Checkout Repository
@@ -32,14 +44,3 @@ jobs:
         run: |
           mkdocs build
           mkdocs gh-deploy --force
-
-      # Combine markdown files to create the MkDocs index and the repository readme
-      - name: 📖 Update Index & Readme
-        shell: pwsh
-        run: Copy-Item ./docs/index.md ./README.md
-        # git-auto-commit-action only runs on Linux-based platforms.
-      - name: 💾 Commit Changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'Copy MkDocs index to README'
-          file_pattern: 'docs/index.md README.md'
