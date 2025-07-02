@@ -16,17 +16,7 @@ on:
       - '**.md'
       - 'docs/**'
       - 'src/Drafts/**'
-  push:
-    paths:
-      - 'src/**/${{ github.event.repository.name }}/**''
-      # Ignore Paths that begin with an '!'
-      - '!**.md'
-      - '!docs/**'
-      - '!src/Drafts/**'
-    #paths-ignore: # Cannot use both paths and paths-ignore simultaneously.
-    #  - '**.md'
-    #  - 'docs/**'
-    #  - 'src/Drafts/**'
+
   workflow_dispatch:
 
 jobs:
