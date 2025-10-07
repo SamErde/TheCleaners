@@ -98,3 +98,10 @@ nav:
       - "Clear-UserTemp": "Clear-UserTemp.md"
       - "Clear-WindowsTemp": "Clear-WindowsTemp.md"
       - "Get-StaleUserProfile": "Get-StaleUserProfile.md"
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
