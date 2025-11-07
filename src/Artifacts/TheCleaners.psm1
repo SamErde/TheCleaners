@@ -12,205 +12,53 @@
 .GUID bec6a004-45da-4062-ab78-b8eae99f29be
 .AUTHOR Sam Erde
 .COPYRIGHT (c) 2025 Sam Erde. All rights reserved.
-.TAGS Update PowerShell Windows
+.TAGS PowerShell Windows Utility
 .LICENSEURI https://github.com/SamErde/TheCleaners/blob/main/LICENSE
 .PROJECTURI https://github.com/SamErde/TheCleaners/
 #>
+
 function Invoke-TheCleaners {
+    <#
+    .SYNOPSIS
+    Show a welcome message when the module is imported explicitly by the user.
+
+    .DESCRIPTION
+    This function shows a welcome message to help the user get started when they explicitly import the module. If the
+    module is automatically imported by invoking one of its exported functions, we assume the user already knows the
+    command that they want to run and do not show the welcome message.
+
+    .PARAMETER InvokingCommand
+    A parameter to receive the command line that called this function. This is used to determine if the module was
+    imported explicitly by the user or automatically by invoking one of its exported functions. This information must
+    come from outside the function in order to be able to determine what command invoked the script itself.
+
+    .EXAMPLE
+    Invoke-TheCleaners -InvokingCommand "$( ((Get-PSCallStack)[1]).InvocationInfo.MyCommand )"
+
+    .NOTES
+    Author: Sam Erde
+    Company: Sentinel Technologies, Inc
+    Date: 2025-03-11
+    Version: 1.0.0
+    #>
     [CmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '')]
-    param()
-    Write-Host "Thank you for calling The Cleaners! 🧹`nRun " -ForegroundColor Green -NoNewline
-    Write-Host 'Start-Cleaning' -BackgroundColor Black -ForegroundColor White -NoNewline
-    Write-Host " to see the services we offer today.`n" -ForegroundColor Green
-}
-
-Invoke-TheCleaners
-
-
-function Convert-SamAccountNameToSID {
-    <#
-    .SYNOPSIS
-        Translates a SamAccountName to a SID.
-
-    .DESCRIPTION
-        Translates a SamAccountName to a SID.
-
-    .PARAMETER domain
-        The domain to search for the SamAccountName.
-
-    .PARAMETER SamAccountName
-        The SamAccountName to translate to a SID.
-
-    .EXAMPLE
-        Convert-SamAccountNameToSID -Domain "contoso" -SamAccountName "jdoe"
-
-        Translates the SamAccountName "jdoe" to a SID.
-
-    .COMPONENT
-        TheCleaners
-    #>
-    [CmdletBinding()]
     param (
-        # The Domain
+        # The command that called this function.
         [Parameter(Mandatory)]
-        [string]$Domain,
-
-        # The SamAccountName
-        [Parameter(Mandatory)]
-        [string]$SamAccountName
-    )
-
-    $User = New-Object System.Security.Principal.NTAccount($Domain,$SamAccountName)
-    $SID = $User.Translate([System.Security.Principal.SecurityIdentifier])
-    $SID.Value
-} # End function Convert-SamAccountNameToSID
-
-
-function Convert-SIDtoSamAccountName {
-    <#
-    .SYNOPSIS
-        Translates a SID to a SamAccountName.
-
-    .DESCRIPTION
-        Translates a SID to a SamAccountName.
-
-    .PARAMETER SID
-        The SID to translate to a SamAccountName.
-
-    .EXAMPLE
-        Convert-SIDtoSamAccountName -SID "S-1-5-21-3623811015-3361044348-30300820"
-
-        Translates the SID to a SamAccountName.
-
-    .COMPONENT
-        TheCleaners
-    #>
-    [CmdletBinding()]
-    param (
-        # The SID as a string or a SID object.
-        [Parameter(Mandatory)]
-        $SID
-    )
-
-    $SID = New-Object System.Security.Principal.SecurityIdentifier($SID)
-    $User = $SID.Translate([System.Security.Principal.NTAccount])
-    $User.Value
-} # End function Convert-SIDtoSamAccountName
-
-
-<#
-.SYNOPSIS
-    Remove files in a path that are older than the specified number of days.
-
-.DESCRIPTION
-    Remove files in a path that are older than the specified number of days. This function is used by other functions within the module when removing old files.
-
-.EXAMPLE
-    Remove-OldFiles -Path "C:\Windows\Temp" -Days 60 -Recurse
-
-    Removes all files older than 60 does in C:\Windows\Temp with recursion to clean subfolders.
-#>
-function Remove-OldFiles {
-    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
-    param (
-        # The path containing files to remove
         [string]
-        $Path,
-
-        # How many days worth of logs to retain (how far back to filter)
-        [int16]
-        $Days = 60
+        $InvokingCommand
     )
 
-    begin {
-
+    if ($InvokingCommand -match 'ipmo|Import-Module') {
+        Write-Host "Thank you for calling The Cleaners! 🧹`nRun " -ForegroundColor Green -NoNewline
+        Write-Host 'Start-Cleaning' -BackgroundColor Black -ForegroundColor White -NoNewline
+        Write-Host " to see the services we offer today.`n" -ForegroundColor Green
     }
 
-    process {
-        Write-Verbose -Message "Finding and removing files older than $Days."
-        Get-ChildItem -Path $Path -Recurse | Where-Object {
-            $_.CreationTime -le ([datetime]::Now.AddDays( -$Days ))
-        } | Remove-Item
-    }
-
-    end {
-
-    }
 }
 
-
-function Show-TCLogo {
-    <#
-    .SYNOPSIS
-    Show an ASCII art logo for The Cleaners.
-
-    .DESCRIPTION
-    Show a color or plain ASCII art logo for The Cleaners whenever you need it in another function.
-
-    .PARAMETER Plain
-    Return a plan-text version of the logo instead of multi-colored Write-Host output.
-
-    .EXAMPLE
-    Show-Logo
-
-    .EXAMPLE
-    Show-Logo -Plain
-
-    #>
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost','')]
-    param (
-        [Parameter()]
-        [switch]
-        $Plain
-    )
-
-    $Version = (Import-PowerShellDataFile -Path $PSScriptRoot\..\TheCleaners.psd1).ModuleVersion
-
-    if ($Plain.IsPresent) {
-        $Logo = @"
-
-        ╭━━━━┳╮╱╱╱╱╱╭━━━┳╮
-        ┃╭╮╭╮┃┃╱╱╱╱╱┃╭━╮┃┃          v$Version
-        ╰╯┃┃╰┫╰━┳━━╮┃┃╱╰┫┃╭━━┳━━┳━╮ ╭━━┳━┳━━╮
-        ╱╱┃┃╱┃╭╮┃┃━┫┃┃╱╭┫┃|┃━┫╭╮┃╭╮╮┃|━┫╭┫━━┫
-        ╱╱┃┃╱┃┃┃┃┃━┫┃╰━╯┃╰┫┃━┫╭╮┃||┃┃|━┫|┣━━┃
-        ╱╱╰╯╱╰╯╰┻━━╯╰━━━┻━┻━━┻╯╰┻╯╰┻┻━━┻╯╰━━╯
-
-"@
-        return $Logo
-    } else {
-        Write-Host ''
-        Write-Host '    ╭━━━━┳╮' -ForegroundColor DarkCyan -NoNewline
-        Write-Host '╱╱╱╱╱' -ForegroundColor Yellow -NoNewline
-        Write-Host '╭━━━┳╮' -ForegroundColor DarkCyan #NewLine
-        Write-Host '    ┃╭╮╭╮┃┃' -ForegroundColor DarkCyan -NoNewline
-        Write-Host '╱╱╱╱╱' -ForegroundColor Yellow -NoNewline
-        Write-Host '┃╭━╮┃┃' -ForegroundColor DarkCyan -NoNewline #NewLine
-        Write-Host " v$Version" -ForegroundColor Yellow
-        Write-Host '    ╰╯┃┃╰┫╰━┳━━╮┃┃' -ForegroundColor DarkCyan -NoNewline
-        Write-Host '/' -ForegroundColor Yellow -NoNewline
-        Write-Host '╰┫┃╭━━┳━━┳━╮' -ForegroundColor DarkCyan -NoNewline
-        Write-Host '*' -ForegroundColor Yellow -NoNewline
-        Write-Host '╭━━┳━┳━━╮' -ForegroundColor DarkCyan #NewLine
-        Write-Host '    ╱╱' -ForegroundColor Yellow -NoNewline
-        Write-Host '┃┃' -ForegroundColor DarkCyan -NoNewline
-        Write-Host '/' -ForegroundColor Yellow -NoNewline
-        Write-Host '┃╭╮┃┃━┫┃┃' -ForegroundColor DarkCyan -NoNewline
-        Write-Host '/' -ForegroundColor Yellow -NoNewline
-        Write-Host '╭┫┃|┃━┫╭╮┃╭╮╮┃|━┫╭┫━━┫' -ForegroundColor DarkCyan #NewLine
-        Write-Host '    ╱╱' -ForegroundColor Yellow -NoNewline
-        Write-Host '┃┃' -ForegroundColor DarkCyan -NoNewline
-        Write-Host '/' -ForegroundColor Yellow -NoNewline
-        Write-Host '┃┃┃┃┃━┫┃╰━╯┃╰┫┃━┫╭╮┃||┃┃|━┫|┣━━┃' -ForegroundColor DarkCyan #NewLine
-        Write-Host '    ╱╱' -ForegroundColor Yellow -NoNewline
-        Write-Host '┃┃' -ForegroundColor DarkCyan -NoNewline
-        Write-Host '/' -ForegroundColor Yellow -NoNewline
-        Write-Host '╰╯╰┻━━╯╰━━━┻━┻━━┻╯╰┻╯╰┻┻━━┻╯╰━━╯' -ForegroundColor DarkCyan #NewLine
-        Write-Host ''
-    }
-}
+Invoke-TheCleaners -InvokingCommand "$( ((Get-PSCallStack)[1]).InvocationInfo.MyCommand )"
 
 
 function Clear-CurrentUserTemp {
@@ -526,6 +374,191 @@ function Start-Cleaning {
     Get-Command -Module TheCleaners | Select-Object @{Name = 'The Cleaners Offer These Services: 🧹'; Expression = { $_.Name } }
 }
 
+
+
+function Convert-SamAccountNameToSID {
+    <#
+    .SYNOPSIS
+        Translates a SamAccountName to a SID.
+
+    .DESCRIPTION
+        Translates a SamAccountName to a SID.
+
+    .PARAMETER domain
+        The domain to search for the SamAccountName.
+
+    .PARAMETER SamAccountName
+        The SamAccountName to translate to a SID.
+
+    .EXAMPLE
+        Convert-SamAccountNameToSID -Domain "contoso" -SamAccountName "jdoe"
+
+        Translates the SamAccountName "jdoe" to a SID.
+
+    .COMPONENT
+        TheCleaners
+    #>
+    [CmdletBinding()]
+    param (
+        # The Domain
+        [Parameter(Mandatory)]
+        [string]$Domain,
+
+        # The SamAccountName
+        [Parameter(Mandatory)]
+        [string]$SamAccountName
+    )
+
+    $User = New-Object System.Security.Principal.NTAccount($Domain,$SamAccountName)
+    $SID = $User.Translate([System.Security.Principal.SecurityIdentifier])
+    $SID.Value
+} # End function Convert-SamAccountNameToSID
+
+
+function Convert-SIDtoSamAccountName {
+    <#
+    .SYNOPSIS
+        Translates a SID to a SamAccountName.
+
+    .DESCRIPTION
+        Translates a SID to a SamAccountName.
+
+    .PARAMETER SID
+        The SID to translate to a SamAccountName.
+
+    .EXAMPLE
+        Convert-SIDtoSamAccountName -SID "S-1-5-21-3623811015-3361044348-30300820"
+
+        Translates the SID to a SamAccountName.
+
+    .COMPONENT
+        TheCleaners
+    #>
+    [CmdletBinding()]
+    param (
+        # The SID as a string or a SID object.
+        [Parameter(Mandatory)]
+        $SID
+    )
+
+    $SID = New-Object System.Security.Principal.SecurityIdentifier($SID)
+    $User = $SID.Translate([System.Security.Principal.NTAccount])
+    $User.Value
+} # End function Convert-SIDtoSamAccountName
+
+
+<#
+.SYNOPSIS
+    Remove files in a path that are older than the specified number of days.
+
+.DESCRIPTION
+    Remove files in a path that are older than the specified number of days. This function is used by other functions within the module when removing old files.
+
+.EXAMPLE
+    Remove-OldFiles -Path "C:\Windows\Temp" -Days 60 -Recurse
+
+    Removes all files older than 60 does in C:\Windows\Temp with recursion to clean subfolders.
+#>
+function Remove-OldFiles {
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
+    param (
+        # The path containing files to remove
+        [string]
+        $Path,
+
+        # How many days worth of logs to retain (how far back to filter)
+        [int16]
+        $Days = 60
+    )
+
+    begin {
+
+    }
+
+    process {
+        Write-Verbose -Message "Finding and removing files older than $Days."
+        Get-ChildItem -Path $Path -Recurse | Where-Object {
+            $_.CreationTime -le ([datetime]::Now.AddDays( -$Days ))
+        } | Remove-Item
+    }
+
+    end {
+
+    }
+}
+
+
+function Show-TCLogo {
+    <#
+    .SYNOPSIS
+    Show an ASCII art logo for The Cleaners.
+
+    .DESCRIPTION
+    Show a color or plain ASCII art logo for The Cleaners whenever you need it in another function.
+
+    .PARAMETER Plain
+    Return a plan-text version of the logo instead of multi-colored Write-Host output.
+
+    .EXAMPLE
+    Show-Logo
+
+    .EXAMPLE
+    Show-Logo -Plain
+
+    #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost','')]
+    param (
+        [Parameter()]
+        [switch]
+        $Plain
+    )
+
+    $Version = (Import-PowerShellDataFile -Path $PSScriptRoot\..\TheCleaners.psd1).ModuleVersion
+
+    if ($Plain.IsPresent) {
+        $Logo = @"
+
+        ╭━━━━┳╮╱╱╱╱╱╭━━━┳╮
+        ┃╭╮╭╮┃┃╱╱╱╱╱┃╭━╮┃┃          v$Version
+        ╰╯┃┃╰┫╰━┳━━╮┃┃╱╰┫┃╭━━┳━━┳━╮ ╭━━┳━┳━━╮
+        ╱╱┃┃╱┃╭╮┃┃━┫┃┃╱╭┫┃|┃━┫╭╮┃╭╮╮┃|━┫╭┫━━┫
+        ╱╱┃┃╱┃┃┃┃┃━┫┃╰━╯┃╰┫┃━┫╭╮┃||┃┃|━┫|┣━━┃
+        ╱╱╰╯╱╰╯╰┻━━╯╰━━━┻━┻━━┻╯╰┻╯╰┻┻━━┻╯╰━━╯
+
+"@
+        return $Logo
+    } else {
+        Write-Host ''
+        Write-Host '    ╭━━━━┳╮' -ForegroundColor DarkCyan -NoNewline
+        Write-Host '╱╱╱╱╱' -ForegroundColor Yellow -NoNewline
+        Write-Host '╭━━━┳╮' -ForegroundColor DarkCyan #NewLine
+        Write-Host '    ┃╭╮╭╮┃┃' -ForegroundColor DarkCyan -NoNewline
+        Write-Host '╱╱╱╱╱' -ForegroundColor Yellow -NoNewline
+        Write-Host '┃╭━╮┃┃' -ForegroundColor DarkCyan -NoNewline #NewLine
+        Write-Host " v$Version" -ForegroundColor Yellow
+        Write-Host '    ╰╯┃┃╰┫╰━┳━━╮┃┃' -ForegroundColor DarkCyan -NoNewline
+        Write-Host '/' -ForegroundColor Yellow -NoNewline
+        Write-Host '╰┫┃╭━━┳━━┳━╮' -ForegroundColor DarkCyan -NoNewline
+        Write-Host '*' -ForegroundColor Yellow -NoNewline
+        Write-Host '╭━━┳━┳━━╮' -ForegroundColor DarkCyan #NewLine
+        Write-Host '    ╱╱' -ForegroundColor Yellow -NoNewline
+        Write-Host '┃┃' -ForegroundColor DarkCyan -NoNewline
+        Write-Host '/' -ForegroundColor Yellow -NoNewline
+        Write-Host '┃╭╮┃┃━┫┃┃' -ForegroundColor DarkCyan -NoNewline
+        Write-Host '/' -ForegroundColor Yellow -NoNewline
+        Write-Host '╭┫┃|┃━┫╭╮┃╭╮╮┃|━┫╭┫━━┫' -ForegroundColor DarkCyan #NewLine
+        Write-Host '    ╱╱' -ForegroundColor Yellow -NoNewline
+        Write-Host '┃┃' -ForegroundColor DarkCyan -NoNewline
+        Write-Host '/' -ForegroundColor Yellow -NoNewline
+        Write-Host '┃┃┃┃┃━┫┃╰━╯┃╰┫┃━┫╭╮┃||┃┃|━┫|┣━━┃' -ForegroundColor DarkCyan #NewLine
+        Write-Host '    ╱╱' -ForegroundColor Yellow -NoNewline
+        Write-Host '┃┃' -ForegroundColor DarkCyan -NoNewline
+        Write-Host '/' -ForegroundColor Yellow -NoNewline
+        Write-Host '╰╯╰┻━━╯╰━━━┻━┻━━┻╯╰┻╯╰┻┻━━┻╯╰━━╯' -ForegroundColor DarkCyan #NewLine
+        Write-Host ''
+    }
+}
 
 
 
