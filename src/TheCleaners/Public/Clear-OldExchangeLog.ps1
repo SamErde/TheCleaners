@@ -29,7 +29,7 @@ function Clear-OldExchangeLog {
     param (
         [Parameter()]
         [ValidateRange(1, [int16]::MaxValue)]
-        [int]
+        [int16]
         $Days = 60
     )
 

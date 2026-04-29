@@ -24,7 +24,7 @@ This script will clean out IIS log files older than x days.
 
 ### EXAMPLE 1
 ```
-Clear-OldIISLogFile -Days 60
+Clear-OldIISLog -Days 60
 ```
 
 Removes all IIS log files that are older than 60 days.
@@ -33,7 +33,7 @@ Removes all IIS log files that are older than 60 days.
 
 ### -Days
 The number of days to keep log files.
-The default is 30 days.
+The default is 60 days.
 
 ```yaml
 Type: Int16
