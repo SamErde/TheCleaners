@@ -68,7 +68,9 @@ function Clear-OldExchangeLog {
 
             foreach ($File in $OldFiles) {
                 if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove old Exchange log file')) {
-                    Remove-Item -LiteralPath $File.FullName -ErrorAction Stop
+                    # Confirmation is handled by the outer ShouldProcess check, so suppress
+                    # nested Remove-Item confirmation to avoid duplicate prompts.
+                    Remove-Item -LiteralPath $File.FullName -Confirm:$false -ErrorAction Stop
                 }
             } # end foreach $file
 
