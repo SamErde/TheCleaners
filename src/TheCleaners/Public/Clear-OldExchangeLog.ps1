@@ -28,7 +28,8 @@ function Clear-OldExchangeLog {
     # Logs older than this number of days will be removed.
     param (
         [Parameter()]
-        [int]
+        [ValidateRange(1, [int16]::MaxValue)]
+        [int16]
         $Days = 60
     )
 
@@ -45,8 +46,8 @@ function Clear-OldExchangeLog {
         $LogLocations = @{
             ExchangeLoggingPath     = Join-Path -Path $ExchangeInstallPath -ChildPath 'Logging\' -ErrorAction Ignore
             ETLTracesPath           = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\ETLTraces\' -ErrorAction Ignore
-            DiagnosticLogsPath      = Join-Path -Path $ExchangeInstallPath -ChildPath '\Bin\Search\Ceres\Diagnostics\Logs' -ErrorAction Ignore
-            MessageTrackingLogsPath = Join-Path -Path $ExchangeInstallPath -ChildPath '\TransportRoles\Logs\MessageTracking\' -ErrorAction Ignore
+            DiagnosticLogsPath      = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\Logs' -ErrorAction Ignore
+            MessageTrackingLogsPath = Join-Path -Path $ExchangeInstallPath -ChildPath 'TransportRoles\Logs\MessageTracking\' -ErrorAction Ignore
         }
 
         $LastWriteDate = (Get-Date).AddDays(-$Days)
@@ -54,7 +55,7 @@ function Clear-OldExchangeLog {
 
     process {
         # Clean up the IIS log files
-        Clear-OldIisLogFiles -Days $Days
+        Clear-OldIISLog -Days $Days -WhatIf:$WhatIfPreference
 
         foreach ($LogLocation in $LogLocations.GetEnumerator()) {
             if (-not (Test-Path -Path $LogLocation.Value)) {
@@ -62,12 +63,14 @@ function Clear-OldExchangeLog {
                 continue
             }
 
-            $OldFiles = Get-ChildItem -Path $($LogLocation.Value) -Recurse |
-                Where-Object { ($_.Name -like '*.log') -and ($_.lastWriteTime -le "$LastWriteDate") } | Select-Object FullName
+            $OldFiles = Get-ChildItem -Path $($LogLocation.Value) -File -Recurse |
+                Where-Object { ($_.Name -like '*.log') -and ($_.LastWriteTime -le $LastWriteDate) }
 
-            foreach ($file in $OldFiles) {
-                if ( $PSCmdlet.ShouldProcess($file.Name) ) {
-                    $file.Delete()
+            foreach ($File in $OldFiles) {
+                if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove old Exchange log file')) {
+                    # Confirmation is handled by the outer ShouldProcess check, so suppress
+                    # nested Remove-Item confirmation to avoid duplicate prompts.
+                    Remove-Item -LiteralPath $File.FullName -Confirm:$false -ErrorAction Stop
                 }
             } # end foreach $file
 

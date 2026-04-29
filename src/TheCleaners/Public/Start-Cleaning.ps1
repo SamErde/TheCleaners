@@ -6,8 +6,8 @@
     .DESCRIPTION
         Get started with a menu of services The Cleaners can offer.
 
-    .PARAMETER NoLogo
-        Do not display the logo.
+    .PARAMETER Dedication
+        Show a short dedication before the command menu.
 
     .EXAMPLE
         Start-Cleaning

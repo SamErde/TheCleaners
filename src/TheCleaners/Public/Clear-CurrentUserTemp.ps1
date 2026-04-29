@@ -85,9 +85,23 @@ function Clear-CurrentUserTemp {
             break
         }
         # Get directories that have 0 files in them.
-        $EmptyDirectories = Get-ChildItem -Path $UserTempPath -Directory -Recurse | Where-Object { $_.GetFileSystemInfos().Count -eq 0 } | Out-Null
+        $EmptyDirectories = @(Get-ChildItem -Path $UserTempPath -Directory -Recurse | Where-Object { $_.GetFileSystemInfos().Count -eq 0 })
         Write-Verbose "$($EmptyDirectories.Count) empty directories found."
-        $EmptyDirectories | Remove-Item
+        $RemovedDirectory = $false
+        foreach ($Directory in $EmptyDirectories) {
+            if ($PSCmdlet.ShouldProcess("Removing $($Directory.FullName)", $Directory.FullName, 'Remove-Item')) {
+                try {
+                    Remove-Item -LiteralPath $Directory.FullName -ErrorAction Stop
+                    $RemovedDirectory = $true
+                } catch {
+                    Write-Warning -Message "Failed to remove directory '$($Directory.FullName)': $($_.Exception.Message)"
+                }
+            }
+        }
+
+        if ($EmptyDirectories.Count -gt 0 -and -not $RemovedDirectory) {
+            break
+        }
     } until (
         $EmptyDirectories.Count -eq 0
     )

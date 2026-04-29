@@ -37,7 +37,7 @@ function Get-StaleUserProfile {
     [array]$StaleUserProfiles = Get-CimInstance -Class Win32_UserProfile | Where-Object { ($_.LastUseTime -lt (Get-Date).AddDays(-$Days)) -and (!$_.Special) -and (!$_.Loaded) }
     # Might need to check last modified date using NTFS: foreach ($profile in $StaleUserProfiles) { Get-Item -Path $($_.LocalPath).LastWriteTime }
 
-    if ($StaleUserProfiles.Count -lt 1 -or !(StaleUserProfiles)) {
+    if ($StaleUserProfiles.Count -lt 1 -or -not $StaleUserProfiles) {
         Write-Information 'No stale user profiles were found.' -InformationAction Continue
     } else {
         if ($ShowSummary) {

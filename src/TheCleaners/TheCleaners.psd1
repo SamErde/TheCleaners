@@ -107,9 +107,7 @@
             # RequireLicenseAcceptance = $false
 
             # External dependent modules of this module
-            ExternalModuleDependencies = @(
-                'WebAdministration'
-            )
+            ExternalModuleDependencies = @()
 
         } # End of PSData hashtable
 

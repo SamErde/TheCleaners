@@ -13,7 +13,8 @@ A script to clean out old IIS log files.
 ## SYNTAX
 
 ```
-Clear-OldIISLog [[-Days] <Int16>] [<CommonParameters>]
+Clear-OldIISLog [[-Days] <Int16>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -23,7 +24,7 @@ This script will clean out IIS log files older than x days.
 
 ### EXAMPLE 1
 ```
-Clear-OldIISLogFile -Days 60
+Clear-OldIISLog -Days 60
 ```
 
 Removes all IIS log files that are older than 60 days.
@@ -32,7 +33,7 @@ Removes all IIS log files that are older than 60 days.
 
 ### -Days
 The number of days to keep log files.
-The default is 30 days.
+The default is 60 days.
 
 ```yaml
 Type: Int16
@@ -46,8 +47,39 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutBuffer, -OutVariable, -PipelineVariable, -Verbose, -WarningAction, -WarningVariable, and -ProgressAction. 
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutBuffer, -OutVariable, -PipelineVariable, -Verbose, -WarningAction, -WarningVariable, and -ProgressAction.
 For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
