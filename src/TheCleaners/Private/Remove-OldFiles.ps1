@@ -12,13 +12,18 @@
 #>
 function Remove-OldFiles {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '')]
     param (
         # The path containing files to remove
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
         [string]
         $Path,
 
         # How many days worth of logs to retain (how far back to filter)
+        [Parameter()]
+        [ValidateRange(1, [int16]::MaxValue)]
         [int16]
         $Days = 60
     )
@@ -29,9 +34,15 @@ function Remove-OldFiles {
 
     process {
         Write-Verbose -Message "Finding and removing files older than $Days."
-        Get-ChildItem -Path $Path -Recurse | Where-Object {
-            $_.CreationTime -le ([datetime]::Now.AddDays( -$Days ))
-        } | Remove-Item
+        $OldFiles = Get-ChildItem -LiteralPath $Path -File -Recurse -ErrorAction Stop | Where-Object {
+            $_.LastWriteTime -le ([datetime]::Now.AddDays(-$Days))
+        }
+
+        foreach ($File in $OldFiles) {
+            if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove old file')) {
+                Remove-Item -LiteralPath $File.FullName -ErrorAction Stop
+            }
+        }
     }
 
     end {

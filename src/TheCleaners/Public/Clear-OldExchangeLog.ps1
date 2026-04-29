@@ -28,6 +28,7 @@ function Clear-OldExchangeLog {
     # Logs older than this number of days will be removed.
     param (
         [Parameter()]
+        [ValidateRange(1, [int16]::MaxValue)]
         [int]
         $Days = 60
     )
@@ -54,7 +55,7 @@ function Clear-OldExchangeLog {
 
     process {
         # Clean up the IIS log files
-        Clear-OldIisLogFiles -Days $Days
+        Clear-OldIISLog -Days $Days -WhatIf:$WhatIfPreference
 
         foreach ($LogLocation in $LogLocations.GetEnumerator()) {
             if (-not (Test-Path -Path $LogLocation.Value)) {
@@ -62,12 +63,12 @@ function Clear-OldExchangeLog {
                 continue
             }
 
-            $OldFiles = Get-ChildItem -Path $($LogLocation.Value) -Recurse |
-                Where-Object { ($_.Name -like '*.log') -and ($_.lastWriteTime -le "$LastWriteDate") } | Select-Object FullName
+            $OldFiles = Get-ChildItem -Path $($LogLocation.Value) -File -Recurse |
+                Where-Object { ($_.Name -like '*.log') -and ($_.LastWriteTime -le $LastWriteDate) }
 
-            foreach ($file in $OldFiles) {
-                if ( $PSCmdlet.ShouldProcess($file.Name) ) {
-                    $file.Delete()
+            foreach ($File in $OldFiles) {
+                if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove old Exchange log file')) {
+                    Remove-Item -LiteralPath $File.FullName -ErrorAction Stop
                 }
             } # end foreach $file
 

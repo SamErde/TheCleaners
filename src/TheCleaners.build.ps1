@@ -249,7 +249,10 @@ Add-BuildTask Test {
         $pesterConfiguration.Run.PassThru = $true
         $pesterConfiguration.Run.Exit = $false
         $pesterConfiguration.CodeCoverage.Enabled = $true
-        $pesterConfiguration.CodeCoverage.Path = "..\..\..\$ModuleName\*\*.ps1"
+        $pesterConfiguration.CodeCoverage.Path = @(
+            Join-Path -Path $script:ModuleSourcePath -ChildPath '*.ps1'
+            Join-Path -Path $script:ModuleSourcePath -ChildPath '*\*.ps1'
+        )
         $pesterConfiguration.CodeCoverage.CoveragePercentTarget = $script:coverageThreshold
         $pesterConfiguration.CodeCoverage.OutputPath = "$codeCovPath\CodeCoverage.xml"
         $pesterConfiguration.CodeCoverage.OutputFormat = 'JaCoCo'
@@ -303,7 +306,10 @@ Add-BuildTask DevCC {
     $pesterConfiguration = New-PesterConfiguration
     $pesterConfiguration.run.Path = $script:UnitTestsPath
     $pesterConfiguration.CodeCoverage.Enabled = $true
-    $pesterConfiguration.CodeCoverage.Path = "$PSScriptRoot\$ModuleName\*\*.ps1"
+    $pesterConfiguration.CodeCoverage.Path = @(
+        Join-Path -Path $script:ModuleSourcePath -ChildPath '*.ps1'
+        Join-Path -Path $script:ModuleSourcePath -ChildPath '*\*.ps1'
+    )
     $pesterConfiguration.CodeCoverage.CoveragePercentTarget = $script:coverageThreshold
     $pesterConfiguration.CodeCoverage.OutputPath = '..\..\..\cov.xml'
     $pesterConfiguration.CodeCoverage.OutputFormat = 'CoverageGutters'
