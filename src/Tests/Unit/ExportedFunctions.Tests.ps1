@@ -8,7 +8,8 @@ BeforeAll {
     }
     Import-Module $PathToManifest -Force
     $manifestContent = Test-ModuleManifest -Path $PathToManifest
-    $moduleExported = Get-Command -Module $ModuleName | Select-Object -ExpandProperty Name
+    # Limit the runtime query to functions so it matches the manifest's ExportedFunctions collection.
+    $moduleExported = Get-Command -Module $ModuleName -CommandType Function | Select-Object -ExpandProperty Name
     $manifestExported = ($manifestContent.ExportedFunctions).Keys
 }
 

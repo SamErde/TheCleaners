@@ -46,8 +46,8 @@ function Clear-OldExchangeLog {
         $LogLocations = @{
             ExchangeLoggingPath     = Join-Path -Path $ExchangeInstallPath -ChildPath 'Logging\' -ErrorAction Ignore
             ETLTracesPath           = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\ETLTraces\' -ErrorAction Ignore
-            DiagnosticLogsPath      = Join-Path -Path $ExchangeInstallPath -ChildPath '\Bin\Search\Ceres\Diagnostics\Logs' -ErrorAction Ignore
-            MessageTrackingLogsPath = Join-Path -Path $ExchangeInstallPath -ChildPath '\TransportRoles\Logs\MessageTracking\' -ErrorAction Ignore
+            DiagnosticLogsPath      = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\Logs' -ErrorAction Ignore
+            MessageTrackingLogsPath = Join-Path -Path $ExchangeInstallPath -ChildPath 'TransportRoles\Logs\MessageTracking\' -ErrorAction Ignore
         }
 
         $LastWriteDate = (Get-Date).AddDays(-$Days)
