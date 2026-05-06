@@ -19,34 +19,52 @@ function Clear-WindowsTemp {
     [Alias('Clean-WindowsTemp')]
     param (
         # How many days worth of temp files to retain (how far back to filter).
+        [Parameter()]
         [ValidateRange(1, [int16]::MaxValue)] # Ensure it is a positive number.
         [int16]
         $Days = 30
     )
+
+    $IsWindowsHost = $PSVersionTable.PSEdition -eq 'Desktop' -or ($PSVersionTable.PSVersion.Major -ge 6 -and $IsWindows)
+    if (-not $IsWindowsHost) {
+        Write-Error -Message 'Clear-WindowsTemp requires Windows because it cleans the system temp folder under SystemRoot.'
+        return
+    }
+
+    if ([string]::IsNullOrWhiteSpace($env:SystemRoot)) {
+        Write-Error -Message 'Clear-WindowsTemp requires the SystemRoot environment variable to locate the system temp folder.'
+        return
+    }
 
     $TempPath = Join-Path -Path $env:SystemRoot -ChildPath 'Temp'
     if (-not (Test-Path -Path $TempPath)) {
         Write-Warning -Message "Unable to find $TempPath."
         return
     }
-    $OldFiles = Get-ChildItem -Path $TempPath -Recurse | Where-Object {
-        $_.LastWriteTime -le ( (Get-Date).AddDays(-$Days) )
-    }
-
-    if ($OldFiles.Count -eq 0) {
-        Write-Output "No files found older than $Days days."
+    try {
+        $CutoffDate = (Get-Date).AddDays(-$Days)
+        $OldFiles = @(Get-ChildItem -LiteralPath $TempPath -File -Recurse -Force -ErrorAction Stop | Where-Object {
+                $_.LastWriteTime -le $CutoffDate
+            })
+    } catch {
+        Write-Warning -Message "Failed to enumerate '$TempPath': $($_.Exception.Message)"
         return
     }
 
-    Write-Output "Found $($OldFiles.Count) files and directories older than $Days days in the system temp folder.`n"
+    if ($OldFiles.Count -eq 0) {
+        Write-Information -MessageData "No files found older than $Days days." -InformationAction Continue
+        return
+    }
 
-    foreach ($file in $OldFiles) {
-        if ( $PSCmdlet.ShouldProcess("Removing $($file.FullName)", $file.FullName, 'Remove-Item') ) {
+    Write-Information -MessageData "Found $($OldFiles.Count) files older than $Days days in the system temp folder." -InformationAction Continue
+
+    foreach ($File in $OldFiles) {
+        if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove temp item')) {
             try {
-                Remove-Item $file -Confirm:$false -ErrorAction Stop
-                Write-Verbose -Message "Removed file: $($file.FullName)"
+                Remove-Item -LiteralPath $File.FullName -Confirm:$false -ErrorAction Stop
+                Write-Verbose -Message "Removed temp file: $($File.FullName)"
             } catch {
-                Write-Output "  $($Error[-1].Exception.Message)"
+                Write-Warning -Message "Failed to remove '$($File.FullName)': $($_.Exception.Message)"
             }
         }
     }

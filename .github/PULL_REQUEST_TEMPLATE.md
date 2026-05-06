@@ -19,4 +19,4 @@
 
 - [ ] 🕵️ I have reviewed my code for errors and tested it.
 - [ ] 🚩 My pull request does not contain multiple types of changes.
-- [ ] 📄 By submitting this pull request, I confirm that my contribution is made under the terms of the projects associated license.
+- [ ] 📄 By submitting this pull request, I confirm that my contribution is made under the terms of the project's associated license.

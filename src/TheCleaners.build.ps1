@@ -89,9 +89,8 @@ Enter-Build {
 
     $script:BuildModuleRootFile = Join-Path -Path $script:ArtifactsPath -ChildPath "$($script:ModuleName).psm1"
 
-    # Ensure our builds fail until if below a minimum defined code test coverage threshold
-    ##### Nerf this test by setting the threshold to 2 #####
-    $script:coverageThreshold = 2
+    # Ensure our builds fail if code coverage falls below the current tested baseline.
+    $script:coverageThreshold = 40
 
     [version]$script:MinPesterVersion = '5.2.2'
     [version]$script:MaxPesterVersion = '5.99.99'
@@ -124,7 +123,7 @@ Set-BuildFooter {
 Add-BuildTask ValidateRequirements {
     # this setting comes from the *.Settings.ps1
     Write-Build White "      Verifying at least PowerShell $script:requiredPSVersion..."
-    Assert-Build ($PSVersionTable.PSVersion -ge $script:requiredPSVersion) "At least Powershell $script:requiredPSVersion is required for this build to function properly"
+    Assert-Build ($PSVersionTable.PSVersion -ge $script:requiredPSVersion) "At least PowerShell $script:requiredPSVersion is required for this build to function properly"
     Write-Build Green '      ...Verification Complete!'
 } #ValidateRequirements
 
@@ -151,9 +150,9 @@ Add-BuildTask ImportModuleManifest {
 Add-BuildTask Clean {
     Write-Build White '      Clean up our Artifacts/Archive directory...'
 
-    $null = Remove-Item $script:ArtifactsPath -Force -Recurse -ErrorAction 0
+    $null = Remove-Item $script:ArtifactsPath -Force -Recurse -ErrorAction SilentlyContinue
     $null = New-Item $script:ArtifactsPath -ItemType:Directory
-    $null = Remove-Item $script:ArchivePath -Force -Recurse -ErrorAction 0
+    $null = Remove-Item $script:ArchivePath -Force -Recurse -ErrorAction SilentlyContinue
     $null = New-Item $script:ArchivePath -ItemType:Directory
 
     Write-Build Green '      ...Clean Complete!'

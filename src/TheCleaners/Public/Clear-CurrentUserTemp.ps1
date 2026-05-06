@@ -46,24 +46,30 @@ function Clear-CurrentUserTemp {
     }
 
     Write-Verbose "Getting files older than $($Days) days (inclusive) in `'$UserTempPath`'."
-    $OldFiles = Get-ChildItem -Path $UserTempPath -File -Recurse -ErrorAction SilentlyContinue | Where-Object {
-        $_.LastWriteTime -le ( (Get-Date).AddDays(-$Days) )
-    }
-
-    if ($OldFiles.Count -eq 0) {
-        Write-Output "No files found older than $Days days in `'$UserTempPath`'."
+    try {
+        $CutoffDate = (Get-Date).AddDays(-$Days)
+        $OldFiles = @(Get-ChildItem -LiteralPath $UserTempPath -File -Recurse -Force -ErrorAction Stop | Where-Object {
+                $_.LastWriteTime -le $CutoffDate
+            })
+    } catch {
+        Write-Warning -Message "Failed to enumerate '$UserTempPath': $($_.Exception.Message)"
         return
     }
 
-    Write-Output "Found $($OldFiles.Count) files and directories older than $Days days in $UserTempPath.`n"
+    if ($OldFiles.Count -eq 0) {
+        Write-Information -MessageData "No files found older than $Days days in `'$UserTempPath`'." -InformationAction Continue
+        return
+    }
 
-    foreach ($file in $OldFiles) {
-        if ( $PSCmdlet.ShouldProcess("Removing $($file.FullName)", $file.FullName, 'Remove-Item') ) {
+    Write-Information -MessageData "Found $($OldFiles.Count) files older than $Days days in $UserTempPath." -InformationAction Continue
+
+    foreach ($File in $OldFiles) {
+        if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove temp file')) {
             try {
-                Remove-Item $file -Confirm:$false -ErrorAction Stop
-                Write-Verbose -Message "Removed file: $($file.FullName)"
+                Remove-Item -LiteralPath $File.FullName -Confirm:$false -ErrorAction Stop
+                Write-Verbose -Message "Removed file: $($File.FullName)"
             } catch {
-                Write-Output "  $($Error[-1].Exception.Message)"
+                Write-Warning -Message "Failed to remove file '$($File.FullName)': $($_.Exception.Message)"
             }
         }
     }
@@ -77,34 +83,37 @@ function Clear-CurrentUserTemp {
     $TimeLimit = [timespan]::FromSeconds($TimeOut)
     # Save the current ErrorActionPreference so we can restore it after using SilentlyContinue.
     $RunningErrorActionPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'SilentlyContinue'
-    do {
-        # Break from the do-until loop if the TimeLimit has been reached.
-        if ((Get-Date) - $CleanEmptyDirectoriesStartTime -ge $TimeLimit ) {
-            Write-Output "The CleanEmptyDirectories operation timed out after $TimeOut seconds. There are $($EmptyDirectories.Count) empty directories left."
-            break
-        }
-        # Get directories that have 0 files in them.
-        $EmptyDirectories = @(Get-ChildItem -Path $UserTempPath -Directory -Recurse | Where-Object { $_.GetFileSystemInfos().Count -eq 0 })
-        Write-Verbose "$($EmptyDirectories.Count) empty directories found."
-        $RemovedDirectory = $false
-        foreach ($Directory in $EmptyDirectories) {
-            if ($PSCmdlet.ShouldProcess("Removing $($Directory.FullName)", $Directory.FullName, 'Remove-Item')) {
-                try {
-                    Remove-Item -LiteralPath $Directory.FullName -ErrorAction Stop
-                    $RemovedDirectory = $true
-                } catch {
-                    Write-Warning -Message "Failed to remove directory '$($Directory.FullName)': $($_.Exception.Message)"
+    try {
+        $ErrorActionPreference = 'Stop'
+        do {
+            # Break from the do-until loop if the TimeLimit has been reached.
+            if ((Get-Date) - $CleanEmptyDirectoriesStartTime -ge $TimeLimit ) {
+                Write-Warning -Message "The CleanEmptyDirectories operation timed out after $TimeOut seconds. There are $($EmptyDirectories.Count) empty directories left."
+                break
+            }
+            # Get directories that have 0 files in them.
+            $EmptyDirectories = @(Get-ChildItem -LiteralPath $UserTempPath -Directory -Recurse -Force | Where-Object { $_.GetFileSystemInfos().Count -eq 0 })
+            Write-Verbose "$($EmptyDirectories.Count) empty directories found."
+            $RemovedDirectory = $false
+            foreach ($Directory in $EmptyDirectories) {
+                if ($PSCmdlet.ShouldProcess($Directory.FullName, 'Remove empty temp directory')) {
+                    try {
+                        Remove-Item -LiteralPath $Directory.FullName -Confirm:$false -ErrorAction Stop
+                        $RemovedDirectory = $true
+                    } catch {
+                        Write-Warning -Message "Failed to remove directory '$($Directory.FullName)': $($_.Exception.Message)"
+                    }
                 }
             }
-        }
 
-        if ($EmptyDirectories.Count -gt 0 -and -not $RemovedDirectory) {
-            break
-        }
-    } until (
-        $EmptyDirectories.Count -eq 0
-    )
-    $ErrorActionPreference = $RunningErrorActionPreference
+            if ($EmptyDirectories.Count -gt 0 -and -not $RemovedDirectory) {
+                break
+            }
+        } until (
+            $EmptyDirectories.Count -eq 0
+        )
+    } finally {
+        $ErrorActionPreference = $RunningErrorActionPreference
+    }
     #endregion CleanEmptyDirectories
 }

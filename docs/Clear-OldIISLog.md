@@ -92,6 +92,6 @@ each web site.
 Otherwise, it checks the assumed default log folder location and the registry for the IIS
 log file location.
 
-To Do: Add a summary of which blocks were run and possibly a count of log files removed.
+Future enhancements may add a summary of which locations were processed and how many log files were removed.
 
 ## RELATED LINKS

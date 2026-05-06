@@ -3,9 +3,6 @@
 # https://docs.microsoft.com/powershell/module/packagemanagement/get-packageprovider
 Get-PackageProvider -Name Nuget -ForceBootstrap | Out-Null
 
-# https://docs.microsoft.com/powershell/module/powershellget/set-psrepository
-Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-
 # List of PowerShell Modules required for the build
 $modulesToInstall = New-Object System.Collections.Generic.List[object]
 # https://github.com/pester/Pester
@@ -36,14 +33,16 @@ foreach ($module in $modulesToInstall) {
         Name               = $module.ModuleName
         RequiredVersion    = $module.ModuleVersion
         Repository         = 'PSGallery'
-        SkipPublisherCheck = $true
+        Scope              = 'CurrentUser'
         Force              = $true
         ErrorAction        = 'Stop'
     }
     try {
-        if ($module.ModuleName -eq 'Pester' -and ($IsWindows -or $PSVersionTable.PSVersion -ge [version]'5.1')) {
-            # special case for Pester certificate mismatch with older Pester versions - https://github.com/pester/Pester/issues/2389
-            # this only affects windows builds
+        $isWindowsPowerShell = $PSVersionTable.PSEdition -eq 'Desktop'
+        $isWindowsHost = $isWindowsPowerShell -or ($PSVersionTable.PSVersion.Major -ge 6 -and $IsWindows)
+        if ($module.ModuleName -eq 'Pester' -and $isWindowsHost) {
+            # Pester 5.6.1 has a known publisher certificate mismatch on Windows.
+            # Keep the bypass scoped to this one dependency until the pinned version changes.
             Install-Module @installSplat -SkipPublisherCheck
         } else {
             Install-Module @installSplat

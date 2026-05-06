@@ -21,7 +21,7 @@
     #________________________________________
 
     #ExcludeRules
-    #Specify ExcludeRules when you want to exclude a certain rule from the the default set of rules.
+    #Specify ExcludeRules when you want to exclude a certain rule from the default set of rules.
     ExcludeRules        = @(
         #'PSUseDeclaredVarsMoreThanAssignments',
         'PSUseSingularNouns',
