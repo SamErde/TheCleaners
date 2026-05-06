@@ -43,14 +43,14 @@ jobs:
       run: Invoke-Build -File .\src\TheCleaners.build.ps1
 
     - name: 🧪 Upload Pester Results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: pester-results
         path: .\src\Artifacts\testOutput
         if-no-files-found: warn
 
     - name: 📦 Upload Build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: zip-archive
         path: .\src\Archive
