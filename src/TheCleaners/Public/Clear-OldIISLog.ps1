@@ -19,7 +19,7 @@ function Clear-OldIISLog {
         each web site. Otherwise, it checks the assumed default log folder location and the registry for the IIS
         log file location.
 
-        To Do: Add a summary of which blocks were run and possibly a count of log files removed.
+        Future enhancements may add a summary of which locations were processed and how many log files were removed.
 
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
@@ -52,7 +52,7 @@ function Clear-OldIISLog {
         # If the WebAdministration module is not available, check the default log file location
         $DefaultIISLogLocation = "$env:SystemDrive\inetpub\logs\LogFiles"
         Write-Information "The WebAdministration module is not installed. We will check the default IIS log file location at '$DefaultIISLogLocation'." -InformationAction Continue
-        if (Test-Path -Path $DefaultIISLogLocation -ErrorAction SilentlyContinue) {
+        if (Test-Path -LiteralPath $DefaultIISLogLocation -PathType Container) {
             try {
                 if ($PSCmdlet.ShouldProcess($DefaultIISLogLocation, "Remove IIS log files older than $Days days")) {
                     Remove-OldFiles -Path $DefaultIISLogLocation -Days $Days -Confirm:$false
@@ -65,9 +65,16 @@ function Clear-OldIISLog {
             Write-Information -MessageData "The default IIS log file location at '$DefaultIISLogLocation' does not exist." -InformationAction Continue
         }
 
-        # If the WebAdministration module is not available,try to check the IIS log file location from the registry (requires local admin rights to read this path)
-        $LogDir = Get-ItemProperty -Path 'HKLM:\\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LogDir
-        if ($LogDir -and (Test-Path -Path $LogDir)) {
+        # If the WebAdministration module is not available, try to check the IIS log file location from the registry (requires local admin rights to read this path)
+        try {
+            $LogDir = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction Stop |
+                Select-Object -ExpandProperty LogDir
+        } catch {
+            Write-Verbose -Message "Unable to read the alternate IIS log file location from the registry: $($_.Exception.Message)"
+            $LogDir = $null
+        }
+
+        if ($LogDir -and (Test-Path -LiteralPath $LogDir -PathType Container)) {
             try {
                 if ($PSCmdlet.ShouldProcess($LogDir, "Remove IIS log files older than $Days days")) {
                     Remove-OldFiles -Path $LogDir -Days $Days -Confirm:$false

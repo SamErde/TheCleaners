@@ -93,9 +93,9 @@ nav:
   - Home: "index.md"
   - Functions:
       - "Start-Cleaning": "Start-Cleaning.md"
-      - "Clear-OldExchangeLogs": "Clear-OldExchangeLogs.md"
-      - "Clear-OldIISLogs": "Clear-OldIISLogs.md"
-      - "Clear-UserTemp": "Clear-UserTemp.md"
+      - "Clear-OldExchangeLog": "Clear-OldExchangeLog.md"
+      - "Clear-OldIISLog": "Clear-OldIISLog.md"
+      - "Clear-CurrentUserTemp": "Clear-CurrentUserTemp.md"
       - "Clear-WindowsTemp": "Clear-WindowsTemp.md"
       - "Get-StaleUserProfile": "Get-StaleUserProfile.md"
 

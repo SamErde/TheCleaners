@@ -44,10 +44,10 @@ function Clear-OldExchangeLog {
 
         # Define the paths to the Exchange log files
         $LogLocations = @{
-            ExchangeLoggingPath     = Join-Path -Path $ExchangeInstallPath -ChildPath 'Logging\' -ErrorAction Ignore
-            ETLTracesPath           = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\ETLTraces\' -ErrorAction Ignore
-            DiagnosticLogsPath      = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\Logs' -ErrorAction Ignore
-            MessageTrackingLogsPath = Join-Path -Path $ExchangeInstallPath -ChildPath 'TransportRoles\Logs\MessageTracking\' -ErrorAction Ignore
+            ExchangeLoggingPath     = Join-Path -Path $ExchangeInstallPath -ChildPath 'Logging\'
+            ETLTracesPath           = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\ETLTraces\'
+            DiagnosticLogsPath      = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\Logs'
+            MessageTrackingLogsPath = Join-Path -Path $ExchangeInstallPath -ChildPath 'TransportRoles\Logs\MessageTracking\'
         }
 
         $LastWriteDate = (Get-Date).AddDays(-$Days)
@@ -63,14 +63,23 @@ function Clear-OldExchangeLog {
                 continue
             }
 
-            $OldFiles = Get-ChildItem -Path $($LogLocation.Value) -File -Recurse |
-                Where-Object { ($_.Name -like '*.log') -and ($_.LastWriteTime -le $LastWriteDate) }
+            try {
+                $OldFiles = @(Get-ChildItem -LiteralPath $LogLocation.Value -File -Recurse -Force -ErrorAction Stop |
+                        Where-Object { ($_.Name -like '*.log') -and ($_.LastWriteTime -le $LastWriteDate) })
+            } catch {
+                Write-Warning -WarningAction Continue "Failed to enumerate $($LogLocation.Key): $($_.Exception.Message)"
+                continue
+            }
 
             foreach ($File in $OldFiles) {
                 if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove old Exchange log file')) {
-                    # Confirmation is handled by the outer ShouldProcess check, so suppress
-                    # nested Remove-Item confirmation to avoid duplicate prompts.
-                    Remove-Item -LiteralPath $File.FullName -Confirm:$false -ErrorAction Stop
+                    try {
+                        # Confirmation is handled by the outer ShouldProcess check, so suppress
+                        # nested Remove-Item confirmation to avoid duplicate prompts.
+                        Remove-Item -LiteralPath $File.FullName -Confirm:$false -ErrorAction Stop
+                    } catch {
+                        Write-Warning -WarningAction Continue "Failed to remove Exchange log '$($File.FullName)': $($_.Exception.Message)"
+                    }
                 }
             } # end foreach $file
 

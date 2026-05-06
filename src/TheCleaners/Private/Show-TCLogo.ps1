@@ -7,13 +7,13 @@
     Show a color or plain ASCII art logo for The Cleaners whenever you need it in another function.
 
     .PARAMETER Plain
-    Return a plan-text version of the logo instead of multi-colored Write-Host output.
+    Return a plain-text version of the logo instead of multi-colored Write-Host output.
 
     .EXAMPLE
-    Show-Logo
+    Show-TCLogo
 
     .EXAMPLE
-    Show-Logo -Plain
+    Show-TCLogo -Plain
 
     #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost','')]

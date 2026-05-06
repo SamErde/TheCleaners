@@ -24,6 +24,7 @@ function Get-StaleUserProfile {
     param (
         # Number of days to consider a profile stale. The default is 90.
         [Parameter(Position = 0)]
+        [ValidateRange(1, [int16]::MaxValue)]
         [Int16]
         $Days = 90,
 
@@ -33,16 +34,39 @@ function Get-StaleUserProfile {
         $ShowSummary
     )
 
-    # Get all user profiles that have not been used in 60 days, are not currently loaded, and are not special accounts.
-    [array]$StaleUserProfiles = Get-CimInstance -Class Win32_UserProfile | Where-Object { ($_.LastUseTime -lt (Get-Date).AddDays(-$Days)) -and (!$_.Special) -and (!$_.Loaded) }
+    $IsWindowsHost = $PSVersionTable.PSEdition -eq 'Desktop' -or ($PSVersionTable.PSVersion.Major -ge 6 -and $IsWindows)
+    if (-not $IsWindowsHost) {
+        Write-Error -Message 'Get-StaleUserProfile requires Windows because it queries Win32_UserProfile.'
+        return
+    }
+
+    try {
+        $CutoffDate = (Get-Date).AddDays(-$Days)
+        [array]$StaleUserProfiles = Get-CimInstance -Class Win32_UserProfile -ErrorAction Stop | Where-Object {
+            ($_.LastUseTime -lt $CutoffDate) -and (-not $_.Special) -and (-not $_.Loaded)
+        }
+    } catch {
+        Write-Error -Message "Failed to query Win32_UserProfile: $($_.Exception.Message)"
+        return
+    }
     # Might need to check last modified date using NTFS: foreach ($profile in $StaleUserProfiles) { Get-Item -Path $($_.LocalPath).LastWriteTime }
 
     if ($StaleUserProfiles.Count -lt 1 -or -not $StaleUserProfiles) {
         Write-Information 'No stale user profiles were found.' -InformationAction Continue
     } else {
         if ($ShowSummary) {
-            $StaleUserProfiles | Select-Object LocalPath, SID, @{ Name = 'Size'; Expression = { '{0} MB' -f [math]::Round(((Get-ChildItem $_.LocalPath -Recurse | Measure-Object -Property Length -Sum -ErrorAction Stop).Sum / 1MB)) } } | Out-Host
-            Write-Information -InformationAction Continue 'NOTE: If you do not have access to a profile folder, the size will show as 0 MB.'
+            $StaleUserProfiles | Select-Object LocalPath, SID, @{
+                Name       = 'Size'
+                Expression = {
+                    try {
+                        '{0} MB' -f [math]::Round(((Get-ChildItem -LiteralPath $_.LocalPath -Recurse -File -Force -ErrorAction Stop | Measure-Object -Property Length -Sum).Sum / 1MB))
+                    } catch {
+                        Write-Warning -Message "Failed to measure profile '$($_.LocalPath)': $($_.Exception.Message)"
+                        'Unavailable'
+                    }
+                }
+            } | Out-Host
+            Write-Information -InformationAction Continue 'NOTE: If you do not have access to a profile folder, the size will show as Unavailable.'
         }
         $StaleUserProfiles
     }

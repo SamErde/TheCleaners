@@ -1,6 +1,8 @@
 # Project Files #
 Archive
 Artifacts
+src/Archive/
+src/Artifacts/
 cov.xml
 coverage.xml
 Ignore

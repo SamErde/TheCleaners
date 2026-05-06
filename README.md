@@ -4,7 +4,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/samerde/TheCleaners?cacheSeconds=3600)](https://github.com/samerde/TheCleaners/stargazers/)
 ![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/TheCleaners?include_prereleases)
 ![PowerShell Gallery Downloads](https://img.shields.io/powershellgallery/dt/TheCleaners)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
 [![GitHub contributors](https://img.shields.io/github/contributors/samerde/TheCleaners.svg)](https://github.com/samerde/TheCleaners/graphs/contributors/)
 
 ![GitHub top language](https://img.shields.io/github/languages/top/SamErde/TheCleaners)
@@ -13,7 +13,7 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SamErde/TheCleaners/.github%2Fworkflows%2FDeploy%20MkDocs.yml?label=MkDocs)
 <!-- badges-end -->
 
-<img src="https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-CodeHoodieNoBG.png" width="400" />
+<img src="https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-CodeHoodieNoBG.png" alt="The Cleaners logo on a code hoodie" width="400" />
 
 ## Synopsis
 
@@ -49,7 +49,7 @@ Install-Module -Name TheCleaners -AllowPrerelease
 
 ### Quick Start
 
-#### Example1
+#### Example 1
 
 ```powershell
 # See what jobs TheCleaners can do for you.

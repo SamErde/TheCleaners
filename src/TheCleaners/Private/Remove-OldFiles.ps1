@@ -34,13 +34,14 @@ function Remove-OldFiles {
 
     process {
         Write-Verbose -Message "Finding and removing files older than $Days."
+        $CutoffDate = [datetime]::Now.AddDays(-$Days)
         $OldFiles = Get-ChildItem -LiteralPath $Path -File -Recurse -ErrorAction Stop | Where-Object {
-            $_.LastWriteTime -le ([datetime]::Now.AddDays(-$Days))
+            $_.LastWriteTime -le $CutoffDate
         }
 
         foreach ($File in $OldFiles) {
             if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove old file')) {
-                Remove-Item -LiteralPath $File.FullName -ErrorAction Stop
+                Remove-Item -LiteralPath $File.FullName -Confirm:$false -ErrorAction Stop
             }
         }
     }

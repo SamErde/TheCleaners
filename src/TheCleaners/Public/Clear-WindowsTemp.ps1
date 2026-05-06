@@ -19,6 +19,7 @@ function Clear-WindowsTemp {
     [Alias('Clean-WindowsTemp')]
     param (
         # How many days worth of temp files to retain (how far back to filter).
+        [Parameter()]
         [ValidateRange(1, [int16]::MaxValue)] # Ensure it is a positive number.
         [int16]
         $Days = 30
@@ -29,24 +30,30 @@ function Clear-WindowsTemp {
         Write-Warning -Message "Unable to find $TempPath."
         return
     }
-    $OldFiles = Get-ChildItem -Path $TempPath -Recurse | Where-Object {
-        $_.LastWriteTime -le ( (Get-Date).AddDays(-$Days) )
-    }
-
-    if ($OldFiles.Count -eq 0) {
-        Write-Output "No files found older than $Days days."
+    try {
+        $CutoffDate = (Get-Date).AddDays(-$Days)
+        $OldFiles = @(Get-ChildItem -LiteralPath $TempPath -Recurse -Force -ErrorAction Stop | Where-Object {
+                $_.LastWriteTime -le $CutoffDate
+            })
+    } catch {
+        Write-Warning -Message "Failed to enumerate '$TempPath': $($_.Exception.Message)"
         return
     }
 
-    Write-Output "Found $($OldFiles.Count) files and directories older than $Days days in the system temp folder.`n"
+    if ($OldFiles.Count -eq 0) {
+        Write-Information -MessageData "No files found older than $Days days." -InformationAction Continue
+        return
+    }
 
-    foreach ($file in $OldFiles) {
-        if ( $PSCmdlet.ShouldProcess("Removing $($file.FullName)", $file.FullName, 'Remove-Item') ) {
+    Write-Information -MessageData "Found $($OldFiles.Count) files and directories older than $Days days in the system temp folder." -InformationAction Continue
+
+    foreach ($File in $OldFiles) {
+        if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove temp item')) {
             try {
-                Remove-Item $file -Confirm:$false -ErrorAction Stop
-                Write-Verbose -Message "Removed file: $($file.FullName)"
+                Remove-Item -LiteralPath $File.FullName -Recurse -Confirm:$false -ErrorAction Stop
+                Write-Verbose -Message "Removed temp item: $($File.FullName)"
             } catch {
-                Write-Output "  $($Error[-1].Exception.Message)"
+                Write-Warning -Message "Failed to remove '$($File.FullName)': $($_.Exception.Message)"
             }
         }
     }
