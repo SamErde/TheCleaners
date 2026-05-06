@@ -45,8 +45,12 @@ Describe 'Clear-WindowsTemp' -Tag Unit {
         New-Item -Path $WindowsTempPath -ItemType Directory -Force | Out-Null
         $OldFile = New-Item -Path (Join-Path -Path $WindowsTempPath -ChildPath 'old.tmp') -ItemType File
         $NewFile = New-Item -Path (Join-Path -Path $WindowsTempPath -ChildPath 'new.tmp') -ItemType File
+        $OldDirectory = New-Item -Path (Join-Path -Path $WindowsTempPath -ChildPath 'old-dir') -ItemType Directory
+        $NewChildFile = New-Item -Path (Join-Path -Path $OldDirectory.FullName -ChildPath 'new-child.tmp') -ItemType File
         $OldFile.LastWriteTime = (Get-Date).AddDays(-31)
         $NewFile.LastWriteTime = Get-Date
+        $NewChildFile.LastWriteTime = Get-Date
+        $OldDirectory.LastWriteTime = (Get-Date).AddDays(-31)
         $env:SystemRoot = $TestRoot
     }
 
@@ -62,11 +66,27 @@ Describe 'Clear-WindowsTemp' -Tag Unit {
         $NewFile.FullName | Should -Exist
     }
 
+    It 'does not recursively delete old directories containing newer files' {
+        Clear-WindowsTemp -Days 30 -Confirm:$false | Out-Null
+
+        $OldDirectory.FullName | Should -Exist
+        $NewChildFile.FullName | Should -Exist
+    }
+
     It 'does not remove matching system temp items when WhatIf is used' {
         Clear-WindowsTemp -Days 30 -WhatIf
 
         $OldFile.FullName | Should -Exist
         $NewFile.FullName | Should -Exist
+    }
+
+    It 'writes a clear error when SystemRoot is missing' {
+        $env:SystemRoot = ''
+
+        $ErrorRecord = Clear-WindowsTemp -Days 30 -ErrorAction SilentlyContinue -ErrorVariable WindowsTempError 2>$null
+
+        $ErrorRecord | Should -BeNullOrEmpty
+        $WindowsTempError.Exception.Message | Should -Be 'Clear-WindowsTemp requires the SystemRoot environment variable to locate the system temp folder.'
     }
 }
 

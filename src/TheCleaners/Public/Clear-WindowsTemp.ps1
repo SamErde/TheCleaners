@@ -25,6 +25,17 @@ function Clear-WindowsTemp {
         $Days = 30
     )
 
+    $IsWindowsHost = $PSVersionTable.PSEdition -eq 'Desktop' -or ($PSVersionTable.PSVersion.Major -ge 6 -and $IsWindows)
+    if (-not $IsWindowsHost) {
+        Write-Error -Message 'Clear-WindowsTemp requires Windows because it cleans the system temp folder under SystemRoot.'
+        return
+    }
+
+    if ([string]::IsNullOrWhiteSpace($env:SystemRoot)) {
+        Write-Error -Message 'Clear-WindowsTemp requires the SystemRoot environment variable to locate the system temp folder.'
+        return
+    }
+
     $TempPath = Join-Path -Path $env:SystemRoot -ChildPath 'Temp'
     if (-not (Test-Path -Path $TempPath)) {
         Write-Warning -Message "Unable to find $TempPath."
@@ -32,7 +43,7 @@ function Clear-WindowsTemp {
     }
     try {
         $CutoffDate = (Get-Date).AddDays(-$Days)
-        $OldFiles = @(Get-ChildItem -LiteralPath $TempPath -Recurse -Force -ErrorAction Stop | Where-Object {
+        $OldFiles = @(Get-ChildItem -LiteralPath $TempPath -File -Recurse -Force -ErrorAction Stop | Where-Object {
                 $_.LastWriteTime -le $CutoffDate
             })
     } catch {
@@ -45,13 +56,13 @@ function Clear-WindowsTemp {
         return
     }
 
-    Write-Information -MessageData "Found $($OldFiles.Count) files and directories older than $Days days in the system temp folder." -InformationAction Continue
+    Write-Information -MessageData "Found $($OldFiles.Count) files older than $Days days in the system temp folder." -InformationAction Continue
 
     foreach ($File in $OldFiles) {
         if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove temp item')) {
             try {
-                Remove-Item -LiteralPath $File.FullName -Recurse -Confirm:$false -ErrorAction Stop
-                Write-Verbose -Message "Removed temp item: $($File.FullName)"
+                Remove-Item -LiteralPath $File.FullName -Confirm:$false -ErrorAction Stop
+                Write-Verbose -Message "Removed temp file: $($File.FullName)"
             } catch {
                 Write-Warning -Message "Failed to remove '$($File.FullName)': $($_.Exception.Message)"
             }

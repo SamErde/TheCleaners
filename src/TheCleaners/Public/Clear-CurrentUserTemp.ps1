@@ -98,7 +98,7 @@ function Clear-CurrentUserTemp {
             foreach ($Directory in $EmptyDirectories) {
                 if ($PSCmdlet.ShouldProcess($Directory.FullName, 'Remove empty temp directory')) {
                     try {
-                        Remove-Item -LiteralPath $Directory.FullName -ErrorAction Stop
+                        Remove-Item -LiteralPath $Directory.FullName -Confirm:$false -ErrorAction Stop
                         $RemovedDirectory = $true
                     } catch {
                         Write-Warning -Message "Failed to remove directory '$($Directory.FullName)': $($_.Exception.Message)"
