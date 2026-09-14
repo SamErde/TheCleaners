@@ -301,7 +301,7 @@ Describe 'Exchange is structurally preview-only' -Skip:(-not $WindowsHost) -Tag 
     }
 }
 
-Describe 'IIS is structurally preview-only' -Tag Unit {
+Describe 'IIS is structurally preview-only' -Skip:(-not $WindowsHost) -Tag Unit {
     It 'rejects omission of WhatIf before discovering or removing logs' {
         Mock Remove-OldFiles { throw 'IIS must not delete.' }
         { Clear-OldIISLog -Confirm:$false } | Should -Throw '*preview-only*'
