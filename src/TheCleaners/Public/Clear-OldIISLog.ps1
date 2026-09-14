@@ -1,98 +1,169 @@
 function Clear-OldIISLog {
     <#
     .SYNOPSIS
-        A script to clean out old IIS log files.
-
+        Preview old IIS log candidates without removing anything.
     .DESCRIPTION
-        This command is structurally preview-only until its refactor and acceptance gates
-        pass. Explicit -WhatIf is required; no IIS log files are removed.
-
+        This command is structurally preview-only while IIS path, file-pattern, and
+        server acceptance work remains incomplete. Explicit -WhatIf is required. The
+        command discovers existing IIS log roots, skips reparse points before traversal,
+        and previews old .log files using one inclusive UTC cutoff. Candidate discovery
+        is experimental and is not a validated deletion allowlist. No deletion command
+        or generic removal helper is called.
     .PARAMETER Days
-        The number of days to keep log files. The default is 30 days.
-
+        Preview .log files whose LastWriteTimeUtc is at or before one UTC cutoff, Days
+        days ago. The default is 60 days.
+    .PARAMETER PassThru
+        Return a TheCleaners.CleanupResult preview summary for each successfully
+        enumerated existing IIS log root. CandidatePaths contains the discovered files.
     .EXAMPLE
         Clear-OldIISLog -Days 60 -WhatIf
-
-        Previews IIS log cleanup without removing files.
-
-    .NOTES
-        If the WebAdministration module is available, it will use that to check the specific log file locations for
-        each web site. Otherwise, it checks the assumed default log folder location and the registry for the IIS
-        log file location.
-
-        Future enhancements may add a summary of which locations were processed and how many log files were removed.
-
+    .EXAMPLE
+        Clear-OldIISLog -Days 30 -WhatIf -PassThru
+    .OUTPUTS
+        TheCleaners.CleanupResult
+    .LINK
+        https://day3bits.com/thecleaners/Clear-OldIISLog/
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Alias('Clean-IISLog')]
-    #[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
+    [OutputType('TheCleaners.CleanupResult')]
     param (
         [Parameter()]
-        [ValidateRange(1, [int16]::MaxValue)] # Ensure it is a positive number.
-        [int16]
-        $Days = 60
+        [ValidateRange(1, [Int16]::MaxValue)]
+        [Int16]
+        $Days = 60,
+
+        [Parameter()]
+        [switch]
+        $PassThru
     )
 
+    # Reject before module, registry, or filesystem discovery. Do not silently force WhatIf.
     if (-not $PSBoundParameters.ContainsKey('WhatIf') -or -not $PSBoundParameters['WhatIf']) {
         $Exception = [System.NotSupportedException]::new('IIS cleanup is preview-only. Run Clear-OldIISLog -WhatIf. Removal is not available in this version.')
         $ErrorRecord = [System.Management.Automation.ErrorRecord]::new($Exception, 'IISCleanupPreviewOnly', [System.Management.Automation.ErrorCategory]::NotImplemented, $null)
         $PSCmdlet.ThrowTerminatingError($ErrorRecord)
     }
+    if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
+        throw [System.PlatformNotSupportedException]::new('IIS log discovery requires Windows.')
+    }
+    Write-Warning -Message 'IIS preview only: no files will be removed. Candidate discovery is experimental, not a deletion allowlist.'
 
-    # Use the WebAdministration module if it is available
-    if (Get-Module -Name 'WebAdministration' -ListAvailable) {
-        # Get the logfile directory for each web site
-        $WebSites = Get-Website
-        foreach ($site in $WebSites) {
-            $SiteLogFileDirectory = ("$($Site.logFile.directory)\W3SVC$($Site.id)").Replace( '%SystemDrive%', $env:SystemDrive )
-            Write-Information -MessageData "Removing old IIS log files from $($Site.name) at $SiteLogFileDirectory." -InformationAction Continue
-            try {
-                if ($PSCmdlet.ShouldProcess($SiteLogFileDirectory, "Preview IIS log files older than $Days days; removal is unavailable")) {
-                    Remove-OldFiles -Path $SiteLogFileDirectory -Days $Days -Confirm:$false
-                }
-            } catch {
-                Write-Error -Message $_.Exception.Message -ErrorAction Continue
-                Write-Warning "Failed to remove old IIS log files from $($Site.name) at $SiteLogFileDirectory." -WarningAction Continue
+    $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
+    $Roots = [System.Collections.Generic.List[object]]::new()
+    $SeenRoots = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $WebAdministrationModule = Get-Module -Name 'WebAdministration' -ListAvailable | Select-Object -First 1
+
+    if ($null -ne $WebAdministrationModule) {
+        Import-Module -Name 'WebAdministration' -ErrorAction Stop
+        foreach ($Site in @(WebAdministration\Get-Website -ErrorAction Stop)) {
+            $ConfiguredRoot = [Environment]::ExpandEnvironmentVariables([string]$Site.LogFile.Directory)
+            if ([string]::IsNullOrWhiteSpace($ConfiguredRoot)) {
+                Write-Verbose -Message "IIS site '$($Site.Name)' has no log directory."
+                continue
+            }
+            $RootPath = Join-Path -Path $ConfiguredRoot -ChildPath ('W3SVC{0}' -f $Site.Id)
+            if ($SeenRoots.Add($RootPath)) {
+                $Roots.Add([pscustomobject]@{
+                        Path        = $RootPath
+                        DisplayName = [string]$Site.Name
+                        Source      = 'WebAdministration'
+                    })
             }
         }
     } else {
-        # If the WebAdministration module is not available, check the default log file location
-        $DefaultIISLogLocation = "$env:SystemDrive\inetpub\logs\LogFiles"
-        Write-Information "The WebAdministration module is not installed. We will check the default IIS log file location at '$DefaultIISLogLocation'." -InformationAction Continue
-        if (Test-Path -LiteralPath $DefaultIISLogLocation -PathType Container) {
-            try {
-                if ($PSCmdlet.ShouldProcess($DefaultIISLogLocation, "Preview IIS log files older than $Days days; removal is unavailable")) {
-                    Remove-OldFiles -Path $DefaultIISLogLocation -Days $Days -Confirm:$false
-                }
-            } catch {
-                Write-Error -Message $_.Exception.Message -ErrorAction Continue
-                Write-Warning "Failed to remove old log files from the default IIS log file location at '$DefaultIISLogLocation'." -WarningAction Continue
+        if (-not [string]::IsNullOrWhiteSpace($env:SystemDrive)) {
+            $DefaultRoot = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
+            if ($SeenRoots.Add($DefaultRoot)) {
+                $Roots.Add([pscustomobject]@{
+                        Path        = $DefaultRoot
+                        DisplayName = 'Default IIS log root'
+                        Source      = 'DefaultPath'
+                    })
             }
-        } else {
-            Write-Information -MessageData "The default IIS log file location at '$DefaultIISLogLocation' does not exist." -InformationAction Continue
         }
-
-        # If the WebAdministration module is not available, try to check the IIS log file location from the registry (requires local admin rights to read this path)
         try {
-            $LogDir = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction Stop |
+            $RegistryRoot = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction Stop |
                 Select-Object -ExpandProperty LogDir
-        } catch {
-            Write-Verbose -Message "Unable to read the alternate IIS log file location from the registry: $($_.Exception.Message)"
-            $LogDir = $null
-        }
-
-        if ($LogDir -and (Test-Path -LiteralPath $LogDir -PathType Container)) {
-            try {
-                if ($PSCmdlet.ShouldProcess($LogDir, "Preview IIS log files older than $Days days; removal is unavailable")) {
-                    Remove-OldFiles -Path $LogDir -Days $Days -Confirm:$false
-                }
-            } catch {
-                Write-Error -Message $_.Exception.Message -ErrorAction Continue
-                Write-Warning "Failed to remove old IIS log files from the location specified in the directory ($LogDir)." -WarningAction Continue
+            $RegistryRoot = [Environment]::ExpandEnvironmentVariables([string]$RegistryRoot)
+            if (-not [string]::IsNullOrWhiteSpace($RegistryRoot) -and $SeenRoots.Add($RegistryRoot)) {
+                $Roots.Add([pscustomobject]@{
+                        Path        = $RegistryRoot
+                        DisplayName = 'Registry IIS log root'
+                        Source      = 'Registry'
+                    })
             }
-        } else {
-            Write-Information -MessageData 'Unable to find an alternate IIS log file location from the registry.' -InformationAction Continue
+        } catch {
+            Write-Verbose -Message "Unable to read the alternate IIS log location from the registry: $($_.Exception.Message)"
         }
     }
 
+    foreach ($RootDefinition in $Roots) {
+        if (-not (Test-Path -LiteralPath $RootDefinition.Path -PathType Container)) {
+            Write-Verbose -Message "IIS log root not present as a directory: $($RootDefinition.Path)"
+            continue
+        }
+        $OldFiles = @()
+        try {
+            $LogRoot = Resolve-TheCleanersFileSystemPath -LiteralPath $RootDefinition.Path
+            if ($LogRoot -isnot [System.IO.DirectoryInfo]) {
+                throw [System.IO.InvalidDataException]::new("IIS log root is not a directory: '$($RootDefinition.Path)'.")
+            }
+            $Pending = [System.Collections.Generic.Stack[string]]::new()
+            $Pending.Push($LogRoot.FullName)
+            $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+            while ($Pending.Count -gt 0) {
+                $DirectoryPath = $Pending.Pop()
+                if ($DirectoryPath -ne $LogRoot.FullName) {
+                    $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $LogRoot.FullName
+                    if ($Directory -isnot [System.IO.DirectoryInfo]) {
+                        throw [System.IO.InvalidDataException]::new("IIS traversal path is not a directory: '$DirectoryPath'.")
+                    }
+                }
+                foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
+                    if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                        Write-Verbose -Message "Skipping reparse point: $($Item.FullName)"
+                        continue
+                    }
+                    if ($Item.PSIsContainer) {
+                        $Pending.Push($Item.FullName)
+                    } elseif ($Item.Extension -eq '.log' -and $Item.LastWriteTimeUtc -le $CutoffUtc) {
+                        $Candidates.Add($Item)
+                    }
+                }
+            }
+            $OldFiles = @($Candidates.ToArray() | Sort-Object -Property FullName)
+        } catch {
+            $PSCmdlet.WriteError($_)
+            # A failed discovery must not masquerade as an empty, successful preview.
+            continue
+        }
+
+        foreach ($File in $OldFiles) {
+            $null = $PSCmdlet.ShouldProcess($File.FullName, 'Preview candidate only; IIS removal is unavailable')
+        }
+        if ($PassThru) {
+            [pscustomobject]@{
+                PSTypeName              = 'TheCleaners.CleanupResult'
+                Command                 = 'Clear-OldIISLog'
+                RootPath                = $LogRoot.FullName
+                CutoffUtc               = $CutoffUtc
+                FileCandidateCount      = $OldFiles.Count
+                FilesRemoved            = 0
+                FileFailureCount        = 0
+                FilesSkipped            = 0
+                DirectoryCandidateCount = 0
+                DirectoriesRemoved      = 0
+                DirectoryFailureCount   = 0
+                DirectoriesSkipped      = 0
+                BytesReclaimed          = [Int64]0
+                Status                  = 'WhatIf'
+                DiscoveryStatus         = 'Experimental'
+                DiscoverySource         = $RootDefinition.Source
+                DisplayName             = $RootDefinition.DisplayName
+                CandidatePaths          = @($OldFiles | ForEach-Object { $_.FullName })
+            }
+        }
+    }
 }
+

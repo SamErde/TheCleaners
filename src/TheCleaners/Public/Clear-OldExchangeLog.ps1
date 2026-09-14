@@ -53,6 +53,9 @@ function Clear-OldExchangeLog {
         throw 'The Exchange Server installation path is missing.'
     }
     $InstallRoot = Resolve-TheCleanersFileSystemPath -LiteralPath $Setup.MsiInstallPath
+    if ($InstallRoot -isnot [System.IO.DirectoryInfo]) {
+        throw [System.IO.InvalidDataException]::new("The Exchange Server installation path is not a directory: '$($Setup.MsiInstallPath)'.")
+    }
     $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
     $RelativeRoots = @(
         'Logging'
@@ -62,20 +65,26 @@ function Clear-OldExchangeLog {
     )
     foreach ($RelativeRoot in $RelativeRoots) {
         $RootPath = Join-Path -Path $InstallRoot.FullName -ChildPath $RelativeRoot
-        if (-not (Test-Path -LiteralPath $RootPath)) {
-            Write-Verbose -Message "Log root not present: $RootPath"
+        if (-not (Test-Path -LiteralPath $RootPath -PathType Container)) {
+            Write-Verbose -Message "Log root not present as a directory: $RootPath"
             continue
         }
         $OldFiles = @()
         try {
             $LogRoot = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath -RootPath $InstallRoot.FullName
+            if ($LogRoot -isnot [System.IO.DirectoryInfo]) {
+                throw [System.IO.InvalidDataException]::new("Exchange log root is not a directory: '$RootPath'.")
+            }
             $Pending = [System.Collections.Generic.Stack[string]]::new()
             $Pending.Push($LogRoot.FullName)
             $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
             while ($Pending.Count -gt 0) {
                 $DirectoryPath = $Pending.Pop()
                 if ($DirectoryPath -ne $LogRoot.FullName) {
-                    $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $LogRoot.FullName
+                    $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $LogRoot.FullName
+                    if ($Directory -isnot [System.IO.DirectoryInfo]) {
+                        throw [System.IO.InvalidDataException]::new("Exchange traversal path is not a directory: '$DirectoryPath'.")
+                    }
                 }
                 foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
                     if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
@@ -108,9 +117,11 @@ function Clear-OldExchangeLog {
                 FileCandidateCount      = $OldFiles.Count
                 FilesRemoved            = 0
                 FileFailureCount        = 0
+                FilesSkipped            = 0
                 DirectoryCandidateCount = 0
                 DirectoriesRemoved      = 0
                 DirectoryFailureCount   = 0
+                DirectoriesSkipped      = 0
                 BytesReclaimed          = [Int64]0
                 Status                  = 'WhatIf'
                 DiscoveryStatus         = 'Experimental'

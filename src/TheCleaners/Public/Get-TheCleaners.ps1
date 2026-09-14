@@ -5,6 +5,7 @@ function Get-TheCleaners {
     .DESCRIPTION
         Return one TheCleaners.CommandInfo object per public function. The command never
         performs cleanup. No command is labeled stable before its acceptance gates pass.
+        IIS and Exchange remain preview-only until their product-specific gates pass.
         Start-Cleaning remains a deprecated compatibility alias through the 1.x releases.
     .PARAMETER Dedication
         Show a dedication before the command inventory.
@@ -42,7 +43,7 @@ function Get-TheCleaners {
 
     $Module = $ExecutionContext.SessionState.Module
     foreach ($Command in @($Module.ExportedFunctions.Values | Sort-Object -Property Name)) {
-        $IsPreviewOnly = $Command.Name -in @('Clear-OldExchangeLog', 'Clear-OldIISLog')
+        $IsPreviewOnly = $Command.Name -in @('Clear-OldIISLog', 'Clear-OldExchangeLog')
         [pscustomobject]@{
             PSTypeName     = 'TheCleaners.CommandInfo'
             Name           = $Command.Name
@@ -52,3 +53,4 @@ function Get-TheCleaners {
         }
     }
 }
+

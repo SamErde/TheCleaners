@@ -18,12 +18,19 @@ if (Get-Command Invoke-TheCleaners -ErrorAction SilentlyContinue) { throw 'Impor
 $Inventory = @(TheCleaners\Get-TheCleaners -NoLogo)
 if ($Inventory.Count -ne 6) { throw 'Unexpected command inventory.' }
 if ($Module.ExportedAliases['Start-Cleaning'].Definition -ne 'Get-TheCleaners') { throw 'Missing compatibility alias.' }
-$Blocked = $false
-try { TheCleaners\Clear-OldExchangeLog -Confirm:$false } catch {
-    if ($_.FullyQualifiedErrorId -notlike 'ExchangeCleanupPreviewOnly*') { throw }
-    $Blocked = $true
+foreach ($PreviewCommand in @(
+    @{ Name = 'Clear-OldIISLog'; ErrorId = 'IISCleanupPreviewOnly' }
+    @{ Name = 'Clear-OldExchangeLog'; ErrorId = 'ExchangeCleanupPreviewOnly' }
+)) {
+    $Blocked = $false
+    try { & ('TheCleaners\' + $PreviewCommand.Name) -Confirm:$false } catch {
+        if ($_.FullyQualifiedErrorId -notlike ($PreviewCommand.ErrorId + '*')) { throw }
+        $Blocked = $true
+    }
+    if (-not $Blocked) { throw "$($PreviewCommand.Name) was not blocked." }
+    $InventoryItem = $Inventory | Where-Object Name -EQ $PreviewCommand.Name
+    if ($InventoryItem.Maturity -ne 'PreviewOnly' -or $InventoryItem.RemovalEnabled) { throw "Incorrect preview metadata: $($PreviewCommand.Name)" }
 }
-if (-not $Blocked) { throw 'Exchange was not blocked.' }
 foreach ($Name in $Module.ExportedFunctions.Keys) {
     $Help = Get-Help -Name ('TheCleaners\' + $Name) -Full
     if (-not $Help.Synopsis -or -not $Help.Description -or -not $Help.Examples) { throw "Incomplete packaged help: $Name" }
@@ -44,7 +51,7 @@ Describe 'Built-package contract' -Tag Integration {
         (Join-Path -Path $PackageRoot -ChildPath 'Invoke-TheCleaners.ps1') | Should -Not -Exist
     }
 
-    It 'passes quiet import, packaged-help, aliases, and Exchange-lock checks in a fresh process' {
+    It 'passes quiet import, packaged-help, aliases, and preview-lock checks in a fresh process' {
         $ProbeOutput = & $PowerShellExecutable -NoLogo -NoProfile -NonInteractive -File $ProbePath -ManifestPath $PackageManifest 2>&1
         $ExitCode = $LASTEXITCODE
         if ($ExitCode -ne 0) {
@@ -53,4 +60,3 @@ Describe 'Built-package contract' -Tag Integration {
         $ExitCode | Should -Be 0
     }
 }
-

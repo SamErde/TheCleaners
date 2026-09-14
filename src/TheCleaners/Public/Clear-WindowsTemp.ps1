@@ -7,10 +7,13 @@ function Clear-WindowsTemp {
         removal is opt-in and limited to directories emptied by this invocation and
         their now-empty ancestors. Preserve the cleanup root, unrelated empty branches,
         and reparse points. A single ShouldProcess decision authorizes the discovered
-        file/directory plan. Revalidate paths and timestamps before removal. Run elevated
-        for system-owned files; permission failures are reported through the error stream.
-        This prerelease still requires the Windows acceptance and privilege-preflight work
-        in the 1.0 plan. Path checks are not an atomic defense against hostile changes.
+        file/directory plan. Revalidate paths and timestamps before removal. File
+        deletion uses an opened file handle with DeleteOnClose so a concurrent directory
+        substitution cannot be removed as a file or counted as success. Run elevated for
+        system-owned files; permission failures are reported through the error stream.
+        This prerelease still requires the Windows
+        acceptance and privilege-preflight work in the 1.0 plan. Path checks are not an
+        atomic defense against hostile changes.
     .PARAMETER Days
         Retain files newer than Days days ago. The default is 30 days.
     .PARAMETER RemoveEmptyDirectory
@@ -151,16 +154,35 @@ function Clear-WindowsTemp {
     foreach ($File in $OldFiles) {
         try {
             $CurrentFile = Resolve-TheCleanersFileSystemPath -LiteralPath $File.FullName -RootPath $RootPath
-            if ($CurrentFile -isnot [System.IO.FileInfo] -or $CurrentFile.LastWriteTimeUtc -gt $CutoffUtc) {
+            if ($CurrentFile -isnot [System.IO.FileInfo]) {
                 $Result.FilesSkipped++
                 continue
             }
-            if (-not [System.IO.File]::Exists($CurrentFile.FullName)) {
+            $CurrentPath = $CurrentFile.FullName
+            $CurrentFile.Refresh()
+            if (-not $CurrentFile.Exists -or [System.IO.Directory]::Exists($CurrentPath) -or $CurrentFile.LastWriteTimeUtc -gt $CutoffUtc) {
                 $Result.FilesSkipped++
                 continue
             }
-            $Length = $CurrentFile.Length
-            [System.IO.File]::Delete($CurrentFile.FullName)
+            # DeleteOnClose binds deletion to the opened file object. A missing path or
+            # directory substitution fails before any directory can be removed.
+            $DeletionStream = [System.IO.FileStream]::new(
+                $CurrentPath,
+                [System.IO.FileMode]::Open,
+                [System.IO.FileAccess]::Read,
+                ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete),
+                1,
+                [System.IO.FileOptions]::DeleteOnClose
+            )
+            try {
+                $Length = $DeletionStream.Length
+            } finally {
+                $DeletionStream.Dispose()
+            }
+            $CurrentFile.Refresh()
+            if ($CurrentFile.Exists -or [System.IO.Directory]::Exists($CurrentPath)) {
+                throw [System.IO.IOException]::new("File candidate still exists after the deletion attempt: '$CurrentPath'.")
+            }
             $Result.FilesRemoved++
             $Result.BytesReclaimed += $Length
             $Parent = $CurrentFile.Directory
@@ -168,6 +190,12 @@ function Clear-WindowsTemp {
                 $null = $TouchedDirectories.Add($Parent.FullName)
                 $Parent = $Parent.Parent
             }
+        } catch [System.Management.Automation.ItemNotFoundException] {
+            $Result.FilesSkipped++
+        } catch [System.IO.FileNotFoundException] {
+            $Result.FilesSkipped++
+        } catch [System.IO.DirectoryNotFoundException] {
+            $Result.FilesSkipped++
         } catch {
             $Result.FileFailureCount++
             $PSCmdlet.WriteError($_)
@@ -206,3 +234,4 @@ function Clear-WindowsTemp {
         $Result
     }
 }
+

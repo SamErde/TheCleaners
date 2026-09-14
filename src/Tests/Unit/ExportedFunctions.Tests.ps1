@@ -51,15 +51,15 @@ Describe 'TheCleaners public API' -Tag Unit {
             $Item.PSObject.TypeNames | Should -Contain 'TheCleaners.CommandInfo'
             $Item.Maturity | Should -Not -Be 'Stable'
         }
-        $Exchange = $Inventory | Where-Object Name -EQ 'Clear-OldExchangeLog'
-        $Exchange.Maturity | Should -Be 'PreviewOnly'
-        $Exchange.RemovalEnabled | Should -BeFalse
-        $IIS = $Inventory | Where-Object Name -EQ 'Clear-OldIISLog'
-        $IIS.Maturity | Should -Be 'PreviewOnly'
-        $IIS.RemovalEnabled | Should -BeFalse
+        foreach ($CommandName in @('Clear-OldIISLog', 'Clear-OldExchangeLog')) {
+            $PreviewCommand = $Inventory | Where-Object Name -EQ $CommandName
+            $PreviewCommand.Maturity | Should -Be 'PreviewOnly'
+            $PreviewCommand.RemovalEnabled | Should -BeFalse
+        }
     }
 
-    It 'keeps the Exchange lock through the legacy alias' {
+    It 'keeps the IIS and Exchange locks through their legacy aliases' {
+        { TheCleaners\Clean-IISLog -Confirm:$false } | Should -Throw '*preview-only*'
         { TheCleaners\Clean-ExchangeLog -Confirm:$false } | Should -Throw '*preview-only*'
     }
 
