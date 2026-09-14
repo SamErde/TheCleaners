@@ -102,6 +102,7 @@ The following references identify the exact regression tests behind review-threa
 | Optional registry absence versus access failure | `src/Tests/Unit/PreviewCommandSafety.Tests.ps1`: IIS fixture uses an absent-value exception; `reports registry access failure instead of silently omitting a configured root` checks the error stream and `-ErrorAction Stop`. |
 | IIS dependency registrations restored on success/failure, existing module preserved | `src/Tests/Unit/IISDiscoverySafety.Tests.ps1`: four fresh-process fixture-module scenarios; also checks caller confirmation preferences and leaked commands. This does not claim to unload Windows assemblies. |
 | Equivalent site/default/registry roots previewed once | `src/Tests/Unit/IISDiscoverySafety.Tests.ps1`: site variants, registry dot/trailing/alternate-separator cases, and a distinct-custom-root control. |
+| Fully qualified Windows path syntax enforced before resolution | `src/Tests/Unit/FullyQualifiedPathSafety.Tests.ps1`: drive-relative, root-relative, ordinary relative, provider, invalid `RootPath`, UNC, device, and extended-length syntax cases, plus valid drive/descendant and containment cases. |
 
 Adding tests is not evidence that they passed. Record CI run URLs, exact commit/runtime versions, counts, failures, and skips in the PR before changing a packet to validated. Windows/IIS/Exchange lab acceptance is not replaced by CI with mocked fixtures. The editing environment has no local PowerShell runtime; do not claim local Pester execution.
 

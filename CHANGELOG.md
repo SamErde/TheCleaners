@@ -14,6 +14,7 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 - A versioned 1.0 implementation ledger and contributor/agent safety instructions.
 - Fresh-process IIS dependency-lifetime tests for initially loaded/unloaded modules on discovery success/failure, using a fixture module rather than a live IIS installation.
 - IIS site and registry deduplication regressions covering dot segments, trailing separators, alternate separators, and distinct custom roots.
+- Fully qualified Windows filesystem path validation that rejects drive-relative, root-relative, provider, device, and unsupported extended-length forms before resolution.
 
 ### Changed
 

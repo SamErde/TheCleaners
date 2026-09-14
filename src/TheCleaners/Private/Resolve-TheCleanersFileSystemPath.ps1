@@ -1,13 +1,65 @@
+function Test-TheCleanersFullyQualifiedPath {
+    <#
+    .SYNOPSIS
+        Test whether a value uses a fully qualified Windows filesystem path syntax.
+    .DESCRIPTION
+        Accept standard drive-qualified paths and UNC paths with both server and
+        share components. Reject drive-relative, root-relative, provider-qualified,
+        device, and extended-length paths before filesystem resolution.
+    .PARAMETER Path
+        Path syntax to test without resolving it.
+    .OUTPUTS
+        System.Boolean
+    #>
+    [OutputType([bool])]
+    param (
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string]
+        $Path
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return $false
+    }
+
+    $Comparison = [System.StringComparison]::OrdinalIgnoreCase
+    if ($Path.StartsWith('\\?\', $Comparison) -or
+        $Path.StartsWith('//?/', $Comparison) -or
+        $Path.StartsWith('\\.\', $Comparison) -or
+        $Path.StartsWith('//./', $Comparison)) {
+        return $false
+    }
+
+    if ($Path.StartsWith('\\') -or $Path.StartsWith('//')) {
+        $NormalizedPath = $Path.Replace('/', '\')
+        $Segments = $NormalizedPath -split '\\'
+        if ($Segments.Count -lt 4 -or
+            [string]::IsNullOrWhiteSpace($Segments[2]) -or
+            [string]::IsNullOrWhiteSpace($Segments[3])) {
+            return $false
+        }
+        return $true
+    }
+
+    if ($Path -match '^[A-Za-z]:[\\/]') {
+        return $true
+    }
+
+    $false
+}
+
 function Resolve-TheCleanersFileSystemPath {
     <#
     .SYNOPSIS
         Validate an existing filesystem root or a literal descendant without changing it.
     .DESCRIPTION
-        Reject non-filesystem paths, broad cleanup roots, and reparse points anywhere in
-        the current ancestry. With RootPath, require a strict descendant using a separator
-        boundary, not a naive string-prefix check. Call again immediately before mutation.
-        These path-based checks do not provide an atomic security boundary against hostile
-        concurrent filesystem changes.
+        Require fully qualified Windows filesystem paths, reject broad cleanup roots, and
+        reject reparse points anywhere in the current ancestry. With RootPath, require a
+        strict descendant using a separator boundary, not a naive string-prefix check.
+        Call again immediately before mutation. Extended-length and device path forms are
+        not supported in this prerelease. These path-based checks do not provide an atomic
+        security boundary against hostile concurrent filesystem changes.
     .PARAMETER LiteralPath
         Existing literal filesystem path to validate.
     .PARAMETER RootPath
@@ -31,8 +83,11 @@ function Resolve-TheCleanersFileSystemPath {
         $RootPath
     )
 
-    if ([string]::IsNullOrWhiteSpace($LiteralPath) -or -not [System.IO.Path]::IsPathRooted($LiteralPath)) {
-        throw 'An absolute, non-empty filesystem path is required.'
+    if (-not (Test-TheCleanersFullyQualifiedPath -Path $LiteralPath)) {
+        throw 'A fully qualified Windows filesystem path is required.'
+    }
+    if ($PSBoundParameters.ContainsKey('RootPath') -and -not (Test-TheCleanersFullyQualifiedPath -Path $RootPath)) {
+        throw 'A fully qualified Windows filesystem RootPath is required.'
     }
     $Item = Get-Item -LiteralPath $LiteralPath -Force -ErrorAction Stop
     if ($Item -isnot [System.IO.FileSystemInfo]) {

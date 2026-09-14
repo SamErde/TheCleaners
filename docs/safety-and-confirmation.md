@@ -8,6 +8,8 @@ This branch is prerelease work. No command is newly certified production-ready b
 
 The functions discover candidates before deletion, skip reparse points before traversing directories, and validate literal paths. Immediately before removal, they recheck ancestry, item type, and last-write time. Candidate deletion opens the file itself with `FileOptions.DeleteOnClose`; this binds the operation to a file handle rather than asking the PowerShell provider to resolve the path again. A path that disappears is counted as skipped, and a path replaced by a directory is never removed or counted as a successful file deletion. Path checks are still not a complete defense against every hostile filesystem race, so additional concurrent-change and platform acceptance cases remain in the release plan.
 
+Cleanup roots and literal filesystem paths must use fully qualified Windows syntax: a drive-qualified path such as `C:\Temp` or a UNC path with both server and share components. Drive-relative (`C:Temp`), root-relative (`\Temp`), ordinary relative, provider-qualified, device, and extended-length paths are rejected before filesystem resolution. Extended-length and device path support is intentionally outside this prerelease contract.
+
 By default, no directories are removed. `-RemoveEmptyDirectory` permits only directories emptied by this invocation and now-empty ancestors. It does not authorize the cleanup root, an unrelated pre-existing empty branch, or a directory containing a retained file. Pruning is deepest-first. Empty directories are deleted using a non-recursive API inside the owning command's approved `ShouldProcess` branch; a file appearing after the emptiness check causes deletion to fail, not become recursive.
 
 ```powershell

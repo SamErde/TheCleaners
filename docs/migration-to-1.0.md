@@ -21,6 +21,8 @@ Clear-WindowsTemp -Days 30 -RemoveEmptyDirectory -WhatIf -PassThru
 
 The retention boundary remains inclusive but is now evaluated using UTC last-write times and a single cutoff. Candidate deletion uses a file-handle-specific `DeleteOnClose` operation instead of provider `Remove-Item`; a missing candidate is skipped, and a directory substituted at the same path is preserved. Locked/access-denied removals produce errors, not warnings; review automation that relies on error-stream behavior. `-ErrorAction Stop` is honored. `-PassThru` returns counters and status, with preview counts distinct from successful removals.
 
+Temp roots and literal paths must be fully qualified Windows filesystem paths. Drive-relative, root-relative, provider-qualified, device, and unsupported extended-length forms are rejected before resolution.
+
 ## IIS
 
 Existing destructive IIS invocations now stop with a terminating `IISCleanupPreviewOnly` error. Use explicit preview mode while the IIS-specific path and file-format contract is completed:
