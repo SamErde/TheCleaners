@@ -1,0 +1,1355 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Windows maintenance commands with explicit cleanup safety controls. Exchange log discovery is preview-only.">
+      
+      
+        <meta name="author" content="Sam Erde">
+      
+      
+        <link rel="canonical" href="https://day3bits.com/thecleaners/release-plan-1.0/">
+      
+      
+        <link rel="prev" href="../Start-Cleaning/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>1.0 implementation plan - The Cleaners PowerShell Module</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#thecleaners-10-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="The Cleaners PowerShell Module" class="md-header__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            The Cleaners PowerShell Module
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              1.0 implementation plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SamErde/TheCleaners" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    SamErde/TheCleaners
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../safety-and-confirmation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Safety
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../support-matrix/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Support
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../migration-to-1.0/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Migration to 1.0
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Get-TheCleaners/" class="md-tabs__link">
+          
+  
+  
+  Functions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="The Cleaners PowerShell Module" class="md-nav__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    The Cleaners PowerShell Module
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SamErde/TheCleaners" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    SamErde/TheCleaners
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../safety-and-confirmation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../support-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration-to-1.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration to 1.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Functions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Get-TheCleaners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get-TheCleaners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-CurrentUserTemp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-CurrentUserTemp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-WindowsTemp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-WindowsTemp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-OldIISLog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-OldIISLog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-OldExchangeLog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-OldExchangeLog (preview)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Get-StaleUserProfile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get-StaleUserProfile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Start-Cleaning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start-Cleaning (alias)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1.0 implementation plan
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1.0 implementation plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#status-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accepted-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepted decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release sequence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#work-packets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Work packets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Work packets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tc-003004-completion-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-003/004 completion checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tc-005006-completion-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-005/006 completion checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tc-007-completion-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-007 completion checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tc-008009-completion-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-008/009 completion checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parallel-work-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel work boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#out-of-scope-for-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Out of scope for 1.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href=".." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Development
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="thecleaners-10-implementation-plan">TheCleaners 1.0 implementation plan</h1>
+<p>Updated September 14, 2026. Approved direction from the maintainer; implementation is underway in <a href="https://github.com/SamErde/TheCleaners/pull/27">PR #27</a>.</p>
+<h2 id="status-conventions">Status conventions</h2>
+<p><strong>Open</strong> means work has not been completed. <strong>Implemented in PR</strong> means code exists but is not merged or release-accepted. <strong>Validated</strong> requires passing checks for the referenced commit. <strong>Merged</strong> still does not mean the product acceptance or release gates have passed.</p>
+<p>The manifest stays on the current prerelease version during this packet. No command is advertised as stable merely because it is exported. The plan is milestone/gate-driven, not a promised calendar deadline.</p>
+<h2 id="accepted-decisions">Accepted decisions</h2>
+<ul>
+<li>Windows only. Minimum Windows PowerShell 5.1; include Microsoft-supported PowerShell 7 releases on Windows. Before RC, CI must cover 5.1, supported 7 LTS, and supported current stable when distinct. Do not promise all historical or future 7.x versions.</li>
+<li>Add <code>-RemoveEmptyDirectory</code> to <code>Clear-CurrentUserTemp</code> and <code>Clear-WindowsTemp</code>. Without it, directories are untouched. With it, prune only directories emptied by this invocation and their now-empty ancestors, deepest-first. Preserve cleanup roots, unrelated pre-existing empty branches, reparse points, and paths outside the approved root.</li>
+<li>Rename private <code>Show-TCLogo</code> to <code>Show-TheCleanersLogo</code>; rename public <code>Start-Cleaning</code> to <code>Get-TheCleaners</code>. Retain <code>Start-Cleaning</code> as a deprecated alias through 1.x.</li>
+<li>Canonical documentation is <code>https://day3bits.com/thecleaners/</code>. Keep the source repository as the manifest's <code>ProjectUri</code>. Do not use a documentation URL as an Updatable Help endpoint unless the required HelpInfo artifacts actually exist.</li>
+<li>Keep Exchange discoverable in 1.0, but structurally incapable of deletion. Require explicit <code>-WhatIf</code>, fail before discovery when it is absent/false, and do not silently force a preference or run IIS cleanup.</li>
+<li>A later minor release may add a per-invocation Exchange <code>-AllowRemoval</code> switch after acceptance. This is <strong>provisional</strong>: the maintainer accepted it for now, not as an irreversible permanent design. There is no persistent unlock and no removal flag in the 1.0 implementation.</li>
+<li>IIS may ship as stable only after its gates pass. Until then, keep it structurally preview-only rather than delaying ready commands.</li>
+<li>Zensical migration is <a href="https://github.com/SamErde/TheCleaners/issues/26">issue #26</a>, outside the 1.0 critical path unless the documentation stack blocks publication.</li>
+</ul>
+<h2 id="release-sequence">Release sequence</h2>
+<table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Entry/exit criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0 preview</td>
+<td>Implement the new safety boundaries, naming, output contracts, quiet imports, and repeatable tests; permit necessary API corrections.</td>
+</tr>
+<tr>
+<td>1.0 beta</td>
+<td>Temp cleaners and non-destructive commands pass behavior tests; freeze most signatures; IIS lab validation underway; IIS and Exchange remain preview-only.</td>
+</tr>
+<tr>
+<td>1.0 RC</td>
+<td>Every stable command has evidence for its supported configurations; incomplete IIS remains preview-locked; exact packaged module passes all required runtimes, help, and installation checks. Accept only defect, safety, documentation, and packaging corrections.</td>
+</tr>
+<tr>
+<td>1.0 stable</td>
+<td>Publish the tested artifact with aligned version/tag/metadata and a successful clean-install check. No feature can become destructive merely by changing a maturity label.</td>
+</tr>
+<tr>
+<td>Later Exchange minor</td>
+<td>First release an Exchange-enabled prerelease; validate paths, file patterns, custom drives, locks, access failures, protected database/transaction-log locations, and post-cleanup service health. Reconfirm the provisional per-invocation opt-in before activation.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="work-packets">Work packets</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Work</th>
+<th>Current state</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-001</td>
+<td>Behavioral contracts, support matrix, maturity policy, migration notes, and release ledger</td>
+<td>Partially implemented in PR #27; exact Windows/IIS/Exchange product matrix and remaining command contracts open.</td>
+</tr>
+<tr>
+<td>TC-002</td>
+<td>Naming, compatibility aliases, deterministic loader, quiet import, removal of initialization scaffolding</td>
+<td>Implemented in PR #27; source and packaged import tests added.</td>
+</tr>
+<tr>
+<td>TC-003</td>
+<td>Public mutation ownership, shared result/error contracts, UTC semantics, path safety, removal of generic deletion wrapper</td>
+<td>Temp mutation ownership and Exchange/IIS no-deletion structures implemented in PR #27. IIS no longer calls the legacy wrapper; helper retirement and cross-command result/error standardization remain open.</td>
+</tr>
+<tr>
+<td>TC-004</td>
+<td>Temp cleaners, opt-in directory pruning, WhatIf/Confirm, locked-file/race handling, privilege/root preflight</td>
+<td>Main behavior and file-to-directory/missing-candidate race protections implemented in PR #27; actual OS-root verification, elevation preflight, additional adversarial cases, and Windows acceptance remain open.</td>
+</tr>
+<tr>
+<td>TC-005</td>
+<td>IIS path discovery, environment expansion, per-format allowlist, deduplication, inline deletion, and server validation</td>
+<td>Preview lock, read-only discovery, validated-root normalization/deduplication, and dependency registration restoration implemented in PR #27. Format allowlist, remaining path hardening, removal implementation, and server validation remain open; removal stays disabled until those gates pass.</td>
+</tr>
+<tr>
+<td>TC-006</td>
+<td>Exchange preview guard, experimental discovery, validated per-directory patterns, protected locations, and lab fixtures</td>
+<td>Guard, IIS decoupling, and directory-root validation implemented in PR #27. Current <code>.log</code>-only discovery is experimental, not a validated deletion allowlist. ETL and product-version validation remain open.</td>
+</tr>
+<tr>
+<td>TC-007</td>
+<td>Typed stale-profile output, unknown LastUseTime, optional size, SID resolution, and command inventory</td>
+<td>Inventory implemented in PR #27. Profile refactor and unused SID-helper disposition open.</td>
+</tr>
+<tr>
+<td>TC-008</td>
+<td>One source-layout package, exact-artifact tests/publication, reproducible build, complete runtime matrix, and CI gates</td>
+<td>5.1 unit/parser job and fresh-process package tests added in PR #27. Legacy merged build and source-directory publisher remain; do not publish them as 1.0.</td>
+</tr>
+<tr>
+<td>TC-009</td>
+<td>Complete help/docs, canonical deployment verification, changelog/history, contributor/security policy, RC and release checks</td>
+<td>Initial docs/ledger in PR #27; full generation drift gate, strict site validation, deployment/redirect checks, and release work open.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tc-003004-completion-checklist">TC-003/004 completion checklist</h3>
+<ul>
+<li>[ ] Standardize documented result fields and stable error IDs/categories across every applicable command.</li>
+<li>[ ] Remove the now-unused generic private deletion wrapper and its legacy tests; do not add another generic mutation layer.</li>
+<li>[ ] Verify every discovery error fails closed and cannot be mistaken for zero candidates.</li>
+<li>[ ] Verify <code>-WhatIf</code> leaves files, directories, preferences, registry, processes, and module state unchanged.</li>
+<li>[ ] Verify <code>-Confirm</code> approval/decline and noninteractive behavior without nested prompts.</li>
+<li>[ ] Validate hard links, junctions, symbolic links, reparse-point ancestry, roots, prefix-confusable siblings, long paths, access failures, and files changing after discovery.</li>
+<li>[ ] Confirm actual system temp root and privilege handling rather than trusting an environment variable alone.</li>
+<li>[ ] Reconcile proposed versus removed/skipped/failed files and directories; bytes are logical lengths of successfully removed files, not a guarantee of physical free-space change.</li>
+<li>[ ] Complete actual Windows client/server acceptance on supported OS versions.</li>
+</ul>
+<h3 id="tc-005006-completion-checklist">TC-005/006 completion checklist</h3>
+<ul>
+<li>[ ] Explicitly import or qualify IIS discovery commands; handle missing optional dependencies and uninstalled products clearly.</li>
+<li>[ ] Expand environment variables in all discovered roots; normalize and deduplicate roots.</li>
+<li>[ ] Document and test exact supported product versions, default/custom paths, file formats, and retention boundaries.</li>
+<li>[ ] Never treat every old file in an arbitrary logging tree as a safe log candidate.</li>
+<li>[ ] Prove mailbox database and transaction-log paths cannot become Exchange cleanup candidates; exclude a configured database path even if it overlaps a proposed log root.</li>
+<li>[x] Keep IIS and Exchange deletion absent while their current preview locks apply, including legacy aliases and all parameter combinations.</li>
+<li>[ ] Capture lab candidate lists, before/after counts, and service health for any command later enabled for removal.</li>
+</ul>
+<h3 id="tc-007-completion-checklist">TC-007 completion checklist</h3>
+<ul>
+<li>[ ] Keep profile discovery read-only; remove presentation-only <code>Out-Host</code> behavior.</li>
+<li>[ ] Introduce a stable profile object with SID/account, path, last use, age, optional size, loaded/special flags, and unknown-date status.</li>
+<li>[ ] Treat missing LastUseTime as unknown, not automatically stale; decide how unknown entries are exposed.</li>
+<li>[ ] Confirm default/public/system/service profile exclusions and size-enumeration safety.</li>
+<li>[ ] Remove orphaned SID helpers unless deliberately used by profile output.</li>
+</ul>
+<h3 id="tc-008009-completion-checklist">TC-008/009 completion checklist</h3>
+<ul>
+<li>[ ] Replace recursive source merging with the explicit source-layout package; preserve useful stack traces and external help.</li>
+<li>[ ] Build once, record a content manifest/digest, test that artifact, and publish it without rebuilding or publishing <code>src</code> directly.</li>
+<li>[ ] Add a protected publishing environment and version/tag/prerelease checks; refuse duplicate Gallery versions.</li>
+<li>[ ] Add complete 5.1 plus supported 7 LTS/current package/install tests, not just source unit tests.</li>
+<li>[ ] Re-enable the ShouldProcess analyzer rule; justify narrowly scoped suppressions and consolidate redundant analyzer jobs.</li>
+<li>[ ] Meet at least 80% overall coverage and explicitly test every safety-critical branch; no zero-test or silent discovery-failure passes.</li>
+<li>[ ] Retain machine-readable unit and integration reports, with failed/skipped counts and exact runtime versions.</li>
+<li>[ ] Generate command references and external help from the source of truth; fail on drift and validate the documentation build strictly.</li>
+<li>[ ] Update README, migration guide, changelog, support/security policy, contributing instructions, PR template, and agent instructions.</li>
+<li>[ ] Review template leftovers, duplicated LICENSE, misplaced editor settings, spell-check entries, pre-commit adoption, and redundant scanners.</li>
+<li>[ ] Verify canonical deployment at the lowercase <code>/thecleaners/</code> path; arrange redirects from older casing/hosts without creating a conflicting custom-domain configuration.</li>
+<li>[ ] Attach package and hashes to the release; verify a clean install of the published version.</li>
+</ul>
+<h2 id="validation-evidence">Validation evidence</h2>
+<p>PR #27 adds parameterized filesystem tests for both temp commands, inclusive cutoff, literal names, junction exclusion, directory scope, WhatIf, partial failure, ErrorAction Stop, failed enumeration, a candidate replaced by a directory, and a candidate disappearing before deletion. It adds IIS and Exchange no-mutation/guard/root-type tests, export/help/alias tests, source import checks, and a fresh-process built-package probe.</p>
+<p>The following references identify the exact regression tests behind review-thread decisions, rather than claiming coverage from implementation alone:</p>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Test source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local-kind clock converted to UTC for both temp commands</td>
+<td><code>src/Tests/Unit/TempCandidateSafety.Tests.ps1</code>: <code>converts a local Get-Date result to a UTC retention cutoff</code>; also asserts <code>DateTimeKind.Utc</code>, including on UTC-configured hosts.</td>
+</tr>
+<tr>
+<td>Candidate disappears between discovery and removal</td>
+<td><code>src/Tests/Unit/TempCandidateSafety.Tests.ps1</code>: <code>reconciles a discovered candidate that disappears before deletion</code>, parameterized for both temp commands.</td>
+</tr>
+<tr>
+<td>No Exchange removal-bypass parameters</td>
+<td><code>src/Tests/Unit/PreviewCommandSafety.Tests.ps1</code>: <code>does not expose a removal-bypass parameter</code>, using command metadata rather than a generic exception.</td>
+</tr>
+<tr>
+<td>Optional registry absence versus access failure</td>
+<td><code>src/Tests/Unit/PreviewCommandSafety.Tests.ps1</code>: IIS fixture uses an absent-value exception; <code>reports registry access failure instead of silently omitting a configured root</code> checks the error stream and <code>-ErrorAction Stop</code>.</td>
+</tr>
+<tr>
+<td>IIS dependency registrations restored on success/failure, existing module preserved</td>
+<td><code>src/Tests/Unit/IISDiscoverySafety.Tests.ps1</code>: four fresh-process fixture-module scenarios; also checks caller confirmation preferences and leaked commands. This does not claim to unload Windows assemblies.</td>
+</tr>
+<tr>
+<td>Equivalent site/default/registry roots previewed once</td>
+<td><code>src/Tests/Unit/IISDiscoverySafety.Tests.ps1</code>: site variants, registry dot/trailing/alternate-separator cases, and a distinct-custom-root control.</td>
+</tr>
+<tr>
+<td>Fully qualified Windows path syntax enforced before resolution</td>
+<td><code>src/Tests/Unit/FullyQualifiedPathSafety.Tests.ps1</code>: drive-relative, root-relative, ordinary relative, provider, invalid <code>RootPath</code>, UNC, device, and extended-length syntax cases, plus valid drive/descendant and containment cases.</td>
+</tr>
+</tbody>
+</table>
+<p>Adding tests is not evidence that they passed. Record CI run URLs, exact commit/runtime versions, counts, failures, and skips in the PR before changing a packet to validated. Windows/IIS/Exchange lab acceptance is not replaced by CI with mocked fixtures. The editing environment has no local PowerShell runtime; do not claim local Pester execution.</p>
+<h2 id="parallel-work-boundaries">Parallel work boundaries</h2>
+<p>One integrator owns shared exports, loader, path helper, shared tests, and build/publishing files. IIS, Exchange, profile, and documentation work may proceed on separate branches with separate test files after interfaces are agreed. Merge serially, rebase, and rerun all cross-cutting tests. Do not run destructive acceptance tests concurrently against the same fixture or machine.</p>
+<h2 id="out-of-scope-for-10">Out of scope for 1.0</h2>
+<p>Profile deletion, arbitrary-path or remote cleanup, scheduling installation, automatic all-service orchestration, Linux/macOS support, additional cleanup targets, and complex UI. These should not displace safety or packaging validation.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      (c) 2026 Sam Erde
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.tracking", "navigation.sections", "navigation.top", "toc.follow", "toc.integrate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
