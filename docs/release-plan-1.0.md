@@ -1,12 +1,12 @@
 # TheCleaners 1.0 implementation plan
 
-Updated September 13, 2026. Approved direction from the maintainer; implementation began in [draft PR #27](https://github.com/SamErde/TheCleaners/pull/27).
+Updated September 13, 2026. Approved direction from the maintainer; implementation is underway in [PR #27](https://github.com/SamErde/TheCleaners/pull/27).
 
 ## Status conventions
 
-**Open** means work has not been completed. **Implemented in draft** means code exists but is not merged or release-accepted. **Validated** requires passing checks for the referenced commit. **Merged** still does not mean the product acceptance or release gates have passed.
+**Open** means work has not been completed. **Implemented in PR** means code exists but is not merged or release-accepted. **Validated** requires passing checks for the referenced commit. **Merged** still does not mean the product acceptance or release gates have passed.
 
-The manifest stays on the current prerelease version during this first packet. No command is advertised as stable merely because it is exported. The plan is milestone/gate-driven, not a promised calendar deadline.
+The manifest stays on the current prerelease version during this packet. No command is advertised as stable merely because it is exported. The plan is milestone/gate-driven, not a promised calendar deadline.
 
 ## Accepted decisions
 
@@ -15,8 +15,8 @@ The manifest stays on the current prerelease version during this first packet. N
 - Rename private `Show-TCLogo` to `Show-TheCleanersLogo`; rename public `Start-Cleaning` to `Get-TheCleaners`. Retain `Start-Cleaning` as a deprecated alias through 1.x.
 - Canonical documentation is `https://day3bits.com/thecleaners/`. Keep the source repository as the manifest's `ProjectUri`. Do not use a documentation URL as an Updatable Help endpoint unless the required HelpInfo artifacts actually exist.
 - Keep Exchange discoverable in 1.0, but structurally incapable of deletion. Require explicit `-WhatIf`, fail before discovery when it is absent/false, and do not silently force a preference or run IIS cleanup.
-- A later minor release may add a per-invocation `-AllowRemoval` switch after Exchange acceptance. This is **provisional**: the maintainer accepted it for now, not as an irreversible permanent design. There is no persistent unlock and no removal flag in the 1.0 implementation.
-- IIS may ship as stable only after its gates pass; otherwise make it structurally preview-only rather than delaying ready commands.
+- A later minor release may add a per-invocation Exchange `-AllowRemoval` switch after acceptance. This is **provisional**: the maintainer accepted it for now, not as an irreversible permanent design. There is no persistent unlock and no removal flag in the 1.0 implementation.
+- IIS may ship as stable only after its gates pass. Until then, keep it structurally preview-only rather than delaying ready commands.
 - Zensical migration is [issue #26](https://github.com/SamErde/TheCleaners/issues/26), outside the 1.0 critical path unless the documentation stack blocks publication.
 
 ## Release sequence
@@ -24,8 +24,8 @@ The manifest stays on the current prerelease version during this first packet. N
 | Milestone | Entry/exit criteria |
 | --- | --- |
 | 1.0 preview | Implement the new safety boundaries, naming, output contracts, quiet imports, and repeatable tests; permit necessary API corrections. |
-| 1.0 beta | Temp cleaners and non-destructive commands pass behavior tests; freeze most signatures; IIS lab validation underway; Exchange remains preview-only. |
-| 1.0 RC | Every stable command has evidence for its supported configurations; incomplete IIS is preview-locked; exact packaged module passes all required runtimes, help, and installation checks. Accept only defect, safety, documentation, and packaging corrections. |
+| 1.0 beta | Temp cleaners and non-destructive commands pass behavior tests; freeze most signatures; IIS lab validation underway; IIS and Exchange remain preview-only. |
+| 1.0 RC | Every stable command has evidence for its supported configurations; incomplete IIS remains preview-locked; exact packaged module passes all required runtimes, help, and installation checks. Accept only defect, safety, documentation, and packaging corrections. |
 | 1.0 stable | Publish the tested artifact with aligned version/tag/metadata and a successful clean-install check. No feature can become destructive merely by changing a maturity label. |
 | Later Exchange minor | First release an Exchange-enabled prerelease; validate paths, file patterns, custom drives, locks, access failures, protected database/transaction-log locations, and post-cleanup service health. Reconfirm the provisional per-invocation opt-in before activation. |
 
@@ -33,20 +33,20 @@ The manifest stays on the current prerelease version during this first packet. N
 
 | ID | Work | Current state |
 | --- | --- | --- |
-| TC-001 | Behavioral contracts, support matrix, maturity policy, migration notes, and release ledger | Partially implemented in draft #27; exact Windows/IIS/Exchange product matrix and remaining command contracts open. |
-| TC-002 | Naming, compatibility aliases, deterministic loader, quiet import, removal of initialization scaffolding | Implemented in draft #27; source and packaged import tests added. |
-| TC-003 | Public mutation ownership, shared result/error contracts, UTC semantics, path safety, removal of generic deletion wrapper | Partially implemented in draft #27 for temp and Exchange preview; IIS still depends on `Remove-OldFiles`. |
-| TC-004 | Temp cleaners, opt-in directory pruning, WhatIf/Confirm, locked-file/race handling, privilege/root preflight | Main behavior implemented in draft #27; remaining adversarial/concurrent cases, actual OS-root verification, elevation preflight, and Windows acceptance open. |
-| TC-005 | IIS path discovery, environment expansion, per-format allowlist, deduplication, inline deletion, and server validation | Open. Remove `Remove-OldFiles` and its legacy tests only in this packet once its last caller is updated. |
-| TC-006 | Exchange preview guard, experimental discovery, validated per-directory patterns, protected locations, and lab fixtures | Guard and IIS decoupling implemented in draft #27. Current .log-only discovery is experimental, not a validated deletion allowlist. ETL and product-version validation remain open. |
-| TC-007 | Typed stale-profile output, unknown LastUseTime, optional size, SID resolution, and command inventory | Inventory implemented in draft #27. Profile refactor and unused SID-helper disposition open. |
-| TC-008 | One source-layout package, exact-artifact tests/publication, reproducible build, complete runtime matrix, and CI gates | 5.1 unit/parser job and fresh-process package tests added in draft #27. Legacy merged build and source-directory publisher remain; do not publish them as 1.0. |
-| TC-009 | Complete help/docs, canonical deployment verification, changelog/history, contributor/security policy, RC and release checks | Initial docs/ledger in draft #27; full generation drift gate, strict site validation, deployment/redirect checks, and release work open. |
+| TC-001 | Behavioral contracts, support matrix, maturity policy, migration notes, and release ledger | Partially implemented in PR #27; exact Windows/IIS/Exchange product matrix and remaining command contracts open. |
+| TC-002 | Naming, compatibility aliases, deterministic loader, quiet import, removal of initialization scaffolding | Implemented in PR #27; source and packaged import tests added. |
+| TC-003 | Public mutation ownership, shared result/error contracts, UTC semantics, path safety, removal of generic deletion wrapper | Temp mutation ownership and Exchange/IIS no-deletion structures implemented in PR #27. IIS no longer calls the legacy wrapper; helper retirement and cross-command result/error standardization remain open. |
+| TC-004 | Temp cleaners, opt-in directory pruning, WhatIf/Confirm, locked-file/race handling, privilege/root preflight | Main behavior and file-to-directory/missing-candidate race protections implemented in PR #27; actual OS-root verification, elevation preflight, additional adversarial cases, and Windows acceptance remain open. |
+| TC-005 | IIS path discovery, environment expansion, per-format allowlist, deduplication, inline deletion, and server validation | Preview lock and read-only discovery implemented in PR #27. Exact root normalization, format allowlist, removal implementation, and server validation remain open; removal stays disabled until those gates pass. |
+| TC-006 | Exchange preview guard, experimental discovery, validated per-directory patterns, protected locations, and lab fixtures | Guard, IIS decoupling, and directory-root validation implemented in PR #27. Current `.log`-only discovery is experimental, not a validated deletion allowlist. ETL and product-version validation remain open. |
+| TC-007 | Typed stale-profile output, unknown LastUseTime, optional size, SID resolution, and command inventory | Inventory implemented in PR #27. Profile refactor and unused SID-helper disposition open. |
+| TC-008 | One source-layout package, exact-artifact tests/publication, reproducible build, complete runtime matrix, and CI gates | 5.1 unit/parser job and fresh-process package tests added in PR #27. Legacy merged build and source-directory publisher remain; do not publish them as 1.0. |
+| TC-009 | Complete help/docs, canonical deployment verification, changelog/history, contributor/security policy, RC and release checks | Initial docs/ledger in PR #27; full generation drift gate, strict site validation, deployment/redirect checks, and release work open. |
 
 ### TC-003/004 completion checklist
 
 - [ ] Standardize documented result fields and stable error IDs/categories across every applicable command.
-- [ ] Remove all generic private deletion wrappers after migrating IIS; retain only justified read-only helpers.
+- [ ] Remove the now-unused generic private deletion wrapper and its legacy tests; do not add another generic mutation layer.
 - [ ] Verify every discovery error fails closed and cannot be mistaken for zero candidates.
 - [ ] Verify `-WhatIf` leaves files, directories, preferences, registry, processes, and module state unchanged.
 - [ ] Verify `-Confirm` approval/decline and noninteractive behavior without nested prompts.
@@ -62,8 +62,8 @@ The manifest stays on the current prerelease version during this first packet. N
 - [ ] Document and test exact supported product versions, default/custom paths, file formats, and retention boundaries.
 - [ ] Never treat every old file in an arbitrary logging tree as a safe log candidate.
 - [ ] Prove mailbox database and transaction-log paths cannot become Exchange cleanup candidates; exclude a configured database path even if it overlaps a proposed log root.
-- [ ] Keep Exchange deletion absent throughout 1.0, including legacy aliases and all parameter combinations.
-- [ ] Capture lab candidate lists, before/after counts, and service health for any command enabled for removal.
+- [x] Keep IIS and Exchange deletion absent while their current preview locks apply, including legacy aliases and all parameter combinations.
+- [ ] Capture lab candidate lists, before/after counts, and service health for any command later enabled for removal.
 
 ### TC-007 completion checklist
 
@@ -90,9 +90,9 @@ The manifest stays on the current prerelease version during this first packet. N
 
 ## Validation evidence
 
-Draft #27 adds parameterized filesystem tests for both temp commands, inclusive cutoff, literal names, junction exclusion, directory scope, WhatIf, partial failure, ErrorAction Stop, and failed enumeration. It adds Exchange no-mutation/guard tests, export/help/alias tests, source import checks, and a fresh-process built-package probe.
+PR #27 adds parameterized filesystem tests for both temp commands, inclusive cutoff, literal names, junction exclusion, directory scope, WhatIf, partial failure, ErrorAction Stop, failed enumeration, a candidate replaced by a directory, and a candidate disappearing before deletion. It adds IIS and Exchange no-mutation/guard/root-type tests, export/help/alias tests, source import checks, and a fresh-process built-package probe.
 
-Adding tests is not evidence that they passed. Record CI run URLs, exact commit/runtime versions, counts, failures, and skips in the PR before changing a packet to validated. Windows/Exchange lab acceptance is not replaced by CI with mocked fixtures. The editing session has no local PowerShell runtime; do not claim local Pester execution.
+Adding tests is not evidence that they passed. Record CI run URLs, exact commit/runtime versions, counts, failures, and skips in the PR before changing a packet to validated. Windows/IIS/Exchange lab acceptance is not replaced by CI with mocked fixtures. The editing environment has no local PowerShell runtime; do not claim local Pester execution.
 
 ## Parallel work boundaries
 

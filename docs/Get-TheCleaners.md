@@ -10,7 +10,7 @@ Get the available commands and their current maturity without running cleanup.
 Get-TheCleaners [-Dedication] [-NoLogo] [<CommonParameters>]
 ```
 
-Returns one `TheCleaners.CommandInfo` object per exported function, with `Name`, `Maturity`, `RemovalEnabled`, and `SupportsWhatIf`. Exchange is `PreviewOnly`; other commands remain `Prerelease` until their acceptance gates pass. Aliases are not duplicated as inventory entries.
+Returns one `TheCleaners.CommandInfo` object per exported function, with `Name`, `Maturity`, `RemovalEnabled`, and `SupportsWhatIf`. IIS and Exchange are `PreviewOnly`; other commands remain `Prerelease` until their acceptance gates pass. Aliases are not duplicated as inventory entries.
 
 ```powershell
 Get-TheCleaners

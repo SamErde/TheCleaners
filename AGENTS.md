@@ -6,10 +6,11 @@ Read `docs/release-plan-1.0.md` before changing behavior. It is the implementati
 
 - Windows PowerShell 5.1 is the minimum. Support Microsoft-supported PowerShell 7 releases on Windows; do not introduce newer syntax into runtime code.
 - Never run a cleaner against real user, Windows, IIS, or Exchange data during development. Use isolated fixture paths or mocks. Server acceptance requires a disposable lab and recorded evidence.
-- Exchange is structurally preview-only for 1.0. Require explicit `-WhatIf` before discovery. No deletion command, native deletion call, IIS cleanup call, force flag, preference override, or persistent activation is permitted.
-- The tentative later-minor `-AllowRemoval` design is per invocation, not an activation setting. Do not add it in the 1.0 work or describe it as a finalized permanent contract.
-- Public cleanup commands own mutations. Do not add a generic private deletion wrapper. The existing `Remove-OldFiles` dependency must be removed with the IIS refactor, not independently while callers remain.
+- IIS and Exchange are structurally preview-only until their product-specific gates pass. Require explicit `-WhatIf` before discovery. No deletion command, native deletion call, generic deletion helper, force flag, preference override, or persistent activation is permitted in either preview implementation.
+- The tentative later-minor Exchange `-AllowRemoval` design is per invocation, not an activation setting. Do not add it in the 1.0 work or describe it as a finalized permanent contract.
+- Public cleanup commands own mutations. Do not add new callers to the legacy `Remove-OldFiles` wrapper. IIS no longer invokes it; remove the now-unused helper and its legacy tests in a focused follow-up without reintroducing a generic mutation layer.
 - Temp directory removal requires `-RemoveEmptyDirectory`. Only prune directories emptied by that invocation and their now-empty ancestors. Preserve roots, unrelated empty branches, recent files, and reparse points.
+- Temp candidate deletion must be file-specific and bound to an opened file object. Do not reintroduce provider `Remove-Item` for candidate files; a missing candidate must be skipped, and a directory substitution must never be deleted or counted as a successful file removal.
 - Every mutation must be covered by the owning command's `ShouldProcess` decision. Never weaken WhatIf/Confirm tests to make a refactor pass.
 - Discovery failure is not an empty successful result. Report failures through PowerShell's error stream and honor `-ErrorAction Stop`.
 - Module import must be quiet, deterministic, and free of caller-scope initialization.
@@ -24,4 +25,3 @@ Parallelize only independent work with separate branches/worktrees and explicit 
 For each packet, update its status, relevant help/docs, changelog, tests, and evidence links in the same PR. Use `implemented in draft`, `validated`, and `merged` distinctly. Do not mark a checkbox complete solely because code was generated or a workflow file exists. Record runtime version, tested commit, test totals/failures/skips, and lab limitations. Keep Zensical migration in issue #26.
 
 Canonical documentation URL: `https://day3bits.com/thecleaners/`.
-

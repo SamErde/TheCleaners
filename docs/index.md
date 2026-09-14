@@ -8,10 +8,11 @@ Windows PowerShell 5.1 is the minimum; the target policy also includes Microsoft
 Get-TheCleaners -NoLogo
 Clear-CurrentUserTemp -Days 30 -WhatIf -PassThru
 Clear-WindowsTemp -Days 30 -RemoveEmptyDirectory -WhatIf -PassThru
+Clear-OldIISLog -Days 60 -WhatIf -PassThru
 Clear-OldExchangeLog -Days 60 -WhatIf -PassThru
 ```
 
-The temp cleaners preserve directories unless `-RemoveEmptyDirectory` is supplied. Exchange is structurally preview-only; its candidate list is experimental and deletion is unavailable. Module import is quiet, and `Start-Cleaning` remains an alias for [Get-TheCleaners](Get-TheCleaners.md).
+The temp cleaners preserve directories unless `-RemoveEmptyDirectory` is supplied. IIS and Exchange are structurally preview-only; their candidate lists are experimental and deletion is unavailable. Module import is quiet, and `Start-Cleaning` remains an alias for [Get-TheCleaners](Get-TheCleaners.md).
 
 Read [safety and confirmation](safety-and-confirmation.md), [migration notes](migration-to-1.0.md), and the [1.0 implementation ledger](release-plan-1.0.md) before using this development version. The [repository README](https://github.com/SamErde/TheCleaners#readme) distinguishes the published Gallery prerelease from a source checkout.
 
