@@ -183,15 +183,22 @@ function Clear-CurrentUserTemp {
                 $null = $TouchedDirectories.Add($Parent.FullName)
                 $Parent = $Parent.Parent
             }
-        } catch [System.Management.Automation.ItemNotFoundException] {
-            $Result.FilesSkipped++
-        } catch [System.IO.FileNotFoundException] {
-            $Result.FilesSkipped++
-        } catch [System.IO.DirectoryNotFoundException] {
-            $Result.FilesSkipped++
         } catch {
-            $Result.FileFailureCount++
-            $PSCmdlet.WriteError($_)
+            # Windows PowerShell 5.1 can wrap FileStream constructor failures in
+            # MethodInvocationException. Classify the root cause so missing candidates
+            # remain safe skips while sharing and access failures remain failures.
+            $BaseException = $_.Exception.GetBaseException()
+            $MissingCandidate = (
+                $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
+                $BaseException -is [System.IO.FileNotFoundException] -or
+                $BaseException -is [System.IO.DirectoryNotFoundException]
+            )
+            if ($MissingCandidate) {
+                $Result.FilesSkipped++
+            } else {
+                $Result.FileFailureCount++
+                $PSCmdlet.WriteError($_)
+            }
         }
     }
     foreach ($DirectoryPath in $DirectoryOrder) {
