@@ -15,45 +15,47 @@
 
 <img src="https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-CodeHoodieNoBG.png" alt="The Cleaners logo on a code hoodie" width="400" />
 
-## Synopsis
+## Purpose
 
-A module to help automate the cleanup of old log files and temp files on your systems.
+A PowerShell module for Windows temporary-file maintenance, IIS log maintenance, and stale-profile discovery. Exchange log discovery is **preview-only**, with no deletion implementation in the 1.0 preparation work.
 
-## Description
+**This branch contains unreleased changes. It is not a production-ready 1.0 release, and the published Gallery package may not contain the behavior described here.** Follow the [implementation ledger](docs/release-plan-1.0.md) and [migration guide](docs/migration-to-1.0.md).
 
-The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!
+## Requirements
 
-## Why
+Windows PowerShell 5.1 is the minimum. The 1.0 policy also includes Microsoft-supported PowerShell 7 releases on Windows. Linux and macOS are not supported. Product-specific Windows/IIS/Exchange acceptance remains tracked in the [support matrix](docs/support-matrix.md).
 
-- For all those hours spent manually clearing old IIS logs, Exchange logs, and temp files when a server disk gets low on space.
-- For those teammates who get woken up at night while on call because a disk hit 90% full.
-- For the fun of writing something useful in PowerShell that will hopefully make somebody's day easier!
+## Installation and development
 
-## Getting Started
-
-### Prerequisites
-
-PowerShell or Windows PowerShell 5.1
-
-There are no other strict dependencies, but the following can make things a little easier:
-
-- IIS: WebManagement Module
-- Exchange: Exchange Management Tools
-
-### Installation
+Install the currently published prerelease from PowerShell Gallery:
 
 ```powershell
-# How to install TheCleaners
 Install-Module -Name TheCleaners -AllowPrerelease
 ```
 
-### Quick Start
-
-#### Example 1
+To evaluate a checked-out development branch instead, import that source explicitly in an isolated test environment:
 
 ```powershell
-# See what jobs TheCleaners can do for you.
-Start-Cleaning
+Import-Module -Name .\src\TheCleaners\TheCleaners.psd1 -Force
+Get-TheCleaners -NoLogo
 ```
 
-These docs can also be found at [TheCleaners.ReadTheDocs.io/](https://thecleaners.readthedocs.io/).
+Import is quiet. `Start-Cleaning` remains a deprecated alias for `Get-TheCleaners`; neither command starts cleanup.
+
+## Preview first
+
+```powershell
+Clear-CurrentUserTemp -Days 30 -WhatIf -PassThru
+Clear-WindowsTemp -Days 30 -RemoveEmptyDirectory -WhatIf -PassThru
+Clear-OldExchangeLog -Days 60 -WhatIf -PassThru
+```
+
+The temp cleaners leave directories untouched unless `-RemoveEmptyDirectory` is explicit. Even then, they only prune directories emptied by that invocation and their now-empty ancestors. They preserve roots, unrelated empty branches, recent files, and reparse points. Removal-enabled temp runs use standard `-Confirm` behavior; read the [safety contract](docs/safety-and-confirmation.md) before executing them.
+
+Exchange requires explicit `-WhatIf` and cannot remove anything. Its discovered candidates are experimental, not a proven deletion allowlist. `-AllowRemoval` is only a provisional later-release design, not an available parameter.
+
+## Development status
+
+The first implementation packet is [draft PR #27](https://github.com/SamErde/TheCleaners/pull/27). IIS hardening, profile output improvements, complete product/runtime acceptance, source-layout packaging, and tested-artifact publication remain open. See `AGENTS.md` and the implementation ledger before contributing. [Zensical migration](https://github.com/SamErde/TheCleaners/issues/26) is a separate follow-up.
+
+Canonical documentation: [day3bits.com/thecleaners](https://day3bits.com/thecleaners/).

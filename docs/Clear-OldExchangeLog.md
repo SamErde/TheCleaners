@@ -1,91 +1,32 @@
----
-external help file: TheCleaners-help.xml
-Module Name: TheCleaners
-online version:
-schema: 2.0.0
----
+# Clear-OldExchangeLog (preview-only)
 
-# Clear-OldExchangeLog
+## Synopsis
 
-## SYNOPSIS
-Clean out old Exchange Server logs.
+Preview experimental old Exchange log candidates. **Deletion is unavailable.**
 
-## SYNTAX
+## Syntax
 
-```
-Clear-OldExchangeLog [[-Days] <Int32>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+```powershell
+Clear-OldExchangeLog [-Days <Int16>] -WhatIf [-PassThru] [<CommonParameters>]
 ```
 
-## DESCRIPTION
-Remove any Exchange logs that are older than a specified date.
+`-Days` defaults to 60 and accepts positive Int16 values. Explicit `-WhatIf` is required; omission or `-WhatIf:$false` throws a terminating `ExchangeCleanupPreviewOnly` error before registry access. An ambient WhatIfPreference alone is not sufficient. The common `-Confirm` parameter does not bypass the guard. No `-Force`, `-EnableRemoval`, `-AllowRemoval`, or persistent activation exists in this version.
 
-## EXAMPLES
+## Experimental discovery scope
 
-### EXAMPLE 1
-```
-Clear-OldExchangeLog -Days 60
-```
+Read `MsiInstallPath` from the Exchange v15 setup registry key. Scan existing `Logging`, `Bin\Search\Ceres\Diagnostics\ETLTraces`, `Bin\Search\Ceres\Diagnostics\Logs`, and `TransportRoles\Logs\MessageTracking` roots for `.log` files at or before the inclusive UTC cutoff. Skip reparse points and validate paths. Do not invoke IIS cleanup.
 
-This will remove all Exchange logs older than 60 days.
+This limited preview is not a validated deletion allowlist. ETL file extensions, product-specific filename rules, protected-location verification, and the supported Exchange version matrix remain open. Do not use its output to implement an external deletion bypass.
 
-## PARAMETERS
+## Examples
 
-### -Days
-The number of days to keep logs for.
-Any logs older than this will be removed.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 1
-Default value: 60
-Accept pipeline input: False
-Accept wildcard characters: False
+```powershell
+Clear-OldExchangeLog -Days 60 -WhatIf
+Clear-OldExchangeLog -Days 30 -WhatIf -PassThru
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+## Output and failures
 
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
+`-PassThru` returns a `TheCleaners.CleanupResult` preview for each successfully enumerated existing root. `CandidatePaths` contains discovered paths; `DiscoveryStatus` is `Experimental`; `Status` is `WhatIf`; all removal and reclaimed-byte counts are zero. Missing roots are reported through verbose output. Registry failures stop discovery; enumeration failures use the error stream and do not emit a successful empty summary. The alias `Clean-ExchangeLog` has the same safety boundary.
 
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutBuffer, -OutVariable, -PipelineVariable, -Verbose, -WarningAction, -WarningVariable, and -ProgressAction. 
-For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
-
-## INPUTS
-
-## OUTPUTS
-
-## NOTES
-
-## RELATED LINKS
+Any later removal capability belongs in a minor release after lab validation and a confirmed per-invocation authorization design. See [the 1.0 plan](release-plan-1.0.md).

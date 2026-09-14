@@ -1,110 +1,33 @@
----
-external help file: TheCleaners-help.xml
-Module Name: TheCleaners
-online version:
-schema: 2.0.0
----
-
 # Clear-CurrentUserTemp
 
-## SYNOPSIS
-Clean old temp files from user profiles.
+## Synopsis
 
-## SYNTAX
+Remove old files from the current user's Windows temporary directory. This command remains prerelease.
 
-```
-Clear-CurrentUserTemp [[-Days] <Int16>] [[-TimeOut] <Int16>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
-```
+## Syntax
 
-## DESCRIPTION
-Remove temp files older than a given number of days from the user's local temp folder.
-
-## EXAMPLES
-
-### EXAMPLE 1
-```
-Clear-CurrentUserTemp -Days 30
+```powershell
+Clear-CurrentUserTemp [-Days <Int16>] [-RemoveEmptyDirectory] [-PassThru] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
-### EXAMPLE 2
-```
-Clean-CurrentUserTemp -Days 21 -TimeOut 30
-```
+## Behavior
 
-## PARAMETERS
+Resolve the temporary directory using `[System.IO.Path]::GetTempPath()` on Windows. Select files of any extension whose `LastWriteTimeUtc` is at or before one UTC cutoff. `-Days` defaults to 30 and accepts positive Int16 values. Reparse points are excluded before traversal. Literal paths, ancestry, type, and timestamps are revalidated before removal.
 
-### -Days
-Remove temp files that are $Days days old or older.
-The default is 30.
+Without `-RemoveEmptyDirectory`, directories remain untouched. With it, only prune directories emptied by the current invocation and their now-empty ancestors. Never remove the root or unrelated pre-existing empty branches. Recent files prevent their containing directories from being removed. The previous `-TimeOut` parameter is removed; pruning is a single deepest-first pass.
 
-```yaml
-Type: Int16
-Parameter Sets: (All)
-Aliases:
+`-WhatIf` makes no filesystem changes and reports the proposed batch. `-Verbose` lists candidate paths. `-Confirm` approves the discovered file/directory plan once at the root. No Force or separate ShouldContinue prompt is implemented.
 
-Required: False
-Position: 1
-Default value: 30
-Accept pipeline input: False
-Accept wildcard characters: False
+## Examples
+
+```powershell
+Clear-CurrentUserTemp -Days 30 -WhatIf -PassThru
+Clear-CurrentUserTemp -Days 30 -RemoveEmptyDirectory -WhatIf -Verbose -PassThru
+Clear-CurrentUserTemp -Days 30 -RemoveEmptyDirectory -Confirm
 ```
 
-### -TimeOut
-A time limit (seconds) for the looping operation that removes empty directories.
-The default is 30.
+## Output and failures
 
-```yaml
-Type: Int16
-Parameter Sets: (All)
-Aliases:
+Normal success is quiet unless `-PassThru` is requested. It returns `TheCleaners.CleanupResult`; see [safety and confirmation](safety-and-confirmation.md) for all fields and status values. Preview counts never count as successful removals. Enumeration failure aborts without deletion and reports unknown candidate counts. Individual deletion errors continue by default and respect `-ErrorAction Stop`.
 
-Required: False
-Position: 2
-Default value: 30
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutBuffer, -OutVariable, -PipelineVariable, -Verbose, -WarningAction, -WarningVariable, and -ProgressAction. 
-For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
-
-## INPUTS
-
-## OUTPUTS
-
-## NOTES
-
-## RELATED LINKS
+The alias `Clean-CurrentUserTemp` remains available. Windows only; Windows PowerShell 5.1 is the minimum. This implementation still needs the remaining acceptance and concurrency tests in the [release plan](release-plan-1.0.md).

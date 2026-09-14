@@ -1,0 +1,36 @@
+# Migrating prerelease scripts toward 1.0
+
+These changes are in draft PR #27, not a published 1.0 release. The Gallery version is not automatically updated when a PR is opened or merged.
+
+## Command inventory
+
+Use `Get-TheCleaners` instead of `Start-Cleaning`. The old name remains a deprecated alias through 1.x. Use `Get-TheCleaners -NoLogo` for pipelines. Output is now typed command metadata with `Name`, `Maturity`, `RemovalEnabled`, and `SupportsWhatIf`, rather than a presentation-only property. No command is labeled stable yet.
+
+The private logo helper is `Show-TheCleanersLogo`; private functions are not a supported public API. Import no longer prints a welcome message or creates `Invoke-TheCleaners` in the caller's environment.
+
+## Temporary directories
+
+`Clear-CurrentUserTemp` no longer removes empty directories by default. Both temp commands now support `-RemoveEmptyDirectory`. It only prunes directories emptied by the current cleanup and their now-empty ancestors; unrelated pre-existing empty branches remain.
+
+The obsolete `-TimeOut` parameter is removed. A bounded deepest-first pass replaces the repeated directory-removal loop. Update scripts that supplied `-TimeOut`; do not silently assume the old parameter still applies.
+
+```powershell
+Clear-CurrentUserTemp -Days 30 -RemoveEmptyDirectory -WhatIf -PassThru
+Clear-WindowsTemp -Days 30 -RemoveEmptyDirectory -WhatIf -PassThru
+```
+
+The retention boundary remains inclusive but is now evaluated using UTC last-write times and a single cutoff. Locked/access-denied removals produce errors, not warnings; review automation that relies on error-stream behavior. `-ErrorAction Stop` is honored. `-PassThru` returns counters and status, with preview counts distinct from successful removals.
+
+## Exchange
+
+Existing destructive Exchange invocations now stop with a terminating `ExchangeCleanupPreviewOnly` error. Rerun only as an explicit preview:
+
+```powershell
+Clear-OldExchangeLog -Days 60 -WhatIf -PassThru
+```
+
+No removal or persistent activation is available. `Clean-ExchangeLog` has the same guard. Exchange no longer invokes IIS cleanup. Preview candidates are experimental and must not be piped into deletion as a substitute for the missing validated cleanup implementation.
+
+## Documentation
+
+The canonical URL is [day3bits.com/thecleaners](https://day3bits.com/thecleaners/). The old Start-Cleaning documentation page is retained as a compatibility pointer. Deployment and redirects from older hosts/casing still need verification. Zensical migration remains a separate follow-up in issue #26.
