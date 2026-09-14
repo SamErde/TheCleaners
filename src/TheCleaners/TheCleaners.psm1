@@ -1,31 +1,24 @@
-# this psm1 is for local testing and development use only
-
-# dot source the parent import for local development variables
-. $PSScriptRoot\Imports.ps1
-
-# discover all ps1 file(s) in Public and Private paths
-
-$itemSplat = @{
-    Filter      = '*.ps1'
-    Recurse     = $true
-    ErrorAction = 'Stop'
-}
-try {
-    $public = @(Get-ChildItem -Path "$PSScriptRoot\Public" @itemSplat)
-    $private = @(Get-ChildItem -Path "$PSScriptRoot\Private" @itemSplat)
-} catch {
-    Write-Error $_
-    throw 'Unable to get get file information from Public & Private src.'
-}
-
-# dot source all .ps1 file(s) found
-foreach ($file in @($public + $private)) {
-    try {
-        . $file.FullName
-    } catch {
-        throw ('Unable to dot source {0}' -f $file.FullName)
-    }
+# Load only reviewed files, in a deterministic order. Import must have no host or caller-scope side effects.
+$PrivateScripts = @(
+    'Private/Convert-SIDtoSamAccountName.ps1'
+    'Private/Convert-SamAccountNameToSID.ps1'
+    'Private/Remove-OldFiles.ps1'
+    'Private/Resolve-TheCleanersFileSystemPath.ps1'
+    'Private/Show-TheCleanersLogo.ps1'
+)
+$PublicScripts = @(
+    'Public/Clear-CurrentUserTemp.ps1'
+    'Public/Clear-WindowsTemp.ps1'
+    'Public/Clear-OldIISLog.ps1'
+    'Public/Clear-OldExchangeLog.ps1'
+    'Public/Get-StaleUserProfile.ps1'
+    'Public/Get-TheCleaners.ps1'
+)
+foreach ($RelativePath in @($PrivateScripts + $PublicScripts)) {
+    . (Join-Path -Path $PSScriptRoot -ChildPath $RelativePath)
 }
 
-# export all public functions
-Export-ModuleMember -Function $public.Basename
+# The manifest is the single export contract, including compatibility aliases.
+$Manifest = Import-PowerShellDataFile -Path (Join-Path -Path $PSScriptRoot -ChildPath 'TheCleaners.psd1')
+Export-ModuleMember -Function $Manifest.FunctionsToExport -Alias $Manifest.AliasesToExport
+
