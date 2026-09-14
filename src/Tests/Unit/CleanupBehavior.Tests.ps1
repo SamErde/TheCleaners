@@ -309,8 +309,14 @@ Describe 'IIS is structurally preview-only' -Skip:(-not $WindowsHost) -Tag Unit 
     }
 
     It 'does not remove logs when explicitly previewed' {
+        Mock Get-Module { $null } -ParameterFilter { $Name -eq 'WebAdministration' -and $ListAvailable }
+        Mock Get-ItemProperty { throw [System.Management.Automation.ItemNotFoundException]::new('Fixture registry value is absent.') }
+        Mock Test-Path { $false }
+        Mock Get-ChildItem { throw 'IIS preview test must not enumerate host paths.' }
         Mock Remove-OldFiles { throw 'IIS must not delete.' }
+
         Clear-OldIISLog -WhatIf
+
         Should -Invoke Remove-OldFiles -Exactly 0
     }
 }
