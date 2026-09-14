@@ -7,11 +7,18 @@ BeforeDiscovery {
 BeforeAll {
     $ManifestPath = Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners/TheCleaners.psd1'
     $ManifestData = Import-PowerShellDataFile -Path $ManifestPath
+    $PreviousModule = Get-Module -Name TheCleaners
     $Module = Import-Module -Name $ManifestPath -Force -PassThru -ErrorAction Stop
 }
 
 AfterAll {
-    Remove-Module -Name TheCleaners -Force -ErrorAction SilentlyContinue
+    if ($null -ne $PreviousModule) {
+        # Preserve a module loaded by the build before Pester; help generation follows these tests.
+        $PreviousManifestPath = Join-Path -Path $PreviousModule.ModuleBase -ChildPath 'TheCleaners.psd1'
+        Import-Module -Name $PreviousManifestPath -Global -Force -ErrorAction Stop
+    } else {
+        Remove-Module -Name TheCleaners -Force -ErrorAction SilentlyContinue
+    }
 }
 
 Describe 'TheCleaners public API' -Tag Unit {

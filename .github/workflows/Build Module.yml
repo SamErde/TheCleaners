@@ -73,12 +73,13 @@ jobs:
               throw ($ParseFailures | Out-String)
           }
           Import-Module -Name Pester -RequiredVersion 5.7.1 -Force -ErrorAction Stop
-          $null = New-Item -Path ./TestResults -ItemType Directory -Force
+          $ResultsDirectory = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath 'TestResults'
+          $null = New-Item -Path $ResultsDirectory -ItemType Directory -Force
           $Configuration = New-PesterConfiguration
-          $Configuration.Run.Path = './src/Tests/Unit'
+          $Configuration.Run.Path = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath 'src/Tests/Unit'
           $Configuration.Run.PassThru = $true
           $Configuration.TestResult.Enabled = $true
-          $Configuration.TestResult.OutputPath = './TestResults/WindowsPowerShell51.xml'
+          $Configuration.TestResult.OutputPath = Join-Path -Path $ResultsDirectory -ChildPath 'WindowsPowerShell51.xml'
           $Configuration.TestResult.OutputFormat = 'NUnitXml'
           $Configuration.Output.Verbosity = 'Detailed'
           $Result = Invoke-Pester -Configuration $Configuration

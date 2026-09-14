@@ -44,11 +44,11 @@ function Get-TheCleaners {
     foreach ($Command in @($Module.ExportedFunctions.Values | Sort-Object -Property Name)) {
         $IsExchange = $Command.Name -eq 'Clear-OldExchangeLog'
         [pscustomobject]@{
-            PSTypeName      = 'TheCleaners.CommandInfo'
-            Name            = $Command.Name
-            Maturity        = if ($IsExchange) { 'PreviewOnly' } else { 'Prerelease' }
-            RemovalEnabled  = $Command.Name -like 'Clear-*' -and -not $IsExchange
-            SupportsWhatIf  = $Command.Parameters.ContainsKey('WhatIf')
+            PSTypeName     = 'TheCleaners.CommandInfo'
+            Name           = $Command.Name
+            Maturity       = if ($IsExchange) { 'PreviewOnly' } else { 'Prerelease' }
+            RemovalEnabled = $Command.Name -like 'Clear-*' -and -not $IsExchange
+            SupportsWhatIf = $Command.Parameters.ContainsKey('WhatIf')
         }
     }
 }

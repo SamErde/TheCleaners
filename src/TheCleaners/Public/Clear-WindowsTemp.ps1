@@ -105,8 +105,8 @@ function Clear-WindowsTemp {
         foreach ($DirectoryPath in $DirectoryOrder) {
             $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $RootPath
             $Remaining = @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop | Where-Object {
-                -not $FilePaths.Contains($_.FullName) -and -not $PlannedDirectories.Contains($_.FullName)
-            })
+                    -not $FilePaths.Contains($_.FullName) -and -not $PlannedDirectories.Contains($_.FullName)
+                })
             if ($Remaining.Count -eq 0) {
                 $null = $PlannedDirectories.Add($DirectoryPath)
             }

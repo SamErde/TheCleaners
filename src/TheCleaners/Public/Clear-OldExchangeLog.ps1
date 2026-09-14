@@ -101,20 +101,20 @@ function Clear-OldExchangeLog {
         }
         if ($PassThru) {
             [pscustomobject]@{
-                PSTypeName             = 'TheCleaners.CleanupResult'
-                Command                = 'Clear-OldExchangeLog'
-                RootPath               = $LogRoot.FullName
-                CutoffUtc              = $CutoffUtc
-                FileCandidateCount     = $OldFiles.Count
-                FilesRemoved           = 0
-                FileFailureCount       = 0
+                PSTypeName              = 'TheCleaners.CleanupResult'
+                Command                 = 'Clear-OldExchangeLog'
+                RootPath                = $LogRoot.FullName
+                CutoffUtc               = $CutoffUtc
+                FileCandidateCount      = $OldFiles.Count
+                FilesRemoved            = 0
+                FileFailureCount        = 0
                 DirectoryCandidateCount = 0
-                DirectoriesRemoved     = 0
-                DirectoryFailureCount  = 0
-                BytesReclaimed         = [Int64]0
-                Status                 = 'WhatIf'
-                DiscoveryStatus        = 'Experimental'
-                CandidatePaths         = @($OldFiles.FullName)
+                DirectoriesRemoved      = 0
+                DirectoryFailureCount   = 0
+                BytesReclaimed          = [Int64]0
+                Status                  = 'WhatIf'
+                DiscoveryStatus         = 'Experimental'
+                CandidatePaths          = @($OldFiles | ForEach-Object { $_.FullName })
             }
         }
     }

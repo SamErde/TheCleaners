@@ -1,63 +1,53 @@
 BeforeAll {
-    #-------------------------------------------------------------------------
-    Set-Location -Path $PSScriptRoot
-    #-------------------------------------------------------------------------
+    # Do not change the build's current directory: Pester writes its reports after tests finish.
     $ModuleName = 'TheCleaners'
-    $PathToManifest = [System.IO.Path]::Combine('..', '..', $ModuleName, "$ModuleName.psd1")
-    $PathToModule = [System.IO.Path]::Combine('..', '..', $ModuleName, "$ModuleName.psm1")
-    #-------------------------------------------------------------------------
+    $ModuleRoot = Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners'
+    $PathToManifest = Join-Path -Path $ModuleRoot -ChildPath 'TheCleaners.psd1'
+    $PathToModule = Join-Path -Path $ModuleRoot -ChildPath 'TheCleaners.psm1'
+    $ManifestInfo = Test-ModuleManifest -Path $PathToManifest -ErrorAction Stop
 }
 
 Describe 'Module Tests' -Tag Unit {
-    Context 'Module Tests' {
-        BeforeAll {
-            $script:manifestEval = $null
+    It 'passes Test-ModuleManifest' {
+        { Test-ModuleManifest -Path $PathToManifest -ErrorAction Stop } | Should -Not -Throw
+    }
+
+    It 'has an existing root module' {
+        $PathToModule | Should -Exist
+    }
+
+    It 'references TheCleaners.psm1 in the manifest' {
+        $PathToManifest | Should -FileContentMatchExactly 'TheCleaners.psm1'
+    }
+
+    It 'has the expected module name' {
+        $ManifestInfo.Name | Should -BeExactly $ModuleName
+    }
+
+    It 'has a description' {
+        $ManifestInfo.Description | Should -Not -BeNullOrEmpty
+    }
+
+    It 'has an author' {
+        $ManifestInfo.Author | Should -Not -BeNullOrEmpty
+    }
+
+    It 'has a valid version' {
+        $ManifestInfo.Version -as [Version] | Should -Not -BeNullOrEmpty
+    }
+
+    It 'has a valid guid' {
+        { [guid]::Parse($ManifestInfo.Guid) } | Should -Not -Throw
+    }
+
+    It 'has no spaces in its tags' {
+        foreach ($Tag in $ManifestInfo.Tags) {
+            $Tag | Should -Not -Match '\s'
         }
+    }
 
-        It 'Passes Test-ModuleManifest' {
-            { $script:manifestEval = Test-ModuleManifest -Path $PathToManifest } | Should -Not -Throw
-            $? | Should -BeTrue
-        } #manifestTest
-
-        It 'root module TheCleaners.psm1 should exist' {
-            $PathToModule | Should -Exist
-            $? | Should -BeTrue
-        } #psm1Exists
-
-        It 'manifest should contain TheCleaners.psm1' {
-            $PathToManifest |
-                Should -FileContentMatchExactly 'TheCleaners.psm1'
-        } #validPSM1
-
-        It 'should have a matching module name in the manifest' {
-            $script:manifestEval.Name | Should -BeExactly $ModuleName
-        } #name
-
-        It 'should have a valid description in the manifest' {
-            $script:manifestEval.Description | Should -Not -BeNullOrEmpty
-        } #description
-
-        It 'should have a valid author in the manifest' {
-            $script:manifestEval.Author | Should -Not -BeNullOrEmpty
-        } #author
-
-        It 'should have a valid version in the manifest' {
-            $script:manifestEval.Version -as [Version] | Should -Not -BeNullOrEmpty
-        } #version
-
-        It 'should have a valid guid in the manifest' {
-            { [guid]::Parse($script:manifestEval.Guid) } | Should -Not -Throw
-        } #guid
-
-        It 'should not have any spaces in the tags' {
-            foreach ($tag in $script:manifestEval.Tags) {
-                $tag | Should -Not -Match '\s'
-            }
-        } #tagSpaces
-
-        It 'should have a valid project Uri' {
-            $script:manifestEval.ProjectUri | Should -Not -BeNullOrEmpty
-        } #uri
-    } #context_ModuleTests
-} #describe_ModuleTests
+    It 'has a project URI' {
+        $ManifestInfo.ProjectUri | Should -Not -BeNullOrEmpty
+    }
+}
 
