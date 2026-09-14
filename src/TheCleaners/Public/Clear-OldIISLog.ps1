@@ -94,7 +94,16 @@ function Clear-OldIISLog {
                     })
             }
         } catch {
-            Write-Verbose -Message "Unable to read the alternate IIS log location from the registry: $($_.Exception.Message)"
+            $OptionalRegistryValueIsAbsent = (
+                $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
+                $_.FullyQualifiedErrorId -match 'PathNotFound|PropertyNotFound|ItemNotFound'
+            )
+            if ($OptionalRegistryValueIsAbsent) {
+                Write-Verbose -Message "The optional alternate IIS log location is not configured: $($_.Exception.Message)"
+            } else {
+                # Access and provider failures make discovery incomplete. Surface them and honor -ErrorAction Stop.
+                $PSCmdlet.WriteError($_)
+            }
         }
     }
 
