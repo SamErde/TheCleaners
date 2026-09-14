@@ -149,8 +149,12 @@ function Clear-CurrentUserTemp {
                 $Result.FilesSkipped++
                 continue
             }
+            if (-not [System.IO.File]::Exists($CurrentFile.FullName)) {
+                $Result.FilesSkipped++
+                continue
+            }
             $Length = $CurrentFile.Length
-            Remove-Item -LiteralPath $CurrentFile.FullName -Force -Confirm:$false -ErrorAction Stop
+            [System.IO.File]::Delete($CurrentFile.FullName)
             $Result.FilesRemoved++
             $Result.BytesReclaimed += $Length
             $Parent = $CurrentFile.Directory
@@ -196,4 +200,3 @@ function Clear-CurrentUserTemp {
         $Result
     }
 }
-

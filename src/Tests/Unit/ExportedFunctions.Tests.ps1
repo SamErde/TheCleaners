@@ -54,6 +54,9 @@ Describe 'TheCleaners public API' -Tag Unit {
         $Exchange = $Inventory | Where-Object Name -EQ 'Clear-OldExchangeLog'
         $Exchange.Maturity | Should -Be 'PreviewOnly'
         $Exchange.RemovalEnabled | Should -BeFalse
+        $IIS = $Inventory | Where-Object Name -EQ 'Clear-OldIISLog'
+        $IIS.Maturity | Should -Be 'PreviewOnly'
+        $IIS.RemovalEnabled | Should -BeFalse
     }
 
     It 'keeps the Exchange lock through the legacy alias' {
@@ -67,4 +70,3 @@ Describe 'TheCleaners public API' -Tag Unit {
         $Help.Examples.Example | Should -Not -BeNullOrEmpty
     }
 }
-

@@ -4,15 +4,16 @@ function Clear-OldIISLog {
         A script to clean out old IIS log files.
 
     .DESCRIPTION
-        This script will clean out IIS log files older than x days.
+        This command is structurally preview-only until its refactor and acceptance gates
+        pass. Explicit -WhatIf is required; no IIS log files are removed.
 
     .PARAMETER Days
         The number of days to keep log files. The default is 30 days.
 
     .EXAMPLE
-        Clear-OldIISLogFile -Days 60
+        Clear-OldIISLog -Days 60 -WhatIf
 
-        Removes all IIS log files that are older than 60 days.
+        Previews IIS log cleanup without removing files.
 
     .NOTES
         If the WebAdministration module is available, it will use that to check the specific log file locations for
@@ -32,6 +33,12 @@ function Clear-OldIISLog {
         $Days = 60
     )
 
+    if (-not $PSBoundParameters.ContainsKey('WhatIf') -or -not $PSBoundParameters['WhatIf']) {
+        $Exception = [System.NotSupportedException]::new('IIS cleanup is preview-only. Run Clear-OldIISLog -WhatIf. Removal is not available in this version.')
+        $ErrorRecord = [System.Management.Automation.ErrorRecord]::new($Exception, 'IISCleanupPreviewOnly', [System.Management.Automation.ErrorCategory]::NotImplemented, $null)
+        $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+    }
+
     # Use the WebAdministration module if it is available
     if (Get-Module -Name 'WebAdministration' -ListAvailable) {
         # Get the logfile directory for each web site
@@ -40,7 +47,7 @@ function Clear-OldIISLog {
             $SiteLogFileDirectory = ("$($Site.logFile.directory)\W3SVC$($Site.id)").Replace( '%SystemDrive%', $env:SystemDrive )
             Write-Information -MessageData "Removing old IIS log files from $($Site.name) at $SiteLogFileDirectory." -InformationAction Continue
             try {
-                if ($PSCmdlet.ShouldProcess($SiteLogFileDirectory, "Remove IIS log files older than $Days days")) {
+                if ($PSCmdlet.ShouldProcess($SiteLogFileDirectory, "Preview IIS log files older than $Days days; removal is unavailable")) {
                     Remove-OldFiles -Path $SiteLogFileDirectory -Days $Days -Confirm:$false
                 }
             } catch {
@@ -54,7 +61,7 @@ function Clear-OldIISLog {
         Write-Information "The WebAdministration module is not installed. We will check the default IIS log file location at '$DefaultIISLogLocation'." -InformationAction Continue
         if (Test-Path -LiteralPath $DefaultIISLogLocation -PathType Container) {
             try {
-                if ($PSCmdlet.ShouldProcess($DefaultIISLogLocation, "Remove IIS log files older than $Days days")) {
+                if ($PSCmdlet.ShouldProcess($DefaultIISLogLocation, "Preview IIS log files older than $Days days; removal is unavailable")) {
                     Remove-OldFiles -Path $DefaultIISLogLocation -Days $Days -Confirm:$false
                 }
             } catch {
@@ -76,7 +83,7 @@ function Clear-OldIISLog {
 
         if ($LogDir -and (Test-Path -LiteralPath $LogDir -PathType Container)) {
             try {
-                if ($PSCmdlet.ShouldProcess($LogDir, "Remove IIS log files older than $Days days")) {
+                if ($PSCmdlet.ShouldProcess($LogDir, "Preview IIS log files older than $Days days; removal is unavailable")) {
                     Remove-OldFiles -Path $LogDir -Days $Days -Confirm:$false
                 }
             } catch {

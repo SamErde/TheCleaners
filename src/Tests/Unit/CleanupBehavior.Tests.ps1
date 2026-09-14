@@ -138,20 +138,28 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
     }
 
     It 'reports deletion failure without claiming reclaimed bytes or removing its parents' {
-        Mock Remove-Item { throw [System.UnauthorizedAccessException]::new('Fixture access denied.') }
-        $Result = & $CommandName -Days 30 -RemoveEmptyDirectory -Confirm:$false -PassThru -ErrorAction SilentlyContinue -ErrorVariable CleanupErrors
-        $CleanupErrors | Should -Not -BeNullOrEmpty
-        $Result.FileFailureCount | Should -Be 1
-        $Result.FilesRemoved | Should -Be 0
-        $Result.BytesReclaimed | Should -Be 0
-        $Result.Status | Should -Be 'PartialFailure'
-        $NestedPath | Should -Exist
+        $FileLock = [System.IO.File]::Open($OldFile.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+        try {
+            $Result = & $CommandName -Days 30 -RemoveEmptyDirectory -Confirm:$false -PassThru -ErrorAction SilentlyContinue -ErrorVariable CleanupErrors
+            $CleanupErrors | Should -Not -BeNullOrEmpty
+            $Result.FileFailureCount | Should -Be 1
+            $Result.FilesRemoved | Should -Be 0
+            $Result.BytesReclaimed | Should -Be 0
+            $Result.Status | Should -Be 'PartialFailure'
+            $NestedPath | Should -Exist
+        } finally {
+            $FileLock.Dispose()
+        }
     }
 
     It 'honors ErrorAction Stop rather than swallowing deletion errors' {
-        Mock Remove-Item { throw [System.UnauthorizedAccessException]::new('Fixture access denied.') }
-        { & $CommandName -Days 30 -Confirm:$false -ErrorAction Stop } | Should -Throw
-        $OldFile.FullName | Should -Exist
+        $FileLock = [System.IO.File]::Open($OldFile.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+        try {
+            { & $CommandName -Days 30 -Confirm:$false -ErrorAction Stop } | Should -Throw
+            $OldFile.FullName | Should -Exist
+        } finally {
+            $FileLock.Dispose()
+        }
     }
 
     It 'fails closed on enumeration failure and marks candidate totals unknown' {
@@ -279,6 +287,20 @@ Describe 'Exchange is structurally preview-only' -Skip:(-not $WindowsHost) -Tag 
     }
 }
 
+Describe 'IIS is structurally preview-only' -Tag Unit {
+    It 'rejects omission of WhatIf before discovering or removing logs' {
+        Mock Remove-OldFiles { throw 'IIS must not delete.' }
+        { Clear-OldIISLog -Confirm:$false } | Should -Throw '*preview-only*'
+        Should -Invoke Remove-OldFiles -Exactly 0
+    }
+
+    It 'does not remove logs when explicitly previewed' {
+        Mock Remove-OldFiles { throw 'IIS must not delete.' }
+        Clear-OldIISLog -WhatIf
+        Should -Invoke Remove-OldFiles -Exactly 0
+    }
+}
+
 # Keep existing coverage of legacy code until its separate refactor is completed.
 Describe 'Remove-OldFiles legacy IIS dependency' -Tag Unit {
     BeforeEach {
@@ -319,4 +341,3 @@ Describe 'Get-StaleUserProfile legacy contract' -Skip:(-not $WindowsHost) -Tag U
         Should -Invoke Get-CimInstance -Exactly 1
     }
 }
-

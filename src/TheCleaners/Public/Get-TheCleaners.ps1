@@ -42,14 +42,13 @@ function Get-TheCleaners {
 
     $Module = $ExecutionContext.SessionState.Module
     foreach ($Command in @($Module.ExportedFunctions.Values | Sort-Object -Property Name)) {
-        $IsExchange = $Command.Name -eq 'Clear-OldExchangeLog'
+        $IsPreviewOnly = $Command.Name -in @('Clear-OldExchangeLog', 'Clear-OldIISLog')
         [pscustomobject]@{
             PSTypeName     = 'TheCleaners.CommandInfo'
             Name           = $Command.Name
-            Maturity       = if ($IsExchange) { 'PreviewOnly' } else { 'Prerelease' }
-            RemovalEnabled = $Command.Name -like 'Clear-*' -and -not $IsExchange
+            Maturity       = if ($IsPreviewOnly) { 'PreviewOnly' } else { 'Prerelease' }
+            RemovalEnabled = $Command.Name -like 'Clear-*' -and -not $IsPreviewOnly
             SupportsWhatIf = $Command.Parameters.ContainsKey('WhatIf')
         }
     }
 }
-
