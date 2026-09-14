@@ -4,7 +4,10 @@ BeforeDiscovery {
 
 BeforeAll {
     $ModuleRoot = Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners'
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/ResultContracts.ps1')
     . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Resolve-TheCleanersFileSystemPath.ps1')
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Test-TheCleanersExchangeLogFileName.ps1')
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Get-TheCleanersExchangeProtectedPaths.ps1')
     . (Join-Path -Path $ModuleRoot -ChildPath 'Public/Clear-OldExchangeLog.ps1')
 }
 

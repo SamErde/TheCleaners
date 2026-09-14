@@ -12,7 +12,10 @@ BeforeAll {
     $ModuleRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners')).Path
     $ManifestPath = Join-Path -Path $ModuleRoot -ChildPath 'TheCleaners.psd1'
     $PowerShellExecutable = (Get-Process -Id $PID).Path
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/ResultContracts.ps1')
     . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Resolve-TheCleanersFileSystemPath.ps1')
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Test-TheCleanersIisLogFileName.ps1')
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Test-TheCleanersIisProtectedPath.ps1')
     . (Join-Path -Path $ModuleRoot -ChildPath 'Public/Clear-OldIISLog.ps1')
 
     # A fixture module exercises actual import/removal without installing or querying IIS.
@@ -102,7 +105,7 @@ if ($Scenario.EndsWith('Failure')) {
         throw 'The preview duplicated candidates or claimed file removal.'
     }
 }
-if (-not [System.IO.File]::Exists((Join-Path -Path $LogRoot -ChildPath 'old.log'))) {
+if (-not [System.IO.File]::Exists((Join-Path -Path $LogRoot -ChildPath 'u_ex240101.log'))) {
     throw 'The preview removed a fixture log.'
 }
 'IIS_DISCOVERY_OK'
@@ -118,7 +121,7 @@ Describe 'IIS dependency state and site-root deduplication: <Scenario>' -ForEach
         $LogRoot = Join-Path -Path $LogBase -ChildPath 'W3SVC1'
         $null = New-Item -Path $DependencyRoot -ItemType Directory -Force
         $null = New-Item -Path $LogRoot -ItemType Directory -Force
-        $OldLog = New-Item -Path (Join-Path -Path $LogRoot -ChildPath 'old.log') -ItemType File
+        $OldLog = New-Item -Path (Join-Path -Path $LogRoot -ChildPath 'u_ex240101.log') -ItemType File
         $OldLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $Sites = @(
             @{ Name = 'Normal spelling'; Id = 1; LogFile = @{ Directory = $LogBase } }
@@ -146,7 +149,7 @@ Describe 'IIS registry-root deduplication' -Skip:(-not $WindowsHost) -Tag Unit {
         $FixtureRoot = Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)
         $IISRoot = Join-Path -Path $FixtureRoot -ChildPath 'inetpub/logs/LogFiles'
         $null = New-Item -Path $IISRoot -ItemType Directory -Force
-        $OldLog = New-Item -Path (Join-Path -Path $IISRoot -ChildPath 'old.log') -ItemType File
+        $OldLog = New-Item -Path (Join-Path -Path $IISRoot -ChildPath 'u_ex240101.log') -ItemType File
         $OldLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $env:SystemDrive = $FixtureRoot
         Mock Get-Module { $null } -ParameterFilter { $Name -eq 'WebAdministration' -and $ListAvailable }

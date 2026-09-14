@@ -9,8 +9,15 @@ BeforeDiscovery {
 BeforeAll {
     $ModuleRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners')).Path
     foreach ($RelativePath in @(
+        'Private/ResultContracts.ps1'
+        'Private/Initialize-TheCleanersNativeFileInterop.ps1'
+        'Private/Get-TheCleanersWindowsTempRoot.ps1'
+        'Private/Get-TheCleanersTempPlan.ps1'
         'Private/Resolve-TheCleanersFileSystemPath.ps1'
-        'Private/Remove-OldFiles.ps1'
+        'Private/Test-TheCleanersIisLogFileName.ps1'
+        'Private/Test-TheCleanersIisProtectedPath.ps1'
+        'Private/Test-TheCleanersExchangeLogFileName.ps1'
+        'Private/Get-TheCleanersExchangeProtectedPaths.ps1'
         'Public/Clear-CurrentUserTemp.ps1'
         'Public/Clear-WindowsTemp.ps1'
         'Public/Clear-OldIISLog.ps1'
@@ -42,6 +49,7 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
         $env:TEMP = $TempRoot
         $env:TMP = $TempRoot
         $env:SystemRoot = $FakeWindows
+        Mock Get-TheCleanersWindowsTempRoot { Resolve-TheCleanersFileSystemPath -LiteralPath $TempRoot }
         Mock Get-Date { $Now }
     }
 
@@ -169,7 +177,8 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
             $Diagnostic = 'a locked candidate must terminate; returned summary: {0}' -f ($UnexpectedResult | ConvertTo-Json -Compress)
             $CompletedNormally | Should -BeFalse -Because $Diagnostic
             $CaughtError | Should -Not -BeNullOrEmpty
-            $CaughtError.Exception.GetBaseException() | Should -BeOfType ([System.IO.IOException])
+            $CaughtError.FullyQualifiedErrorId | Should -Match '^TempFileRemovalFailed'
+            $CaughtError.Exception.GetBaseException() | Should -BeOfType ([System.ComponentModel.Win32Exception])
             $OldFile.FullName | Should -Exist
         } finally {
             $FileLock.Dispose()
@@ -294,7 +303,7 @@ Describe 'Exchange is structurally preview-only' -Skip:(-not $WindowsHost) -Tag 
         $ParseErrors | Should -BeNullOrEmpty
         $Forbidden = $Ast.FindAll({
             param($Node)
-            ($Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -in @('Remove-Item', 'Clear-OldIISLog', 'Remove-OldFiles', 'Invoke-Expression', 'Start-Process')) -or
+            ($Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -in @('Remove-Item', 'Clear-OldIISLog', 'Invoke-Expression', 'Start-Process')) -or
             ($Node -is [System.Management.Automation.Language.InvokeMemberExpressionAst] -and $Node.Member.Value -eq 'Delete')
         }, $true)
         @($Forbidden) | Should -HaveCount 0
@@ -303,9 +312,7 @@ Describe 'Exchange is structurally preview-only' -Skip:(-not $WindowsHost) -Tag 
 
 Describe 'IIS is structurally preview-only' -Skip:(-not $WindowsHost) -Tag Unit {
     It 'rejects omission of WhatIf before discovering or removing logs' {
-        Mock Remove-OldFiles { throw 'IIS must not delete.' }
         { Clear-OldIISLog -Confirm:$false } | Should -Throw '*preview-only*'
-        Should -Invoke Remove-OldFiles -Exactly 0
     }
 
     It 'does not remove logs when explicitly previewed' {
@@ -313,31 +320,9 @@ Describe 'IIS is structurally preview-only' -Skip:(-not $WindowsHost) -Tag Unit 
         Mock Get-ItemProperty { throw [System.Management.Automation.ItemNotFoundException]::new('Fixture registry value is absent.') }
         Mock Test-Path { $false }
         Mock Get-ChildItem { throw 'IIS preview test must not enumerate host paths.' }
-        Mock Remove-OldFiles { throw 'IIS must not delete.' }
 
         Clear-OldIISLog -WhatIf
 
-        Should -Invoke Remove-OldFiles -Exactly 0
-    }
-}
-
-# Keep existing coverage of legacy code until its separate refactor is completed.
-Describe 'Remove-OldFiles legacy IIS dependency' -Tag Unit {
-    BeforeEach {
-        $TestRoot = Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)
-        $null = New-Item -Path $TestRoot -ItemType Directory
-        $OldFile = New-Item -Path (Join-Path -Path $TestRoot -ChildPath 'old.log') -ItemType File
-        $NewFile = New-Item -Path (Join-Path -Path $TestRoot -ChildPath 'new.log') -ItemType File
-        $OldFile.LastWriteTime = (Get-Date).AddDays(-31)
-    }
-    It 'removes files older than the retention window' {
-        Remove-OldFiles -Path $TestRoot -Days 30 -Confirm:$false
-        $OldFile.FullName | Should -Not -Exist
-        $NewFile.FullName | Should -Exist
-    }
-    It 'does not remove matching files with WhatIf' {
-        Remove-OldFiles -Path $TestRoot -Days 30 -WhatIf
-        $OldFile.FullName | Should -Exist
     }
 }
 

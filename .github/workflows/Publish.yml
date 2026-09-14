@@ -7,12 +7,27 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+    environment:
+      name: powershell-gallery
+    permissions:
+      contents: read
     steps:
     - name: Clone Project Files
-      uses: actions/checkout@v7
-    - name: Publish PowerShell Module
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
+    - name: Bootstrap build dependencies
+      shell: pwsh
+      run: ./actions_bootstrap.ps1
+    - name: Build and test the exact artifact
+      shell: pwsh
+      run: |
+        $PSVersionTable | Format-List
+        Import-Module InvokeBuild -ErrorAction Stop
+        Invoke-Build -File .\src\TheCleaners.build.ps1
+    - name: Publish the tested artifact
       shell: pwsh
       env:
         PSGALLERY_API_KEY: ${{ secrets.POWERSHELLGALLERY_KEY }}
-      run: ./.github/workflows/publish.ps1 -PSGalleryApiKey $env:PSGALLERY_API_KEY
+      run: ./.github/workflows/publish.ps1 -PSGalleryApiKey $env:PSGALLERY_API_KEY -ArtifactPath ./src/Artifacts -ArchiveManifestPath ./src/Archive

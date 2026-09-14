@@ -9,6 +9,10 @@ BeforeDiscovery {
 BeforeAll {
     $ModuleRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners')).Path
     foreach ($RelativePath in @(
+        'Private/ResultContracts.ps1'
+        'Private/Initialize-TheCleanersNativeFileInterop.ps1'
+        'Private/Get-TheCleanersWindowsTempRoot.ps1'
+        'Private/Get-TheCleanersTempPlan.ps1'
         'Private/Resolve-TheCleanersFileSystemPath.ps1'
         'Public/Clear-CurrentUserTemp.ps1'
         'Public/Clear-WindowsTemp.ps1'
@@ -32,8 +36,8 @@ Describe 'Temp candidate safety: <CommandName>' -ForEach $TempCases -Skip:(-not 
         $env:TEMP = $TempRoot
         $env:TMP = $TempRoot
         $env:SystemRoot = $FakeWindows
+        Mock Get-TheCleanersWindowsTempRoot { Resolve-TheCleanersFileSystemPath -LiteralPath $TempRoot }
         Mock Get-Date { $Now }
-        $OriginalResolver = (Get-Command -Name Resolve-TheCleanersFileSystemPath -CommandType Function).ScriptBlock
     }
 
     AfterEach {
@@ -43,20 +47,20 @@ Describe 'Temp candidate safety: <CommandName>' -ForEach $TempCases -Skip:(-not 
     }
 
     It 'does not delete or count a directory that replaces a discovered file' {
-        $State = @{ Changed = $false }
-        Mock Resolve-TheCleanersFileSystemPath {
-            param($LiteralPath, $RootPath)
-            $ResolveParameters = @{ LiteralPath = $LiteralPath }
-            if (-not [string]::IsNullOrWhiteSpace($RootPath)) {
-                $ResolveParameters.RootPath = $RootPath
+        Mock Get-TheCleanersTempPlan {
+            param($Root, $CutoffUtc)
+            $RootPath = $Root.FullName.TrimEnd([char[]]@('\', '/'))
+            $RootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+            $CandidateIdentity = Get-TheCleanersFileIdentity -LiteralPath $Candidate.FullName
+            [System.IO.File]::Delete($Candidate.FullName)
+            $null = New-Item -Path $Candidate.FullName -ItemType Directory
+            [pscustomobject]@{
+                RootPath     = $RootPath
+                RootIdentity = $RootIdentity
+                CutoffUtc    = $CutoffUtc
+                Files        = @([pscustomobject]@{ Path = $Candidate.FullName; Identity = $CandidateIdentity; LastWriteTimeUtc = $Now.AddDays(-31); ParentPath = $RootPath; ParentIdentity = $null })
+                Directories  = @()
             }
-            $ResolvedItem = & $OriginalResolver @ResolveParameters
-            if (-not $State.Changed -and $LiteralPath -eq $Candidate.FullName -and -not [string]::IsNullOrWhiteSpace($RootPath)) {
-                [System.IO.File]::Delete($Candidate.FullName)
-                $null = New-Item -Path $Candidate.FullName -ItemType Directory
-                $State.Changed = $true
-            }
-            $ResolvedItem
         }
 
         $Result = & $CommandName -Days 30 -Confirm:$false -PassThru
@@ -68,20 +72,49 @@ Describe 'Temp candidate safety: <CommandName>' -ForEach $TempCases -Skip:(-not 
         $Result.Status | Should -Be 'CompletedWithSkips'
     }
 
+    It 'fails closed when discovery cannot capture a candidate identity' {
+        Mock Get-TheCleanersTempPlan {
+            param($Root, $CutoffUtc)
+            $RootPath = $Root.FullName.TrimEnd([char[]]@('\', '/'))
+            [pscustomobject]@{
+                RootPath     = $RootPath
+                RootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+                CutoffUtc    = $CutoffUtc
+                Files        = @([pscustomobject]@{
+                        Path             = $Candidate.FullName
+                        Identity         = $null
+                        LastWriteTimeUtc = $Now.AddDays(-31)
+                        ParentPath       = $RootPath
+                        ParentIdentity   = $null
+                    })
+                Directories  = @()
+            }
+        }
+
+        $Result = & $CommandName -Days 30 -Confirm:$false -PassThru
+
+        $Candidate.FullName | Should -Exist
+        $Result.FileCandidateCount | Should -Be 1
+        $Result.FilesRemoved | Should -Be 0
+        $Result.FilesSkipped | Should -Be 1
+        $Result.BytesReclaimed | Should -Be 0
+        $Result.Status | Should -Be 'CompletedWithSkips'
+    }
+
     It 'reconciles a discovered candidate that disappears before deletion' {
-        $State = @{ Changed = $false }
-        Mock Resolve-TheCleanersFileSystemPath {
-            param($LiteralPath, $RootPath)
-            $ResolveParameters = @{ LiteralPath = $LiteralPath }
-            if (-not [string]::IsNullOrWhiteSpace($RootPath)) {
-                $ResolveParameters.RootPath = $RootPath
+        Mock Get-TheCleanersTempPlan {
+            param($Root, $CutoffUtc)
+            $RootPath = $Root.FullName.TrimEnd([char[]]@('\', '/'))
+            $RootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+            $CandidateIdentity = Get-TheCleanersFileIdentity -LiteralPath $Candidate.FullName
+            [System.IO.File]::Delete($Candidate.FullName)
+            [pscustomobject]@{
+                RootPath     = $RootPath
+                RootIdentity = $RootIdentity
+                CutoffUtc    = $CutoffUtc
+                Files        = @([pscustomobject]@{ Path = $Candidate.FullName; Identity = $CandidateIdentity; LastWriteTimeUtc = $Now.AddDays(-31); ParentPath = $RootPath; ParentIdentity = $null })
+                Directories  = @()
             }
-            $ResolvedItem = & $OriginalResolver @ResolveParameters
-            if (-not $State.Changed -and $LiteralPath -eq $Candidate.FullName -and -not [string]::IsNullOrWhiteSpace($RootPath)) {
-                [System.IO.File]::Delete($Candidate.FullName)
-                $State.Changed = $true
-            }
-            $ResolvedItem
         }
 
         $Result = & $CommandName -Days 30 -Confirm:$false -PassThru
@@ -102,7 +135,7 @@ Describe 'Temp candidate safety: <CommandName>' -ForEach $TempCases -Skip:(-not 
         $Result.CutoffUtc.Kind | Should -Be ([DateTimeKind]::Utc)
     }
 
-    It 'uses a file-bound DeleteOnClose handle instead of provider removal' {
+    It 'uses a native same-handle deletion primitive instead of provider removal' {
         $Tokens = $null
         $ParseErrors = $null
         $FunctionPath = Join-Path -Path $ModuleRoot -ChildPath ("Public/{0}.ps1" -f $CommandName)
@@ -112,6 +145,7 @@ Describe 'Temp candidate safety: <CommandName>' -ForEach $TempCases -Skip:(-not 
                     param($Node)
                     $Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -eq 'Remove-Item'
                 }, $true)) | Should -HaveCount 0
-        [System.IO.File]::ReadAllText($FunctionPath) | Should -Match '\[System\.IO\.FileOptions\]::DeleteOnClose'
+        [System.IO.File]::ReadAllText($FunctionPath) | Should -Match 'NativeFileInterop.*OpenForDeletion'
+        [System.IO.File]::ReadAllText($FunctionPath) | Should -Match 'NativeFileInterop.*MarkForDeletion'
     }
 }

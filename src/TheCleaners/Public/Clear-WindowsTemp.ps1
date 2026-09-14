@@ -1,26 +1,27 @@
 function Clear-WindowsTemp {
     <#
     .SYNOPSIS
-        Remove old files from the Windows temporary directory.
+        Remove old files from the actual Windows temporary directory.
     .DESCRIPTION
-        Clean SystemRoot\Temp using one inclusive UTC LastWriteTime cutoff. Directory
-        removal is opt-in and limited to directories emptied by this invocation and
-        their now-empty ancestors. Preserve the cleanup root, unrelated empty branches,
-        and reparse points. A single ShouldProcess decision authorizes the discovered
-        file/directory plan. Revalidate paths and timestamps before removal. File
-        deletion uses an opened file handle with DeleteOnClose so a concurrent directory
-        substitution cannot be removed as a file or counted as success. Run elevated for
-        system-owned files; permission failures are reported through the error stream.
-        This prerelease still requires the Windows
-        acceptance and privilege-preflight work in the 1.0 plan. Path checks are not an
-        atomic defense against hostile changes.
+        Resolve the Windows directory through the operating-system special-folder
+        API, not only a mutable process environment variable. Discover candidates
+        under the validated root using one inclusive UTC cutoff. Candidate file IDs
+        and directory IDs are captured during discovery and compared with the same
+        native handle used for the deletion request. The handle requests DELETE
+        access only; it does not read file contents. Directory removal is opt-in,
+        non-recursive, deepest-first, and limited to directories emptied by this
+        invocation. Reparse points, roots, unrelated branches, replacements,
+        hard-link identity changes, and paths outside the approved root are
+        preserved. The privilege field is an informational preflight; access
+        failures remain explicit. These checks are not an atomic defense against a
+        hostile filesystem filter or a filesystem that does not provide stable IDs.
     .PARAMETER Days
         Retain files newer than Days days ago. The default is 30 days.
     .PARAMETER RemoveEmptyDirectory
-        Also remove directories emptied by this invocation, deepest-first. Never remove
-        pre-existing empty branches or the Windows temporary directory itself.
+        Also remove directories emptied by this invocation and their now-empty
+        ancestors. The cleanup root and pre-existing empty branches are preserved.
     .PARAMETER PassThru
-        Return a TheCleaners.CleanupResult summary, including preview and failure counts.
+        Return a TheCleaners.CleanupResult summary.
     .EXAMPLE
         Clear-WindowsTemp -Days 60 -WhatIf -PassThru
     .EXAMPLE
@@ -49,100 +50,52 @@ function Clear-WindowsTemp {
     )
 
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
-        throw [System.PlatformNotSupportedException]::new('Clear-WindowsTemp requires Windows.')
+        $Exception = [System.PlatformNotSupportedException]::new('Clear-WindowsTemp requires Windows.')
+        $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'TempWindowsRequired' -Category NotImplemented
+        $PSCmdlet.ThrowTerminatingError($ErrorRecord)
     }
-    if ([string]::IsNullOrWhiteSpace($env:SystemRoot)) {
-        Write-Error -Message 'Clear-WindowsTemp requires the SystemRoot environment variable to locate the system temp folder.'
-        return
-    }
-    $Root = Resolve-TheCleanersFileSystemPath -LiteralPath (Join-Path -Path $env:SystemRoot -ChildPath 'Temp')
-    $RootPath = $Root.FullName.TrimEnd([char[]]@('\', '/'))
-    $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
-    $Result = [pscustomobject]@{
-        PSTypeName              = 'TheCleaners.CleanupResult'
-        Command                 = 'Clear-WindowsTemp'
-        RootPath                = $RootPath
-        CutoffUtc               = $CutoffUtc
-        FileCandidateCount      = 0
-        FilesRemoved            = 0
-        FileFailureCount        = 0
-        FilesSkipped            = 0
-        DirectoryCandidateCount = 0
-        DirectoriesRemoved      = 0
-        DirectoryFailureCount   = 0
-        DirectoriesSkipped      = 0
-        BytesReclaimed          = [Int64]0
-        Status                  = 'NoCandidates'
-    }
-    $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
-    $FilePaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $DirectoryPaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $PlannedDirectories = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    $Root = $null
     try {
-        # Walk one level at a time so reparse points are excluded before traversal, not afterward.
-        $Pending = [System.Collections.Generic.Stack[string]]::new()
-        $Pending.Push($RootPath)
-        while ($Pending.Count -gt 0) {
-            $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $Pending.Pop()
-            foreach ($Item in @(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop)) {
-                if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-                    Write-Verbose -Message "Skipping reparse point: $($Item.FullName)"
-                    continue
-                }
-                if ($Item.PSIsContainer) {
-                    $Pending.Push($Item.FullName)
-                } elseif ($Item.LastWriteTimeUtc -le $CutoffUtc) {
-                    $Candidates.Add($Item)
-                    $null = $FilePaths.Add($Item.FullName)
-                    if ($RemoveEmptyDirectory) {
-                        $Parent = $Item.Directory
-                        while ($null -ne $Parent -and $Parent.FullName -ne $RootPath) {
-                            $null = $DirectoryPaths.Add($Parent.FullName)
-                            $Parent = $Parent.Parent
-                        }
-                    }
-                }
-            }
-        }
-        $DirectoryOrder = @($DirectoryPaths | Sort-Object -Property @{ Expression = { $_.Length }; Descending = $true }, @{ Expression = { $_ }; Descending = $false })
-        foreach ($DirectoryPath in $DirectoryOrder) {
-            $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $RootPath
-            $Remaining = @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop | Where-Object {
-                    -not $FilePaths.Contains($_.FullName) -and -not $PlannedDirectories.Contains($_.FullName)
-                })
-            if ($Remaining.Count -eq 0) {
-                $null = $PlannedDirectories.Add($DirectoryPath)
-            }
-        }
+        $Root = Get-TheCleanersWindowsTempRoot
     } catch {
+        $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'TempRootValidationFailed' -Category InvalidData
+        $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+    }
+
+    $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
+    $Result = Get-TheCleanersCleanupResult -Command 'Clear-WindowsTemp' -RootPath $Root.FullName.TrimEnd([char[]]@('\', '/')) -CutoffUtc $CutoffUtc -PrivilegeStatus (Get-TheCleanersPrivilegeStatus)
+    try {
+        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc $CutoffUtc -RemoveEmptyDirectory:$RemoveEmptyDirectory -CaptureIdentity:(-not $WhatIfPreference)
+    } catch {
+        $Result.DiscoveryStatus = 'Failed'
         $Result.Status = 'DiscoveryFailed'
         $Result.FileCandidateCount = $null
         $Result.DirectoryCandidateCount = $null
-        $PSCmdlet.WriteError($_)
+        $Result.DiscoveryErrorCount = 1
+        $Result.ErrorIds = @('TempDiscoveryFailed')
+        $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'TempDiscoveryFailed' -Category ReadError -TargetObject $Result.RootPath
+        $PSCmdlet.WriteError($ErrorRecord)
         if ($PassThru) {
             $Result
         }
         return
     }
-    $OldFiles = @($Candidates.ToArray() | Sort-Object -Property FullName)
-    $Result.FileCandidateCount = $OldFiles.Count
-    $Result.DirectoryCandidateCount = $PlannedDirectories.Count
-    foreach ($File in $OldFiles) {
-        Write-Verbose -Message "Candidate file: $($File.FullName)"
-    }
-    foreach ($DirectoryPath in $DirectoryOrder) {
-        if ($PlannedDirectories.Contains($DirectoryPath)) {
-            Write-Verbose -Message "Candidate directory after file cleanup: $DirectoryPath"
-        }
-    }
-    if ($OldFiles.Count -eq 0) {
+
+    $Files = @($Plan.Files)
+    $Directories = @($Plan.Directories)
+    $Result.CandidatePaths = @($Files | ForEach-Object { $_.Path })
+    $Result.FileCandidateCount = $Files.Count
+    $Result.DirectoryCandidateCount = $Directories.Count
+    if ($Files.Count -eq 0) {
         if ($PassThru) {
             $Result
         }
         return
     }
-    $Action = 'Remove {0} old temp files and up to {1} directories emptied by this cleanup; inclusive UTC cutoff {2:u}' -f $OldFiles.Count, $PlannedDirectories.Count, $CutoffUtc
-    if (-not $PSCmdlet.ShouldProcess($RootPath, $Action)) {
+
+    $Action = 'Remove {0} old Windows temp files and up to {1} identity-checked directories; inclusive UTC cutoff {2:u}' -f $Files.Count, $Directories.Count, $CutoffUtc
+    if (-not $PSCmdlet.ShouldProcess($Result.RootPath, $Action)) {
         $Result.Status = if ($WhatIfPreference) { 'WhatIf' } else { 'Declined' }
         if ($PassThru) {
             $Result
@@ -150,86 +103,144 @@ function Clear-WindowsTemp {
         return
     }
 
-    $TouchedDirectories = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    foreach ($File in $OldFiles) {
+    try {
+        $CurrentRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $Result.RootPath -Directory
+        if ($CurrentRootIdentity.IsReparsePoint -or -not $CurrentRootIdentity.Equals($Plan.RootIdentity)) {
+            throw [System.IO.InvalidDataException]::new("The cleanup root changed after discovery: '$($Result.RootPath)'.")
+        }
+    } catch {
+        $Result.Status = 'DiscoveryFailed'
+        $Result.DiscoveryStatus = 'Failed'
+        $Result.DiscoveryErrorCount = 1
+        $Result.ErrorIds = @('TempRootChanged')
+        $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'TempRootChanged' -Category InvalidData -TargetObject $Result.RootPath
+        $PSCmdlet.WriteError($ErrorRecord)
+        if ($PassThru) {
+            $Result
+        }
+        return
+    }
+
+    $TouchedIdentities = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $ReparsePointAttributes = [System.IO.FileAttributes]::ReparsePoint
+    foreach ($Candidate in $Files) {
+        $CurrentHandle = $null
         try {
-            $CurrentFile = Resolve-TheCleanersFileSystemPath -LiteralPath $File.FullName -RootPath $RootPath
-            if ($CurrentFile -isnot [System.IO.FileInfo]) {
+            $CurrentItem = Get-Item -LiteralPath $Candidate.Path -Force -ErrorAction Stop
+            if ($CurrentItem.PSIsContainer -or ($CurrentItem.Attributes -band $ReparsePointAttributes)) {
                 $Result.FilesSkipped++
                 continue
             }
-            $CurrentPath = $CurrentFile.FullName
-            $CurrentFile.Refresh()
-            if (-not $CurrentFile.Exists -or [System.IO.Directory]::Exists($CurrentPath) -or $CurrentFile.LastWriteTimeUtc -gt $CutoffUtc) {
+            $null = Resolve-TheCleanersFileSystemPath -LiteralPath $Candidate.Path -RootPath $Result.RootPath
+            $CurrentItem.Refresh()
+            if (-not $CurrentItem.Exists -or $CurrentItem.LastWriteTimeUtc -gt $Plan.CutoffUtc) {
                 $Result.FilesSkipped++
                 continue
             }
-            # DeleteOnClose binds deletion to the opened file object. A missing path or
-            # directory substitution fails before any directory can be removed.
-            $DeletionStream = [System.IO.FileStream]::new(
-                $CurrentPath,
-                [System.IO.FileMode]::Open,
-                [System.IO.FileAccess]::Read,
-                ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete),
-                1,
-                [System.IO.FileOptions]::DeleteOnClose
-            )
-            try {
-                $Length = $DeletionStream.Length
-            } finally {
-                $DeletionStream.Dispose()
+            $CurrentHandle = [TheCleaners.NativeFileInterop]::OpenForDeletion($Candidate.Path, $false)
+            $CurrentIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($CurrentHandle)
+            if ($CurrentIdentity.IsDirectory -or $CurrentIdentity.IsReparsePoint -or $null -eq $Candidate.Identity -or -not $CurrentIdentity.Equals($Candidate.Identity)) {
+                $Result.FilesSkipped++
+                continue
             }
-            $CurrentFile.Refresh()
-            if ($CurrentFile.Exists -or [System.IO.Directory]::Exists($CurrentPath)) {
-                throw [System.IO.IOException]::new("File candidate still exists after the deletion attempt: '$CurrentPath'.")
-            }
-            $Result.FilesRemoved++
-            $Result.BytesReclaimed += $Length
-            $Parent = $CurrentFile.Directory
-            while ($null -ne $Parent -and $Parent.FullName -ne $RootPath) {
-                $null = $TouchedDirectories.Add($Parent.FullName)
-                $Parent = $Parent.Parent
-            }
+            $Length = $CurrentIdentity.Length
+            [TheCleaners.NativeFileInterop]::MarkForDeletion($CurrentHandle)
         } catch {
-            # Windows PowerShell 5.1 can wrap FileStream constructor failures in
-            # MethodInvocationException. Classify the root cause so missing candidates
-            # remain safe skips while sharing and access failures remain failures.
             $BaseException = $_.Exception.GetBaseException()
-            $MissingCandidate = (
-                $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
-                $BaseException -is [System.IO.FileNotFoundException] -or
-                $BaseException -is [System.IO.DirectoryNotFoundException]
-            )
+            $NativeErrorCode = if ($BaseException -is [System.ComponentModel.Win32Exception]) { $BaseException.NativeErrorCode } else { -1 }
+            $MissingCandidate = $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or $BaseException -is [System.IO.FileNotFoundException] -or $BaseException -is [System.IO.DirectoryNotFoundException] -or $NativeErrorCode -in @(2, 3, 53, 123)
             if ($MissingCandidate) {
                 $Result.FilesSkipped++
             } else {
                 $Result.FileFailureCount++
-                $PSCmdlet.WriteError($_)
+                $Result.ErrorIds = @($Result.ErrorIds + 'TempFileRemovalFailed')
+                $Category = if ($BaseException -is [System.UnauthorizedAccessException] -or $NativeErrorCode -in @(5, 32, 33)) { 'PermissionDenied' } else { 'WriteError' }
+                $ErrorRecord = Get-TheCleanersErrorRecord -Exception $BaseException -ErrorId 'TempFileRemovalFailed' -Category $Category -TargetObject $Candidate.Path
+                $PSCmdlet.WriteError($ErrorRecord)
+            }
+            continue
+        } finally {
+            if ($null -ne $CurrentHandle) {
+                $CurrentHandle.Dispose()
             }
         }
-    }
-    foreach ($DirectoryPath in $DirectoryOrder) {
-        if (-not $PlannedDirectories.Contains($DirectoryPath)) {
+
+        if ([System.IO.File]::Exists($Candidate.Path) -or [System.IO.Directory]::Exists($Candidate.Path)) {
+            $Result.FileFailureCount++
+            $Result.ErrorIds = @($Result.ErrorIds + 'TempFileRemovalFailed')
+            $Exception = [System.IO.IOException]::new("The candidate path still exists after its deletion handle closed: '$($Candidate.Path)'.")
+            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'TempFileRemovalFailed' -Category WriteError -TargetObject $Candidate.Path
+            $PSCmdlet.WriteError($ErrorRecord)
             continue
         }
-        if (-not $TouchedDirectories.Contains($DirectoryPath)) {
+
+        $Result.FilesRemoved++
+        $Result.BytesReclaimed += $Length
+        if ($null -ne $Candidate.ParentIdentity) {
+            $null = $TouchedIdentities.Add($Candidate.ParentIdentity.Key)
+        }
+    }
+
+    foreach ($DirectoryPlan in $Directories) {
+        if ($null -eq $DirectoryPlan.Identity -or -not $TouchedIdentities.Contains($DirectoryPlan.Identity.Key)) {
             $Result.DirectoriesSkipped++
             continue
         }
+
+        $CurrentHandle = $null
         try {
-            $CurrentDirectory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $RootPath
-            if ($CurrentDirectory -isnot [System.IO.DirectoryInfo] -or @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop).Count -gt 0) {
+            $CurrentDirectory = Get-Item -LiteralPath $DirectoryPlan.Path -Force -ErrorAction Stop
+            if ($CurrentDirectory -isnot [System.IO.DirectoryInfo] -or ($CurrentDirectory.Attributes -band $ReparsePointAttributes)) {
                 $Result.DirectoriesSkipped++
                 continue
             }
-            # Non-recursive deletion fails if a file appears after the emptiness check; no nested prompt can escalate it.
-            [System.IO.Directory]::Delete($CurrentDirectory.FullName, $false)
-            $Result.DirectoriesRemoved++
+            $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPlan.Path -RootPath $Result.RootPath
+            $CurrentHandle = [TheCleaners.NativeFileInterop]::OpenForDeletion($DirectoryPlan.Path, $true)
+            $CurrentIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($CurrentHandle)
+            if (-not $CurrentIdentity.IsDirectory -or $CurrentIdentity.IsReparsePoint -or -not $CurrentIdentity.Equals($DirectoryPlan.Identity)) {
+                $Result.DirectoriesSkipped++
+                continue
+            }
+            if (@(Get-ChildItem -LiteralPath $DirectoryPlan.Path -Force -ErrorAction Stop).Count -gt 0) {
+                $Result.DirectoriesSkipped++
+                continue
+            }
+            [TheCleaners.NativeFileInterop]::MarkForDeletion($CurrentHandle)
         } catch {
+            $BaseException = $_.Exception.GetBaseException()
+            $NativeErrorCode = if ($BaseException -is [System.ComponentModel.Win32Exception]) { $BaseException.NativeErrorCode } else { -1 }
+            $MissingDirectory = $BaseException -is [System.IO.DirectoryNotFoundException] -or $NativeErrorCode -in @(2, 3, 53, 123)
+            if ($MissingDirectory) {
+                $Result.DirectoriesSkipped++
+            } else {
+                $Result.DirectoryFailureCount++
+                $Result.ErrorIds = @($Result.ErrorIds + 'TempDirectoryRemovalFailed')
+                $Category = if ($BaseException -is [System.UnauthorizedAccessException] -or $NativeErrorCode -in @(5, 32, 33)) { 'PermissionDenied' } else { 'WriteError' }
+                $ErrorRecord = Get-TheCleanersErrorRecord -Exception $BaseException -ErrorId 'TempDirectoryRemovalFailed' -Category $Category -TargetObject $DirectoryPlan.Path
+                $PSCmdlet.WriteError($ErrorRecord)
+            }
+            continue
+        } finally {
+            if ($null -ne $CurrentHandle) {
+                $CurrentHandle.Dispose()
+            }
+        }
+
+        if ([System.IO.Directory]::Exists($DirectoryPlan.Path)) {
             $Result.DirectoryFailureCount++
-            $PSCmdlet.WriteError($_)
+            $Result.ErrorIds = @($Result.ErrorIds + 'TempDirectoryRemovalFailed')
+            $Exception = [System.IO.IOException]::new("The directory path still exists after its deletion handle closed: '$($DirectoryPlan.Path)'.")
+            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'TempDirectoryRemovalFailed' -Category WriteError -TargetObject $DirectoryPlan.Path
+            $PSCmdlet.WriteError($ErrorRecord)
+            continue
+        }
+
+        $Result.DirectoriesRemoved++
+        if ($null -ne $DirectoryPlan.ParentIdentity) {
+            $null = $TouchedIdentities.Add($DirectoryPlan.ParentIdentity.Key)
         }
     }
+
     $Result.Status = if ($Result.FileFailureCount -gt 0 -or $Result.DirectoryFailureCount -gt 0) {
         'PartialFailure'
     } elseif ($Result.FilesSkipped -gt 0 -or $Result.DirectoriesSkipped -gt 0) {
@@ -241,4 +252,3 @@ function Clear-WindowsTemp {
         $Result
     }
 }
-

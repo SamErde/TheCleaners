@@ -1,23 +1,22 @@
 function Clear-OldIISLog {
     <#
     .SYNOPSIS
-        Preview old IIS log candidates without removing anything.
+        Preview old allowlisted IIS log candidates without removing anything.
     .DESCRIPTION
-        This command is structurally preview-only while IIS path, file-pattern, and
-        server acceptance work remains incomplete. Explicit -WhatIf is required. The
-        command discovers existing IIS log roots, skips reparse points before traversal,
-        and previews old .log files using one inclusive UTC cutoff. Validated roots are
-        normalized and deduplicated before enumeration. A WebAdministration dependency
-        imported for discovery is removed afterward, including when discovery fails;
-        an already loaded dependency is preserved. Candidate discovery is experimental
-        and is not a validated deletion allowlist. No deletion command or generic removal
-        helper is called.
+        This command is structurally preview-only while IIS server acceptance is
+        incomplete. Explicit -WhatIf is required. Discovery expands and validates
+        configured roots, rejects protected IIS configuration paths, skips reparse
+        points, deduplicates normalized roots, and applies a per-format filename
+        allowlist before the inclusive UTC cutoff. A WebAdministration dependency
+        imported for discovery is removed afterward, while an already loaded
+        dependency is preserved. No deletion command or generic mutation helper is
+        called. The allowlist is a discovery safety boundary, not stable-removal
+        evidence; a disposable IIS lab is still required before any future removal.
     .PARAMETER Days
-        Preview .log files whose LastWriteTimeUtc is at or before one UTC cutoff, Days
-        days ago. The default is 60 days.
+        Preview allowlisted log files whose LastWriteTimeUtc is at or before one UTC
+        cutoff, Days days ago. The default is 60 days.
     .PARAMETER PassThru
-        Return a TheCleaners.CleanupResult preview summary for each successfully
-        enumerated existing IIS log root. CandidatePaths contains the discovered files.
+        Return a TheCleaners.CleanupResult preview summary for each existing root.
     .EXAMPLE
         Clear-OldIISLog -Days 60 -WhatIf
     .EXAMPLE
@@ -41,20 +40,22 @@ function Clear-OldIISLog {
         $PassThru
     )
 
-    # Reject before module, registry, or filesystem discovery. Do not silently force WhatIf.
     if (-not $PSBoundParameters.ContainsKey('WhatIf') -or -not $PSBoundParameters['WhatIf']) {
         $Exception = [System.NotSupportedException]::new('IIS cleanup is preview-only. Run Clear-OldIISLog -WhatIf. Removal is not available in this version.')
-        $ErrorRecord = [System.Management.Automation.ErrorRecord]::new($Exception, 'IISCleanupPreviewOnly', [System.Management.Automation.ErrorCategory]::NotImplemented, $null)
+        $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'IISCleanupPreviewOnly' -Category NotImplemented
         $PSCmdlet.ThrowTerminatingError($ErrorRecord)
     }
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
-        throw [System.PlatformNotSupportedException]::new('IIS log discovery requires Windows.')
+        $Exception = [System.PlatformNotSupportedException]::new('IIS log discovery requires Windows.')
+        $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'IISWindowsRequired' -Category NotImplemented
+        $PSCmdlet.ThrowTerminatingError($ErrorRecord)
     }
     Write-Warning -Message 'IIS preview only: no files will be removed. Candidate discovery is experimental, not a deletion allowlist.'
 
     $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
     $Roots = [System.Collections.Generic.List[object]]::new()
     $SeenRoots = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $DiscoveryFailed = $false
     $WebAdministrationModule = Get-Module -Name 'WebAdministration' -ListAvailable | Select-Object -First 1
 
     if ($null -ne $WebAdministrationModule) {
@@ -69,17 +70,23 @@ function Clear-OldIISLog {
                     Write-Verbose -Message "IIS site '$($Site.Name)' has no log directory."
                     continue
                 }
+                $Format = if ($null -eq $Site.LogFile.LogFormat) { 'W3C' } else { [string]$Site.LogFile.LogFormat }
                 $Roots.Add([pscustomobject]@{
                         Path        = Join-Path -Path $ConfiguredRoot -ChildPath ('W3SVC{0}' -f $Site.Id)
                         DisplayName = [string]$Site.Name
                         Source      = 'WebAdministration'
+                        Format      = $Format
+                        Service     = 'W3SVC'
                     })
             }
+        } catch {
+            $DiscoveryFailed = $true
+            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError
+            $PSCmdlet.WriteError($ErrorRecord)
         } finally {
             if (-not $WebAdministrationWasLoaded) {
-                # Restore only the dependency this invocation introduced, even after a
-                # partially failed import. This is session cleanup, not file cleanup.
-                # An inherited WhatIf must not prevent restoring the original module state.
+                # Restore only the dependency this invocation introduced. This is
+                # session cleanup, not file cleanup, and must ignore WhatIf.
                 foreach ($Dependency in @(Get-Module -Name 'WebAdministration' -All)) {
                     Remove-Module -ModuleInfo $Dependency -WhatIf:$false -Confirm:$false -ErrorAction Stop
                 }
@@ -91,6 +98,8 @@ function Clear-OldIISLog {
                     Path        = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
                     DisplayName = 'Default IIS log root'
                     Source      = 'DefaultPath'
+                    Format      = 'W3C'
+                    Service     = 'W3SVC'
                 })
         }
         try {
@@ -102,6 +111,8 @@ function Clear-OldIISLog {
                         Path        = $RegistryRoot
                         DisplayName = 'Registry IIS log root'
                         Source      = 'Registry'
+                        Format      = 'W3C'
+                        Service     = 'W3SVC'
                     })
             }
         } catch {
@@ -113,26 +124,34 @@ function Clear-OldIISLog {
             if ($OptionalRegistryValueIsAbsent) {
                 Write-Verbose -Message "The optional alternate IIS log location is not configured: $($_.Exception.Message)"
             } else {
-                # Access and provider failures make discovery incomplete. Surface them and honor -ErrorAction Stop.
-                $PSCmdlet.WriteError($_)
+                $DiscoveryFailed = $true
+                $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISRegistryDiscoveryFailed' -Category ReadError
+                $PSCmdlet.WriteError($ErrorRecord)
             }
         }
     }
 
     foreach ($RootDefinition in $Roots) {
+        if (Test-TheCleanersIisProtectedPath -Path $RootDefinition.Path) {
+            $DiscoveryFailed = $true
+            $Exception = [System.UnauthorizedAccessException]::new("The IIS path is protected and cannot be used as a log root: '$($RootDefinition.Path)'.")
+            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'IISProtectedRoot' -Category PermissionDenied -TargetObject $RootDefinition.Path
+            $PSCmdlet.WriteError($ErrorRecord)
+            continue
+        }
         if (-not (Test-Path -LiteralPath $RootDefinition.Path -PathType Container)) {
             Write-Verbose -Message "IIS log root not present as a directory: $($RootDefinition.Path)"
             continue
         }
+
         $OldFiles = @()
+        $NormalizedRoot = $null
         try {
             $LogRoot = Resolve-TheCleanersFileSystemPath -LiteralPath $RootDefinition.Path
             if ($LogRoot -isnot [System.IO.DirectoryInfo]) {
                 throw [System.IO.InvalidDataException]::new("IIS log root is not a directory: '$($RootDefinition.Path)'.")
             }
-            # Deduplicate every discovery source at the same boundary, only after the
-            # original path has passed filesystem, root, and reparse-point validation.
-            $NormalizedRoot = [System.IO.Path]::GetFullPath($LogRoot.FullName).TrimEnd([char[]]@('\', '/'))
+            $NormalizedRoot = Convert-TheCleanersPathForComparison -Path $LogRoot.FullName
             if (-not $SeenRoots.Add($NormalizedRoot)) {
                 Write-Verbose -Message "Skipping duplicate IIS log root: $NormalizedRoot"
                 continue
@@ -156,43 +175,35 @@ function Clear-OldIISLog {
                     }
                     if ($Item.PSIsContainer) {
                         $Pending.Push($Item.FullName)
-                    } elseif ($Item.Extension -eq '.log' -and $Item.LastWriteTimeUtc -le $CutoffUtc) {
+                    } elseif ((Test-TheCleanersIisLogFileName -Name $Item.Name -Format $RootDefinition.Format -Service $RootDefinition.Service) -and $Item.LastWriteTimeUtc -le $CutoffUtc) {
                         $Candidates.Add($Item)
                     }
                 }
             }
             $OldFiles = @($Candidates.ToArray() | Sort-Object -Property FullName)
         } catch {
-            $PSCmdlet.WriteError($_)
-            # A failed discovery must not masquerade as an empty, successful preview.
+            $DiscoveryFailed = $true
+            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError -TargetObject $RootDefinition.Path
+            $PSCmdlet.WriteError($ErrorRecord)
             continue
         }
 
         foreach ($File in $OldFiles) {
-            $null = $PSCmdlet.ShouldProcess($File.FullName, 'Preview candidate only; IIS removal is unavailable')
+            $null = $PSCmdlet.ShouldProcess($File.FullName, 'Preview allowlisted candidate only; IIS removal is unavailable')
         }
         if ($PassThru) {
-            [pscustomobject]@{
-                PSTypeName              = 'TheCleaners.CleanupResult'
-                Command                 = 'Clear-OldIISLog'
-                RootPath                = $NormalizedRoot
-                CutoffUtc               = $CutoffUtc
-                FileCandidateCount      = $OldFiles.Count
-                FilesRemoved            = 0
-                FileFailureCount        = 0
-                FilesSkipped            = 0
-                DirectoryCandidateCount = 0
-                DirectoriesRemoved      = 0
-                DirectoryFailureCount   = 0
-                DirectoriesSkipped      = 0
-                BytesReclaimed          = [Int64]0
-                Status                  = 'WhatIf'
-                DiscoveryStatus         = 'Experimental'
-                DiscoverySource         = $RootDefinition.Source
-                DisplayName             = $RootDefinition.DisplayName
-                CandidatePaths          = @($OldFiles | ForEach-Object { $_.FullName })
+            $ResultDiscoveryStatus = 'Experimental'
+            if ($DiscoveryFailed) {
+                $ResultDiscoveryStatus = 'Failed'
             }
+            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus $ResultDiscoveryStatus -ProtectionStatus 'Validated' -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @($OldFiles | ForEach-Object { $_.FullName }) -Status 'WhatIf'
+            if ($DiscoveryFailed) {
+                $Result.DiscoveryErrorCount = 1
+                $Result.ErrorIds = @('IISDiscoveryFailed')
+            }
+            $Result.FileCandidateCount = $OldFiles.Count
+            $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
+            $Result
         }
     }
 }
-

@@ -14,9 +14,9 @@ Clear-OldExchangeLog [-Days <Int16>] -WhatIf [-PassThru] [<CommonParameters>]
 
 ## Experimental discovery scope
 
-Read `MsiInstallPath` from the Exchange v15 setup registry key. Scan existing `Logging`, `Bin\Search\Ceres\Diagnostics\ETLTraces`, `Bin\Search\Ceres\Diagnostics\Logs`, and `TransportRoles\Logs\MessageTracking` roots for `.log` files at or before the inclusive UTC cutoff. Skip reparse points and validate paths. Do not invoke IIS cleanup.
+Read `MsiInstallPath` from the Exchange v15 setup registry key. Scan existing `Logging`, `Bin\Search\Ceres\Diagnostics\ETLTraces`, `Bin\Search\Ceres\Diagnostics\Logs`, and `TransportRoles\Logs\MessageTracking` roots with product-specific filename allowlists at or before the inclusive UTC cutoff. Skip reparse points, validate paths, and exclude mailbox database and transaction-log paths returned by Exchange management discovery. Do not invoke IIS cleanup.
 
-This limited preview is not a validated deletion allowlist. ETL file extensions, product-specific filename rules, protected-location verification, and the supported Exchange version matrix remain open. Do not use its output to implement an external deletion bypass.
+This limited preview is not a validated deletion allowlist. The supported Exchange version/build matrix and disposable-lab service-health evidence remain open. Do not use its output to implement an external deletion bypass.
 
 ## Examples
 

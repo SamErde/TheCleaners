@@ -19,7 +19,7 @@ Clear-CurrentUserTemp -Days 30 -RemoveEmptyDirectory -WhatIf -PassThru
 Clear-WindowsTemp -Days 30 -RemoveEmptyDirectory -WhatIf -PassThru
 ```
 
-The retention boundary remains inclusive but is now evaluated using UTC last-write times and a single cutoff. Candidate deletion uses a file-handle-specific `DeleteOnClose` operation instead of provider `Remove-Item`; a missing candidate is skipped, and a directory substituted at the same path is preserved. Locked/access-denied removals produce errors, not warnings; review automation that relies on error-stream behavior. `-ErrorAction Stop` is honored. `-PassThru` returns counters and status, with preview counts distinct from successful removals.
+The retention boundary remains inclusive but is now evaluated using UTC last-write times and a single cutoff. Candidate deletion uses a same-handle native `DELETE` operation without `FILE_READ_DATA` instead of provider `Remove-Item`; a missing candidate is skipped, and a directory or different identity substituted at the same path is preserved. Locked/access-denied removals produce stable error IDs on the error stream; review automation that relies on error-stream behavior. `-ErrorAction Stop` is honored. `-PassThru` returns the shared result contract, with preview counts distinct from successful removals.
 
 Temp roots and literal paths must be fully qualified Windows filesystem paths. Drive-relative, root-relative, provider-qualified, device, and unsupported extended-length forms are rejected before resolution.
 
@@ -31,7 +31,7 @@ Existing destructive IIS invocations now stop with a terminating `IISCleanupPrev
 Clear-OldIISLog -Days 60 -WhatIf -PassThru
 ```
 
-`Clean-IISLog` has the same guard. No removal flag exists, and IIS no longer invokes the legacy private `Remove-OldFiles` helper. The helper remains internal technical debt until its focused removal; the current `.log` candidate filter is experimental and must not be piped into a separate deletion command.
+`Clean-IISLog` has the same guard. No removal flag exists, and IIS no longer invokes a generic deletion helper. The old private wrapper has been retired; the format-specific candidate filter remains experimental and must not be piped into a separate deletion command.
 
 ## Exchange
 

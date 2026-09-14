@@ -29,64 +29,79 @@ The manifest stays on the current prerelease version during this packet. No comm
 | 1.0 stable | Publish the tested artifact with aligned version/tag/metadata and a successful clean-install check. No feature can become destructive merely by changing a maturity label. |
 | Later Exchange minor | First release an Exchange-enabled prerelease; validate paths, file patterns, custom drives, locks, access failures, protected database/transaction-log locations, and post-cleanup service health. Reconfirm the provisional per-invocation opt-in before activation. |
 
+## Evidence recorded September 14, 2026
+
+This evidence was collected from the dirty working tree based at commit `b01780d2b79319de61b0a92ea18a79a357e08fa2`; it is not a merged commit or a CI run. No real Windows, IIS, or Exchange cleanup was run, and no release tag or Gallery publication was performed.
+
+| Gate | Exact evidence | Boundary that remains open |
+| --- | --- | --- |
+| Host and filesystem | Windows 11 Enterprise `10.0.26200` / build `26200`; PS7.6.6 Core; non-elevated; actual user temp `C:\Users\SamErde\AppData\Local\Temp\`; operating-system Windows root `C:\WINDOWS`; `LongPathsEnabled=0`; visible volumes were NTFS (`OS`, `WINRETOOLS`, `DELLSUPPORT`); no ReFS volume was available. | Elevated, ReFS, and supported Windows client/server acceptance still require a suitable disposable lab. |
+| PS7 native suite | Pester `5.7.1`; `145/145` passed; `0` failed, skipped, or not run; `80.11%` (`761/950` commands executed/analyzed); report runtime `7.6.6 Core`; report commit `b01780d2b79319de61b0a92ea18a79a357e08fa2`. | The same gate still needs the hosted CI run URL and the configured `7.5.9` stable run. |
+| Windows PowerShell compatibility | Exact Pester `5.7.1`; PS `5.1.26100.9444` Desktop; `149/149` passed (`145` unit plus `4` package-integration); `0` failed, skipped, or not run. The test harness preloaded the CodeDOM-generated native helper before Pester created worker runspaces, so the complete native suite ran. | Hosted PS5.1 acceptance still requires its CI run URL. |
+| ACL and native deletion fixture | PS7.6.6 and PS5.1.26100.9444 both used isolated `C:\Users\SamErde\AppData\Local\Temp\TheCleaners-Acl-*` fixtures on C: NTFS, non-elevated. Each exact candidate list contained `old-readable.tmp` and `old-delete-without-read.tmp`; before/after counts were `2 -> 0`; `ReadWasDenied=true`; explicit delete allow mask `65536`; read deny mask `1`; `FilesRemoved=2`; `BytesReclaimed=6`; errors `0`; acceptance `true`; protected paths `0`. | This does not replace elevated/ReFS/real server lab acceptance. |
+| Product preview probe | Host `BN7FXL4`, recorded `2026-09-14T21:23:07.9332045Z`, PS7.6.6 Core, same OS/build, non-elevated, `DeletionEnabled=false`. IIS registry/product absent, `WebAdministration=null`, W3SVC and WAS `NotInstalled`, protected paths `[]`, candidates `[]`, counts `0 -> 0`, preview `Completed`. Exchange registry/product absent, management commands `[]`, all four checked Exchange services `NotInstalled`, protected paths `[]`, candidate counts unavailable, preview `Unavailable` with `ExchangeRegistryDiscoveryFailed,Clear-OldExchangeLog` because the registry path is absent. | Disposable IIS and Exchange product/build labs, exact candidate lists, before/after counts, protected paths, and service-health evidence remain open; absence on this workstation is not acceptance. |
+| Package and clean install | Default Invoke-Build completed with Pester `5.7.1`, analyzer/formatting gates, `4/4` integration tests, deterministic archive `TheCleaners_0.0.15.zip`, archive SHA-256 `f6057642a3a8b19a03fa610c0752ebc302ef62ca01fc923b09e22a259b2a544e`, and exact manifest/file-hash verification. The clean-install probe imported the extracted artifact by module name in every available local host. | The package remains prerelease `0.0.15-beta`; hosted matrix evidence and maintainer acceptance remain open. |
+| Documentation and deployment | `mkdocs build --strict` passed locally. `https://day3bits.com/TheCleaners` redirects to `https://day3bits.com/TheCleaners/` with HTTP 200; the canonical lowercase `https://day3bits.com/thecleaners/` returned HTTP 404. | Lowercase deployment and redirect correction require the site owner; no external deployment was changed in this session. |
+
 ## Work packets
 
 | ID | Work | Current state |
 | --- | --- | --- |
-| TC-001 | Behavioral contracts, support matrix, maturity policy, migration notes, and release ledger | Partially implemented in PR #27; exact Windows/IIS/Exchange product matrix and remaining command contracts open. |
+| TC-001 | Behavioral contracts, support matrix, maturity policy, migration notes, and release ledger | Implemented in draft in PR #27; command contracts and support/maturity documentation are present. Exact product/runtime evidence remains open. |
 | TC-002 | Naming, compatibility aliases, deterministic loader, quiet import, removal of initialization scaffolding | Implemented in PR #27; source and packaged import tests added. |
-| TC-003 | Public mutation ownership, shared result/error contracts, UTC semantics, path safety, removal of generic deletion wrapper | Temp mutation ownership and Exchange/IIS no-deletion structures implemented in PR #27. IIS no longer calls the legacy wrapper; helper retirement and cross-command result/error standardization remain open. |
-| TC-004 | Temp cleaners, opt-in directory pruning, WhatIf/Confirm, locked-file/race handling, privilege/root preflight | Main behavior and file-to-directory/missing-candidate race protections implemented in PR #27; actual OS-root verification, elevation preflight, additional adversarial cases, and Windows acceptance remain open. |
-| TC-005 | IIS path discovery, environment expansion, per-format allowlist, deduplication, inline deletion, and server validation | Preview lock, read-only discovery, validated-root normalization/deduplication, and dependency registration restoration implemented in PR #27. Format allowlist, remaining path hardening, removal implementation, and server validation remain open; removal stays disabled until those gates pass. |
-| TC-006 | Exchange preview guard, experimental discovery, validated per-directory patterns, protected locations, and lab fixtures | Guard, IIS decoupling, and directory-root validation implemented in PR #27. Current `.log`-only discovery is experimental, not a validated deletion allowlist. ETL and product-version validation remain open. |
-| TC-007 | Typed stale-profile output, unknown LastUseTime, optional size, SID resolution, and command inventory | Inventory implemented in PR #27. Profile refactor and unused SID-helper disposition open. |
-| TC-008 | One source-layout package, exact-artifact tests/publication, reproducible build, complete runtime matrix, and CI gates | 5.1 unit/parser job and fresh-process package tests added in PR #27. Legacy merged build and source-directory publisher remain; do not publish them as 1.0. |
-| TC-009 | Complete help/docs, canonical deployment verification, changelog/history, contributor/security policy, RC and release checks | Initial docs/ledger in PR #27; full generation drift gate, strict site validation, deployment/redirect checks, and release work open. |
+| TC-003 | Public mutation ownership, shared result/error contracts, UTC semantics, path safety, removal of generic deletion wrapper | Draft implementation includes shared result/error contracts, owning-command mutation, native temp deletion, and wrapper/helper retirement. Local PS7/PS5.1 fixture evidence is recorded above; hosted cross-edition and adversarial acceptance remain open. |
+| TC-004 | Temp cleaners, opt-in directory pruning, WhatIf/Confirm, locked-file/race handling, privilege/root preflight | Draft implementation includes same-handle identity checks, root preflight, lock/race fixtures, hard-link/reparse tests, actual-root/privilege checks, and ACL evidence. ReFS/elevated/server acceptance, interactive confirmation acceptance, and hosted CI remain open. |
+| TC-005 | IIS path discovery, environment expansion, per-format allowlist, deduplication, inline deletion, and server validation | Preview lock, read-only discovery, validated-root normalization/deduplication, protected-path checks, format allowlists, and dependency restoration are implemented in draft. The local probe recorded IIS absence only; product/version and server lab validation remain open; removal stays disabled. |
+| TC-006 | Exchange preview guard, experimental discovery, validated per-directory patterns, protected locations, and lab fixtures | Guard, IIS decoupling, fixed-root validation, per-directory filename/ETL patterns, and database/transaction-log protection are implemented in draft. The local probe recorded Exchange absence only; exact Exchange build matrix, lab fixtures, and service-health validation remain open. |
+| TC-007 | Typed stale-profile output, unknown LastUseTime, optional size, SID resolution, and command inventory | Typed read-only output, unknown-date handling, optional reparse-safe size, best-effort SID resolution, and orphan-helper retirement are implemented in draft; Windows acceptance remains open. |
+| TC-008 | One source-layout package, exact-artifact tests/publication, reproducible build, complete runtime matrix, and CI gates | Source-layout artifact, strict test/integration reports, deterministic archive, content manifest/hash, protected publisher, clean-install probe, and ShouldProcess analyzer gate are implemented in draft. Hosted runtime/CI evidence and maintainer acceptance remain open. |
+| TC-009 | Complete help/docs, canonical deployment verification, changelog/history, contributor/security policy, RC and release checks | Command contract/lab/deployment docs, strict MkDocs build, drift tests, contributor/security/PR guidance, release hash metadata, and protected publication checks are implemented in draft. Lowercase deployment/redirect correction, hosted clean-install evidence, final tag/metadata alignment, and maintainer acceptance remain open. |
 
 ### TC-003/004 completion checklist
 
-- [ ] Standardize documented result fields and stable error IDs/categories across every applicable command.
-- [ ] Remove the now-unused generic private deletion wrapper and its legacy tests; do not add another generic mutation layer.
-- [ ] Verify every discovery error fails closed and cannot be mistaken for zero candidates.
-- [ ] Verify `-WhatIf` leaves files, directories, preferences, registry, processes, and module state unchanged.
+- [x] Standardize documented result fields and stable error IDs/categories across every applicable command in the draft implementation.
+- [x] Remove the now-unused generic private deletion wrapper and its legacy tests; do not add another generic mutation layer.
+- [x] Verify every discovery error fails closed and cannot be mistaken for zero candidates in the unit and coverage-edge fixtures; hosted product acceptance remains open.
+- [x] Verify `-WhatIf` leaves fixture files/directories, preferences, and module/native state unchanged; real product/registry/process acceptance remains open.
 - [ ] Verify `-Confirm` approval/decline and noninteractive behavior without nested prompts.
-- [ ] Validate hard links, junctions, symbolic links, reparse-point ancestry, roots, prefix-confusable siblings, long paths, access failures, and files changing after discovery.
-- [ ] Confirm actual system temp root and privilege handling rather than trusting an environment variable alone.
-- [ ] Reconcile proposed versus removed/skipped/failed files and directories; bytes are logical lengths of successfully removed files, not a guarantee of physical free-space change.
+- [x] Add fixture coverage for hard links, junctions, symbolic links/reparse points, roots, prefix-confusable siblings, long-path syntax, access/lock failures, and files changing after discovery; lab validation remains open.
+- [x] Confirm the actual system temp root and privilege handling rather than trusting an environment variable alone; this was recorded on the non-elevated Windows 11 host.
+- [x] Reconcile proposed versus removed/skipped/failed files and directories; bytes are logical lengths of successfully removed files, not a guarantee of physical free-space change.
 - [ ] Complete actual Windows client/server acceptance on supported OS versions.
 
 ### TC-005/006 completion checklist
 
-- [ ] Explicitly import or qualify IIS discovery commands; handle missing optional dependencies and uninstalled products clearly.
-- [ ] Expand environment variables in all discovered roots; normalize and deduplicate roots.
-- [ ] Document and test exact supported product versions, default/custom paths, file formats, and retention boundaries.
-- [ ] Never treat every old file in an arbitrary logging tree as a safe log candidate.
-- [ ] Prove mailbox database and transaction-log paths cannot become Exchange cleanup candidates; exclude a configured database path even if it overlaps a proposed log root.
+- [x] Explicitly import or qualify IIS discovery commands; handle missing optional dependencies and uninstalled products clearly in the draft implementation.
+- [x] Expand environment variables in all discovered IIS roots; normalize and deduplicate roots in the draft implementation. Product/lab evidence remains open.
+- [x] Document and unit-test draft product-root, filename-format, and retention-boundary rules; exact supported product versions and lab evidence remain open.
+- [x] Never treat every old file in an arbitrary logging tree as a safe log candidate in the draft preview implementation.
+- [x] Add draft protection for mailbox database and transaction-log paths, including overlap exclusion; live Exchange validation remains open.
 - [x] Keep IIS and Exchange deletion absent while their current preview locks apply, including legacy aliases and all parameter combinations.
 - [ ] Capture lab candidate lists, before/after counts, and service health for any command later enabled for removal.
 
 ### TC-007 completion checklist
 
-- [ ] Keep profile discovery read-only; remove presentation-only `Out-Host` behavior.
-- [ ] Introduce a stable profile object with SID/account, path, last use, age, optional size, loaded/special flags, and unknown-date status.
-- [ ] Treat missing LastUseTime as unknown, not automatically stale; decide how unknown entries are exposed.
-- [ ] Confirm default/public/system/service profile exclusions and size-enumeration safety.
-- [ ] Remove orphaned SID helpers unless deliberately used by profile output.
+- [x] Keep profile discovery read-only; remove presentation-only `Out-Host` behavior.
+- [x] Introduce a stable profile object with SID/account, path, last use, age, optional size, loaded/special flags, and unknown-date status.
+- [x] Treat missing LastUseTime as unknown, not automatically stale; expose it only with `-IncludeUnknownLastUseTime`.
+- [x] Confirm default/public/system/service profile exclusions and size-enumeration safety in fixture tests.
+- [x] Remove orphaned SID helpers unless deliberately used by profile output.
 
 ### TC-008/009 completion checklist
 
-- [ ] Replace recursive source merging with the explicit source-layout package; preserve useful stack traces and external help.
-- [ ] Build once, record a content manifest/digest, test that artifact, and publish it without rebuilding or publishing `src` directly.
-- [ ] Add a protected publishing environment and version/tag/prerelease checks; refuse duplicate Gallery versions.
-- [ ] Add complete 5.1 plus supported 7 LTS/current package/install tests, not just source unit tests.
-- [ ] Re-enable the ShouldProcess analyzer rule; justify narrowly scoped suppressions and consolidate redundant analyzer jobs.
-- [ ] Meet at least 80% overall coverage and explicitly test every safety-critical branch; no zero-test or silent discovery-failure passes.
-- [ ] Retain machine-readable unit and integration reports, with failed/skipped counts and exact runtime versions.
-- [ ] Generate command references and external help from the source of truth; fail on drift and validate the documentation build strictly.
-- [ ] Update README, migration guide, changelog, support/security policy, contributing instructions, PR template, and agent instructions.
-- [ ] Review template leftovers, duplicated LICENSE, misplaced editor settings, spell-check entries, pre-commit adoption, and redundant scanners.
-- [ ] Verify canonical deployment at the lowercase `/thecleaners/` path; arrange redirects from older casing/hosts without creating a conflicting custom-domain configuration.
-- [ ] Attach package and hashes to the release; verify a clean install of the published version.
+- [x] Replace recursive source merging with the explicit source-layout package; preserve useful stack traces and external help in the draft build.
+- [x] Build once, record a content manifest/digest, test that artifact, and publish it without rebuilding or publishing `src` directly in the protected workflow design.
+- [x] Add a protected publishing environment and version/tag/prerelease checks; refuse duplicate Gallery versions in the publisher script.
+- [ ] Add complete 5.1 plus supported 7 LTS/current package/install tests, not just source unit tests; local PS5.1/PS7.6.6 evidence is recorded, but hosted 7.5.9 and CI evidence remain open.
+- [x] Re-enable the ShouldProcess analyzer rule; no broad suppression is used in the draft source.
+- [ ] Meet at least 80% overall coverage and explicitly test every safety-critical branch; local PS7.6.6 measured 80.11% with no skipped tests, while hosted CI and remaining unexecuted failure branches still require evidence.
+- [x] Retain machine-readable unit and integration reports, with failed/skipped counts and exact runtime versions in the draft build.
+- [x] Generate command references and external help from the source of truth; add drift checks and validate the documentation build strictly in CI.
+- [x] Update README, migration guide, changelog, support/security policy, contributing instructions, PR template, and agent instructions.
+- [x] Review template leftovers, remove the duplicate `.github/LICENSE`, move editor settings to the repository-root `.vscode`, and retain the existing spell-check/pre-commit configuration; analyzer roles remain explicit rather than silently removed.
+- [ ] Verify canonical deployment at the lowercase `/thecleaners/` path; local evidence found uppercase `/TheCleaners/` HTTP 200 after redirect and lowercase `/thecleaners/` HTTP 404, so the site-owner deployment correction remains open.
+- [x] Attach package and hashes to the draft archive output and verify a clean install of the tested local artifact.
+- [ ] Verify a clean install of the published version after the hosted release artifact and maintainer acceptance exist.
 
 ## Validation evidence
 
@@ -103,8 +118,15 @@ The following references identify the exact regression tests behind review-threa
 | IIS dependency registrations restored on success/failure, existing module preserved | `src/Tests/Unit/IISDiscoverySafety.Tests.ps1`: four fresh-process fixture-module scenarios; also checks caller confirmation preferences and leaked commands. This does not claim to unload Windows assemblies. |
 | Equivalent site/default/registry roots previewed once | `src/Tests/Unit/IISDiscoverySafety.Tests.ps1`: site variants, registry dot/trailing/alternate-separator cases, and a distinct-custom-root control. |
 | Fully qualified Windows path syntax enforced before resolution | `src/Tests/Unit/FullyQualifiedPathSafety.Tests.ps1`: drive-relative, root-relative, ordinary relative, provider, invalid `RootPath`, UNC, device, and extended-length syntax cases, plus valid drive/descendant and containment cases. |
+| Shared result and stable error contracts | `src/Tests/Unit/ResultContract.Tests.ps1`: documented cleanup fields, UTC normalization, stable fully qualified error ID, category, and target object. |
+| Hard-link, symlink, and recreated-directory identity behavior | `src/Tests/Unit/IdentitySafety.Tests.ps1`: native identity stability, hard-link fixture behavior for both temp commands when the host permits it, symbolic-link reparse detection, and recreated-directory identity mismatch. |
+| IIS/Exchange format and protected-path allowlists | `src/Tests/Unit/PreviewAllowlist.Tests.ps1`: built-in IIS format names, Exchange Message Tracking/ETL/log patterns, protected IIS locations, and Exchange database/transaction path normalization. |
+| Typed stale-profile output | `src/Tests/Unit/ProfileOutput.Tests.ps1`: typed fields, unknown dates, optional size, exclusions, no host output, and orphan-helper retirement. |
+| Fail-closed and runtime edge branches | `src/Tests/Unit/CoverageEdges.Tests.ps1` and `src/Tests/Unit/RuntimeSafety.Tests.ps1`: malformed discovery objects, identity-capture failure, reparse roots/descendants, extended UNC normalization, actual Windows-root resolution, actual token privilege, long-path policy, WhatIf state, and Confirm-false state. |
+| Exact artifact and clean install | `src/Tests/Integration/PackageImport.Tests.ps1`: archive sidecar/hash, manifest file records, extracted source-layout import, external help, aliases, and preview locks in each available host. |
+| Host and ACL evidence | `lab/Invoke-TheCleanersAclFixture.ps1`: isolated read-denied/delete-allowed ACL, exact rule masks, candidate before/after lists, result counts, bytes, errors, and acceptance. `lab/Invoke-TheCleanersProductPreviewLab.ps1`: read-only product, build, service, protected-path, candidate, and preview evidence with deletion disabled. |
 
-Adding tests is not evidence that they passed. Record CI run URLs, exact commit/runtime versions, counts, failures, and skips in the PR before changing a packet to validated. Windows/IIS/Exchange lab acceptance is not replaced by CI with mocked fixtures. The editing environment has no local PowerShell runtime; do not claim local Pester execution.
+Adding tests is not evidence that they passed. The September 14 local evidence is recorded above with exact runtimes, counts, failures/skips, coverage, hashes, and host limitations. Record hosted CI run URLs and the exact tested commit in the PR before changing a packet to validated. Windows/IIS/Exchange lab acceptance is not replaced by CI with mocked fixtures, and the unavailable IIS/Exchange/ReFS/elevated environments remain explicit open gates.
 
 ## Parallel work boundaries
 

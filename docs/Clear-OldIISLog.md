@@ -22,7 +22,7 @@ Clear-OldIISLog [[-Days] <Int16>] [-PassThru] [-WhatIf] [-Confirm]
 
 `Clear-OldIISLog` is structurally preview-only while IIS path, file-pattern, and server acceptance work remains incomplete. Explicit `-WhatIf` is required. Calling the command without it, or with `-WhatIf:$false`, produces a terminating `IISCleanupPreviewOnly` error before module, registry, or filesystem discovery.
 
-The command discovers existing IIS log roots, skips reparse points before traversal, and previews old `.log` files using one inclusive UTC cutoff. Validated roots are normalized and deduplicated before enumeration. A WebAdministration dependency imported for discovery is removed afterward, including when discovery fails; an already loaded dependency is preserved. Candidate discovery is experimental and is not a validated deletion allowlist. This version contains no deletion command and does not call the legacy generic removal helper.
+The command discovers existing IIS log roots, skips reparse points before traversal, and previews files matching the format-specific allowlist using one inclusive UTC cutoff. Validated roots are normalized and deduplicated before enumeration. A WebAdministration dependency imported for discovery is removed afterward, including when discovery fails; an already loaded dependency is preserved. Candidate discovery is experimental and is not a validated deletion allowlist. This version contains no deletion command and no generic deletion wrapper.
 
 ## EXAMPLES
 

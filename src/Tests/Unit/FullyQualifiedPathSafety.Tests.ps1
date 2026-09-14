@@ -70,9 +70,13 @@ Describe 'Fully qualified filesystem path safety' -Skip:([Environment]::OSVersio
         Test-TheCleanersFullyQualifiedPath -Path '\\\share' | Should -BeFalse
     }
 
-    It 'rejects unsupported extended-length and device path syntax' {
-        Test-TheCleanersFullyQualifiedPath -Path '\\?\C:\Temp' | Should -BeFalse
-        Test-TheCleanersFullyQualifiedPath -Path '\\?\UNC\server\share' | Should -BeFalse
+    It 'accepts supported extended-length drive and UNC syntax for long paths' {
+        Test-TheCleanersFullyQualifiedPath -Path '\\?\C:\Temp' | Should -BeTrue
+        Test-TheCleanersFullyQualifiedPath -Path '\\?\UNC\server\share\folder' | Should -BeTrue
+    }
+
+    It 'rejects unsupported device namespace syntax' {
         Test-TheCleanersFullyQualifiedPath -Path '\\.\C:\Temp' | Should -BeFalse
+        Test-TheCleanersFullyQualifiedPath -Path '\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1' | Should -BeFalse
     }
 }

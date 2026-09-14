@@ -23,8 +23,8 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 - Made module loading explicit and import quiet.
 - Standardized the canonical documentation URL to `https://day3bits.com/thecleaners/`.
 - Temp failures now use the error stream; unknown discovery totals are not reported as zero candidates.
-- Temp file removal now uses a file-handle-specific `DeleteOnClose` operation. Missing candidates are skipped, and a directory substituted at a candidate path cannot be removed or counted as a file deletion.
-- IIS now requires explicit `-WhatIf`, reports `PreviewOnly`, and cannot remove files until its product-specific gates pass. It no longer invokes the legacy generic removal helper.
+- Temp file removal now uses a same-handle native `DELETE` operation without `FILE_READ_DATA`. Missing candidates and identity substitutions are skipped, and a directory substituted at a candidate path cannot be removed or counted as a file deletion.
+- IIS now requires explicit `-WhatIf`, reports `PreviewOnly`, and cannot remove files until its product-specific gates pass. The generic deletion wrapper has been retired.
 - IIS validates and normalizes all discovered roots at one boundary before deduplication and traversal; equivalent site, default, and registry paths no longer produce duplicate previews.
 - IIS unloads a WebAdministration dependency introduced for discovery in a `finally` block, while preserving a dependency that was already loaded. Cleanup does not enable file removal or change caller confirmation preferences.
 - Changed workflow actions use immutable SHAs, and missing required artifacts are fatal.
@@ -38,4 +38,4 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 
 ### Still pending
 
-Retirement of the now-unused generic removal helper, remaining IIS path/format hardening and server acceptance, Exchange product validation, profile refactor, full product/runtime acceptance, source-layout package and exact-artifact publication, documentation-generation drift validation, and release authorization. See `docs/release-plan-1.0.md`. Zensical migration is tracked separately in issue #26.
+Windows client/server acceptance, supported runtime CI evidence, ACL/NTFS/ReFS lab evidence, remaining IIS/Exchange product validation, full documentation drift/deployment checks, protected exact-artifact publication, and release authorization remain open. See `docs/release-plan-1.0.md`. Zensical migration is tracked separately in issue #26.

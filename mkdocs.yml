@@ -44,9 +44,11 @@ theme:
 nav:
   - Home: "index.md"
   - Safety: "safety-and-confirmation.md"
+  - Contracts: "command-contracts.md"
   - Support: "support-matrix.md"
   - Migration to 1.0: "migration-to-1.0.md"
   - Functions:
+      - "Module reference": "TheCleaners.md"
       - "Get-TheCleaners": "Get-TheCleaners.md"
       - "Clear-CurrentUserTemp": "Clear-CurrentUserTemp.md"
       - "Clear-WindowsTemp": "Clear-WindowsTemp.md"
@@ -56,6 +58,8 @@ nav:
       - "Start-Cleaning (alias)": "Start-Cleaning.md"
   - Development:
       - "1.0 implementation plan": "release-plan-1.0.md"
+      - "Windows lab acceptance": "lab-acceptance.md"
+      - "Documentation deployment gate": "deployment-validation.md"
 
 markdown_extensions:
   - pymdownx.superfences:

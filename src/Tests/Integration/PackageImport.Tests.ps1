@@ -2,6 +2,10 @@ BeforeAll {
     $PackageRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../Artifacts')).Path
     $PackageManifest = Join-Path -Path $PackageRoot -ChildPath 'TheCleaners.psd1'
     $PackageData = Import-PowerShellDataFile -Path $PackageManifest
+    $ArchiveRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../Archive')).Path
+    $ArchiveManifestPath = Join-Path -Path $ArchiveRoot -ChildPath ('TheCleaners_{0}.manifest.json' -f $PackageData.ModuleVersion)
+    $ArchiveManifest = Get-Content -LiteralPath $ArchiveManifestPath -Raw | ConvertFrom-Json
+    $ArchivePath = Join-Path -Path $ArchiveRoot -ChildPath $ArchiveManifest.Archive
     $ProbeHosts = [System.Collections.Generic.List[string]]::new()
     $CurrentHostPath = (Get-Process -Id $PID).Path
     $ProbeHosts.Add($CurrentHostPath)
@@ -67,6 +71,70 @@ Describe 'Built-package contract' -Tag Integration {
                 throw "Package probe failed under '$ProbeHost':`n$($ProbeOutput | Out-String)"
             }
             $ExitCode | Should -Be 0
+        }
+    }
+}
+
+Describe 'Exact archive clean-install contract' -Tag Integration {
+    It 'matches the archive hash, extracts the tested artifact, and imports it by module name in every host' {
+        $ArchivePath | Should -Exist
+        $ArchiveHash = (Get-FileHash -LiteralPath $ArchivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $ArchiveHash | Should -Be ([string]$ArchiveManifest.ArchiveSHA256)
+        $SidecarPath = "$ArchivePath.sha256"
+        $SidecarPath | Should -Exist
+        (Get-Content -LiteralPath $SidecarPath -Raw).Trim() | Should -Be (('{0} *{1}' -f $ArchiveHash, $ArchiveManifest.Archive))
+
+        foreach ($FileRecord in @($ArchiveManifest.Files)) {
+            $ArtifactFile = Join-Path -Path $PackageRoot -ChildPath ($FileRecord.Path -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+            $ArtifactFile | Should -Exist
+            (Get-FileHash -LiteralPath $ArtifactFile -Algorithm SHA256).Hash.ToLowerInvariant() | Should -Be ([string]$FileRecord.SHA256)
+        }
+
+        $ExtractionRoot = Join-Path -Path $TestDrive -ChildPath 'ArchiveExtraction'
+        $ModuleSearchRoot = Join-Path -Path $TestDrive -ChildPath 'InstalledModules'
+        $InstalledModuleRoot = Join-Path -Path $ModuleSearchRoot -ChildPath ('TheCleaners/{0}' -f $PackageData.ModuleVersion)
+        $null = New-Item -Path $ExtractionRoot -ItemType Directory -Force
+        $null = New-Item -Path $InstalledModuleRoot -ItemType Directory -Force
+        Expand-Archive -LiteralPath $ArchivePath -DestinationPath $ExtractionRoot -Force
+        Copy-Item -Path (Join-Path -Path $ExtractionRoot -ChildPath '*') -Destination $InstalledModuleRoot -Recurse -Force
+
+        $ProbePath = Join-Path -Path $TestDrive -ChildPath 'Test-CleanInstall.ps1'
+        @'
+param (
+    [Parameter(Mandatory)]
+    [string]
+    $ModuleSearchRoot,
+
+    [Parameter(Mandatory)]
+    [string]
+    $ExpectedModuleRoot,
+
+    [Parameter(Mandatory)]
+    [string]
+    $Version
+)
+
+$ErrorActionPreference = 'Stop'
+$env:PSModulePath = $ModuleSearchRoot + [System.IO.Path]::PathSeparator + (Join-Path -Path $PSHOME -ChildPath 'Modules')
+Import-Module -Name TheCleaners -RequiredVersion $Version -Force
+$Module = Get-Module -Name TheCleaners
+if ([System.IO.Path]::GetFullPath($Module.ModuleBase) -ne [System.IO.Path]::GetFullPath($ExpectedModuleRoot)) {
+    throw 'The clean-install probe imported a different module path.'
+}
+if (@(TheCleaners\Get-TheCleaners -NoLogo).Count -ne 6) {
+    throw 'The clean-install probe returned an invalid command inventory.'
+}
+if ($Module.ExportedAliases['Start-Cleaning'].Definition -ne 'Get-TheCleaners') {
+    throw 'The clean-install probe did not preserve the compatibility alias.'
+}
+'CLEAN_INSTALL_OK'
+'@ | Set-Content -LiteralPath $ProbePath -Encoding UTF8
+
+        foreach ($ProbeHost in $ProbeHosts) {
+            $ProbeOutput = & $ProbeHost -NoLogo -NoProfile -NonInteractive -File $ProbePath -ModuleSearchRoot $ModuleSearchRoot -ExpectedModuleRoot $InstalledModuleRoot -Version $PackageData.ModuleVersion 2>&1
+            $ExitCode = $LASTEXITCODE
+            $ExitCode | Should -Be 0 -Because "Clean-install probe failed under '$ProbeHost':`n$($ProbeOutput | Out-String)"
+            $ProbeOutput | Should -Contain 'CLEAN_INSTALL_OK'
         }
     }
 }

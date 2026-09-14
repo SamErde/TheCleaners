@@ -5,8 +5,15 @@ BeforeDiscovery {
 BeforeAll {
     $ModuleRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners')).Path
     foreach ($RelativePath in @(
+        'Private/ResultContracts.ps1'
+        'Private/Initialize-TheCleanersNativeFileInterop.ps1'
+        'Private/Get-TheCleanersWindowsTempRoot.ps1'
+        'Private/Get-TheCleanersTempPlan.ps1'
         'Private/Resolve-TheCleanersFileSystemPath.ps1'
-        'Private/Remove-OldFiles.ps1'
+        'Private/Test-TheCleanersIisLogFileName.ps1'
+        'Private/Test-TheCleanersIisProtectedPath.ps1'
+        'Private/Test-TheCleanersExchangeLogFileName.ps1'
+        'Private/Get-TheCleanersExchangeProtectedPaths.ps1'
         'Public/Clear-OldIISLog.ps1'
         'Public/Clear-OldExchangeLog.ps1'
     )) {
@@ -53,12 +60,11 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $FixtureRoot = Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)
         $IISRoot = Join-Path -Path $FixtureRoot -ChildPath 'inetpub/logs/LogFiles'
         $null = New-Item -Path $IISRoot -ItemType Directory -Force
-        $OldLog = New-Item -Path (Join-Path -Path $IISRoot -ChildPath 'old.log') -ItemType File
+        $OldLog = New-Item -Path (Join-Path -Path $IISRoot -ChildPath 'u_ex240101.log') -ItemType File
         $OldLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $env:SystemDrive = $FixtureRoot
         Mock Get-Module { $null } -ParameterFilter { $Name -eq 'WebAdministration' -and $ListAvailable }
         Mock Get-ItemProperty { throw [System.Management.Automation.ItemNotFoundException]::new('Optional registry value is absent.') }
-        Mock Remove-OldFiles { throw 'IIS preview must not invoke the legacy removal helper.' }
     }
 
     AfterEach {
@@ -69,7 +75,6 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         { Clear-OldIISLog -Confirm:$false } | Should -Throw '*preview-only*'
         Should -Invoke Get-Module -Exactly 0 -ParameterFilter { $Name -eq 'WebAdministration' -and $ListAvailable }
         Should -Invoke Get-ItemProperty -Exactly 0
-        Should -Invoke Remove-OldFiles -Exactly 0
     }
 
     It 'previews candidates without invoking the removal helper' {
@@ -80,7 +85,6 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result.CandidatePaths | Should -Contain $OldLog.FullName
         $Result.FilesRemoved | Should -Be 0
         $OldLog.FullName | Should -Exist
-        Should -Invoke Remove-OldFiles -Exactly 0
     }
 
     It 'reports registry access failure instead of silently omitting a configured root' {
@@ -102,7 +106,7 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $ParseErrors | Should -BeNullOrEmpty
         $Forbidden = $Ast.FindAll({
                 param($Node)
-                ($Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -in @('Remove-Item', 'Remove-OldFiles', 'Invoke-Expression', 'Start-Process')) -or
+            ($Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -in @('Remove-Item', 'Invoke-Expression', 'Start-Process')) -or
                 ($Node -is [System.Management.Automation.Language.InvokeMemberExpressionAst] -and $Node.Member.Value -eq 'Delete')
             }, $true)
         @($Forbidden) | Should -HaveCount 0
