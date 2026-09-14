@@ -155,7 +155,21 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
     It 'honors ErrorAction Stop rather than swallowing deletion errors' {
         $FileLock = [System.IO.File]::Open($OldFile.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
         try {
-            { & $CommandName -Days 30 -Confirm:$false -ErrorAction Stop } | Should -Throw
+            # Inspect actual control flow and the underlying I/O error, not just any
+            # exception from a nested assertion scriptblock or unrelated path preflight.
+            $CaughtError = $null
+            $CompletedNormally = $false
+            $UnexpectedResult = @()
+            try {
+                $UnexpectedResult = @(& $CommandName -Days 30 -Confirm:$false -PassThru -ErrorAction Stop)
+                $CompletedNormally = $true
+            } catch {
+                $CaughtError = $_
+            }
+            $Diagnostic = 'a locked candidate must terminate; returned summary: {0}' -f ($UnexpectedResult | ConvertTo-Json -Compress)
+            $CompletedNormally | Should -BeFalse -Because $Diagnostic
+            $CaughtError | Should -Not -BeNullOrEmpty
+            $CaughtError.Exception.GetBaseException() | Should -BeOfType ([System.IO.IOException])
             $OldFile.FullName | Should -Exist
         } finally {
             $FileLock.Dispose()

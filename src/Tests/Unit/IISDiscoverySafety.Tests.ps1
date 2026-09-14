@@ -38,6 +38,12 @@ param (
     [string]$Scenario
 )
 
+# Emit plain diagnostics on stdout so a failing child process is still reportable
+# under Windows PowerShell native stderr handling and in Pester NUnit XML.
+trap {
+    [Console]::Out.WriteLine(('IIS_DISCOVERY_ERROR: {0}' -f $_.Exception.Message))
+    exit 1
+}
 $ErrorActionPreference = 'Stop'
 $env:PSModulePath = $ModuleSearchRoot + [System.IO.Path]::PathSeparator + (Join-Path -Path $PSHOME -ChildPath 'Modules')
 Import-Module -Name $ManifestPath -ErrorAction Stop
@@ -56,20 +62,26 @@ try {
     $ObservedError = $_.Exception.Message
 }
 $After = @(Get-Module -Name 'WebAdministration' -All)
+# Inspect the fixture's exported function directly. Exact-name Get-Command lookup
+# can discover/auto-import an available module, invalidating a module-lifetime probe.
+$WebsiteFunctionPresent = Test-Path -LiteralPath 'Function:\Get-Website'
 if ($InitiallyLoaded) {
     if ($Before.Count -ne 1 -or $After.Count -ne 1 -or -not [object]::ReferenceEquals($Before[0], $After[0])) {
         throw 'The preview did not preserve the existing dependency module instance.'
     }
-    if (@(Get-Command -Name 'Get-Website' -ListImported -ErrorAction SilentlyContinue).Count -ne 1) {
+    if (-not $WebsiteFunctionPresent) {
         throw 'The preview removed a command from the existing dependency.'
     }
 } else {
     if ($Before.Count -ne 0 -or $After.Count -ne 0) {
         throw 'The preview left a newly imported dependency loaded.'
     }
-    if (@(Get-Command -Name 'Get-Website' -ListImported -ErrorAction SilentlyContinue).Count -ne 0) {
+    if ($WebsiteFunctionPresent) {
         throw 'The preview leaked an imported command into the caller session.'
     }
+}
+if (@(Get-Module -Name 'WebAdministration' -All).Count -ne $Before.Count) {
+    throw 'Verification unexpectedly changed the dependency module state.'
 }
 if ($WhatIfPreference -ne $PreviousWhatIfPreference -or $ConfirmPreference -ne $PreviousConfirmPreference) {
     throw 'The preview changed caller confirmation preferences.'
@@ -121,8 +133,9 @@ Describe 'IIS dependency state and site-root deduplication: <Scenario>' -ForEach
 
         $ProbeOutput = & $PowerShellExecutable -NoLogo -NoProfile -NonInteractive -File $ProbePath -ManifestPath $ManifestPath -ModuleSearchRoot $ModuleSearchRoot -LogRoot $LogRoot -Scenario $Scenario 2>&1
         $ProbeExitCode = $LASTEXITCODE
+        $Diagnostic = [regex]::Replace(($ProbeOutput -join [Environment]::NewLine), '\x1B\[[0-?]*[ -/]*[@-~]', '')
 
-        $ProbeExitCode | Should -Be 0 -Because ($ProbeOutput -join [Environment]::NewLine)
+        $ProbeExitCode | Should -Be 0 -Because $Diagnostic
         $ProbeOutput | Should -Contain 'IIS_DISCOVERY_OK'
     }
 }
