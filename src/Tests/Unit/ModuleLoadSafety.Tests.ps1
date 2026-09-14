@@ -17,14 +17,6 @@ BeforeAll {
     }
 }
 
-BeforeEach {
-    Remove-Module -Name TheCleaners -Force -ErrorAction SilentlyContinue
-}
-
-AfterEach {
-    Remove-Module -Name TheCleaners -Force -ErrorAction SilentlyContinue
-}
-
 AfterAll {
     if ($null -ne $PreviousModule) {
         $PreviousManifestPath = Join-Path -Path $PreviousModule.ModuleBase -ChildPath 'TheCleaners.psd1'
@@ -33,6 +25,14 @@ AfterAll {
 }
 
 Describe 'TheCleaners fail-closed module loading' -Tag Unit {
+    BeforeEach {
+        Remove-Module -Name TheCleaners -Force -ErrorAction SilentlyContinue
+    }
+
+    AfterEach {
+        Remove-Module -Name TheCleaners -Force -ErrorAction SilentlyContinue
+    }
+
     It 'fails import when a required script is missing' {
         $FixtureModuleRoot = Copy-TheCleanersFixture -Name 'MissingScript'
         Remove-Item -LiteralPath (Join-Path -Path $FixtureModuleRoot -ChildPath 'Public/Get-TheCleaners.ps1') -Force

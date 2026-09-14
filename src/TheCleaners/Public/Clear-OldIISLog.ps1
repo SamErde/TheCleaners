@@ -96,6 +96,7 @@ function Clear-OldIISLog {
         } catch {
             $OptionalRegistryValueIsAbsent = (
                 $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
+                ($_.Exception -is [System.Management.Automation.PSArgumentException] -and $_.Exception.Message -match '^Property .+ does not exist') -or
                 $_.FullyQualifiedErrorId -match 'PathNotFound|PropertyNotFound|ItemNotFound'
             )
             if ($OptionalRegistryValueIsAbsent) {
