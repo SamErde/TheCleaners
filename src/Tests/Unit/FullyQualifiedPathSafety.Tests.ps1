@@ -1,27 +1,25 @@
-BeforeDiscovery {
-    $WindowsHost = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
-}
-
 BeforeAll {
     . (Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners/Private/Resolve-TheCleanersFileSystemPath.ps1')
 }
 
-Describe 'Fully qualified filesystem path safety' -Skip:(-not $WindowsHost) -Tag Unit {
-    It 'rejects unsafe path syntax before Get-Item resolution' -TestCases @(
-        @{ Path = 'C:Temp'; Name = 'drive-relative' }
-        @{ Path = 'C:.'; Name = 'drive-relative dot' }
-        @{ Path = '\Temp'; Name = 'root-relative backslash' }
-        @{ Path = '/Temp'; Name = 'root-relative slash' }
-        @{ Path = 'Temp'; Name = 'ordinary relative' }
-        @{ Path = '.\Temp'; Name = 'dot-relative' }
-        @{ Path = '..\Temp'; Name = 'parent-relative' }
-        @{ Path = 'HKLM:\Software'; Name = 'registry provider' }
-        @{ Path = 'FileSystem::C:\Temp'; Name = 'qualified provider' }
-    ) {
-        param ($Path, $Name)
-
+Describe 'Fully qualified filesystem path safety' -Skip:([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) -Tag Unit {
+    It 'rejects unsafe path syntax before Get-Item resolution' {
+        $UnsafePaths = @(
+            'C:Temp'
+            'C:.'
+            '\Temp'
+            '/Temp'
+            'Temp'
+            '.\Temp'
+            '..\Temp'
+            'HKLM:\Software'
+            'FileSystem::C:\Temp'
+        )
         Mock Get-Item { throw 'Get-Item must not run for unsafe path syntax.' }
-        { Resolve-TheCleanersFileSystemPath -LiteralPath $Path } | Should -Throw
+
+        foreach ($UnsafePath in $UnsafePaths) {
+            { Resolve-TheCleanersFileSystemPath -LiteralPath $UnsafePath } | Should -Throw
+        }
         Should -Invoke Get-Item -Exactly 0
     }
 
