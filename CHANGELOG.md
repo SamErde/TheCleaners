@@ -2,7 +2,7 @@
 
 ## Unreleased - 1.0 preparation
 
-This entry describes draft work, not a released 1.0 package. Historical changes preceding this work still need reconciliation against the repository and Gallery history.
+This entry describes unreleased work, not a released 1.0 package. Historical changes preceding this work still need reconciliation against the repository and Gallery history.
 
 ### Added
 
@@ -12,6 +12,8 @@ This entry describes draft work, not a released 1.0 package. Historical changes 
 - Typed `Get-TheCleaners` command inventory with `-NoLogo` for automation.
 - Windows PowerShell 5.1 parser/unit CI and fresh-process source/package import probes.
 - A versioned 1.0 implementation ledger and contributor/agent safety instructions.
+- Fresh-process IIS dependency-lifetime tests for initially loaded/unloaded modules on discovery success/failure, using a fixture module rather than a live IIS installation.
+- IIS site and registry deduplication regressions covering dot segments, trailing separators, alternate separators, and distinct custom roots.
 
 ### Changed
 
@@ -22,6 +24,8 @@ This entry describes draft work, not a released 1.0 package. Historical changes 
 - Temp failures now use the error stream; unknown discovery totals are not reported as zero candidates.
 - Temp file removal now uses a file-handle-specific `DeleteOnClose` operation. Missing candidates are skipped, and a directory substituted at a candidate path cannot be removed or counted as a file deletion.
 - IIS now requires explicit `-WhatIf`, reports `PreviewOnly`, and cannot remove files until its product-specific gates pass. It no longer invokes the legacy generic removal helper.
+- IIS validates and normalizes all discovered roots at one boundary before deduplication and traversal; equivalent site, default, and registry paths no longer produce duplicate previews.
+- IIS unloads a WebAdministration dependency introduced for discovery in a `finally` block, while preserving a dependency that was already loaded. Cleanup does not enable file removal or change caller confirmation preferences.
 - Changed workflow actions use immutable SHAs, and missing required artifacts are fatal.
 
 ### Removed
@@ -33,4 +37,4 @@ This entry describes draft work, not a released 1.0 package. Historical changes 
 
 ### Still pending
 
-Retirement of the now-unused generic removal helper, IIS path/format hardening and server acceptance, Exchange product validation, profile refactor, full product/runtime acceptance, source-layout package and exact-artifact publication, documentation-generation drift validation, and release authorization. See `docs/release-plan-1.0.md`. Zensical migration is tracked separately in issue #26.
+Retirement of the now-unused generic removal helper, remaining IIS path/format hardening and server acceptance, Exchange product validation, profile refactor, full product/runtime acceptance, source-layout package and exact-artifact publication, documentation-generation drift validation, and release authorization. See `docs/release-plan-1.0.md`. Zensical migration is tracked separately in issue #26.

@@ -6,9 +6,12 @@ function Clear-OldIISLog {
         This command is structurally preview-only while IIS path, file-pattern, and
         server acceptance work remains incomplete. Explicit -WhatIf is required. The
         command discovers existing IIS log roots, skips reparse points before traversal,
-        and previews old .log files using one inclusive UTC cutoff. Candidate discovery
-        is experimental and is not a validated deletion allowlist. No deletion command
-        or generic removal helper is called.
+        and previews old .log files using one inclusive UTC cutoff. Validated roots are
+        normalized and deduplicated before enumeration. A WebAdministration dependency
+        imported for discovery is removed afterward, including when discovery fails;
+        an already loaded dependency is preserved. Candidate discovery is experimental
+        and is not a validated deletion allowlist. No deletion command or generic removal
+        helper is called.
     .PARAMETER Days
         Preview .log files whose LastWriteTimeUtc is at or before one UTC cutoff, Days
         days ago. The default is 60 days.
@@ -55,38 +58,46 @@ function Clear-OldIISLog {
     $WebAdministrationModule = Get-Module -Name 'WebAdministration' -ListAvailable | Select-Object -First 1
 
     if ($null -ne $WebAdministrationModule) {
-        Import-Module -Name 'WebAdministration' -ErrorAction Stop
-        foreach ($Site in @(WebAdministration\Get-Website -ErrorAction Stop)) {
-            $ConfiguredRoot = [Environment]::ExpandEnvironmentVariables([string]$Site.LogFile.Directory)
-            if ([string]::IsNullOrWhiteSpace($ConfiguredRoot)) {
-                Write-Verbose -Message "IIS site '$($Site.Name)' has no log directory."
-                continue
+        $WebAdministrationWasLoaded = @(Get-Module -Name 'WebAdministration' -All).Count -gt 0
+        try {
+            if (-not $WebAdministrationWasLoaded) {
+                Import-Module -Name $WebAdministrationModule.Path -Scope Local -ErrorAction Stop
             }
-            $RootPath = Join-Path -Path $ConfiguredRoot -ChildPath ('W3SVC{0}' -f $Site.Id)
-            if ($SeenRoots.Add($RootPath)) {
+            foreach ($Site in @(WebAdministration\Get-Website -ErrorAction Stop)) {
+                $ConfiguredRoot = [Environment]::ExpandEnvironmentVariables([string]$Site.LogFile.Directory)
+                if ([string]::IsNullOrWhiteSpace($ConfiguredRoot)) {
+                    Write-Verbose -Message "IIS site '$($Site.Name)' has no log directory."
+                    continue
+                }
                 $Roots.Add([pscustomobject]@{
-                        Path        = $RootPath
+                        Path        = Join-Path -Path $ConfiguredRoot -ChildPath ('W3SVC{0}' -f $Site.Id)
                         DisplayName = [string]$Site.Name
                         Source      = 'WebAdministration'
                     })
             }
+        } finally {
+            if (-not $WebAdministrationWasLoaded) {
+                # Restore only the dependency this invocation introduced, even after a
+                # partially failed import. This is session cleanup, not file cleanup.
+                # An inherited WhatIf must not prevent restoring the original module state.
+                foreach ($Dependency in @(Get-Module -Name 'WebAdministration' -All)) {
+                    Remove-Module -ModuleInfo $Dependency -WhatIf:$false -Confirm:$false -ErrorAction Stop
+                }
+            }
         }
     } else {
         if (-not [string]::IsNullOrWhiteSpace($env:SystemDrive)) {
-            $DefaultRoot = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
-            if ($SeenRoots.Add($DefaultRoot)) {
-                $Roots.Add([pscustomobject]@{
-                        Path        = $DefaultRoot
-                        DisplayName = 'Default IIS log root'
-                        Source      = 'DefaultPath'
-                    })
-            }
+            $Roots.Add([pscustomobject]@{
+                    Path        = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
+                    DisplayName = 'Default IIS log root'
+                    Source      = 'DefaultPath'
+                })
         }
         try {
             $RegistryRoot = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction Stop |
                 Select-Object -ExpandProperty LogDir
             $RegistryRoot = [Environment]::ExpandEnvironmentVariables([string]$RegistryRoot)
-            if (-not [string]::IsNullOrWhiteSpace($RegistryRoot) -and $SeenRoots.Add($RegistryRoot)) {
+            if (-not [string]::IsNullOrWhiteSpace($RegistryRoot)) {
                 $Roots.Add([pscustomobject]@{
                         Path        = $RegistryRoot
                         DisplayName = 'Registry IIS log root'
@@ -119,13 +130,21 @@ function Clear-OldIISLog {
             if ($LogRoot -isnot [System.IO.DirectoryInfo]) {
                 throw [System.IO.InvalidDataException]::new("IIS log root is not a directory: '$($RootDefinition.Path)'.")
             }
+            # Deduplicate every discovery source at the same boundary, only after the
+            # original path has passed filesystem, root, and reparse-point validation.
+            $NormalizedRoot = [System.IO.Path]::GetFullPath($LogRoot.FullName).TrimEnd([char[]]@('\', '/'))
+            if (-not $SeenRoots.Add($NormalizedRoot)) {
+                Write-Verbose -Message "Skipping duplicate IIS log root: $NormalizedRoot"
+                continue
+            }
+            $RootDefinition.Path = $NormalizedRoot
             $Pending = [System.Collections.Generic.Stack[string]]::new()
-            $Pending.Push($LogRoot.FullName)
+            $Pending.Push($NormalizedRoot)
             $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
             while ($Pending.Count -gt 0) {
                 $DirectoryPath = $Pending.Pop()
-                if ($DirectoryPath -ne $LogRoot.FullName) {
-                    $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $LogRoot.FullName
+                if ($DirectoryPath -ne $NormalizedRoot) {
+                    $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $NormalizedRoot
                     if ($Directory -isnot [System.IO.DirectoryInfo]) {
                         throw [System.IO.InvalidDataException]::new("IIS traversal path is not a directory: '$DirectoryPath'.")
                     }
@@ -156,7 +175,7 @@ function Clear-OldIISLog {
             [pscustomobject]@{
                 PSTypeName              = 'TheCleaners.CleanupResult'
                 Command                 = 'Clear-OldIISLog'
-                RootPath                = $LogRoot.FullName
+                RootPath                = $NormalizedRoot
                 CutoffUtc               = $CutoffUtc
                 FileCandidateCount      = $OldFiles.Count
                 FilesRemoved            = 0

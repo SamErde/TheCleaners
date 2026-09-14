@@ -1,6 +1,6 @@
 # TheCleaners 1.0 implementation plan
 
-Updated September 13, 2026. Approved direction from the maintainer; implementation is underway in [PR #27](https://github.com/SamErde/TheCleaners/pull/27).
+Updated September 14, 2026. Approved direction from the maintainer; implementation is underway in [PR #27](https://github.com/SamErde/TheCleaners/pull/27).
 
 ## Status conventions
 
@@ -37,7 +37,7 @@ The manifest stays on the current prerelease version during this packet. No comm
 | TC-002 | Naming, compatibility aliases, deterministic loader, quiet import, removal of initialization scaffolding | Implemented in PR #27; source and packaged import tests added. |
 | TC-003 | Public mutation ownership, shared result/error contracts, UTC semantics, path safety, removal of generic deletion wrapper | Temp mutation ownership and Exchange/IIS no-deletion structures implemented in PR #27. IIS no longer calls the legacy wrapper; helper retirement and cross-command result/error standardization remain open. |
 | TC-004 | Temp cleaners, opt-in directory pruning, WhatIf/Confirm, locked-file/race handling, privilege/root preflight | Main behavior and file-to-directory/missing-candidate race protections implemented in PR #27; actual OS-root verification, elevation preflight, additional adversarial cases, and Windows acceptance remain open. |
-| TC-005 | IIS path discovery, environment expansion, per-format allowlist, deduplication, inline deletion, and server validation | Preview lock and read-only discovery implemented in PR #27. Exact root normalization, format allowlist, removal implementation, and server validation remain open; removal stays disabled until those gates pass. |
+| TC-005 | IIS path discovery, environment expansion, per-format allowlist, deduplication, inline deletion, and server validation | Preview lock, read-only discovery, validated-root normalization/deduplication, and dependency registration restoration implemented in PR #27. Format allowlist, remaining path hardening, removal implementation, and server validation remain open; removal stays disabled until those gates pass. |
 | TC-006 | Exchange preview guard, experimental discovery, validated per-directory patterns, protected locations, and lab fixtures | Guard, IIS decoupling, and directory-root validation implemented in PR #27. Current `.log`-only discovery is experimental, not a validated deletion allowlist. ETL and product-version validation remain open. |
 | TC-007 | Typed stale-profile output, unknown LastUseTime, optional size, SID resolution, and command inventory | Inventory implemented in PR #27. Profile refactor and unused SID-helper disposition open. |
 | TC-008 | One source-layout package, exact-artifact tests/publication, reproducible build, complete runtime matrix, and CI gates | 5.1 unit/parser job and fresh-process package tests added in PR #27. Legacy merged build and source-directory publisher remain; do not publish them as 1.0. |
@@ -91,6 +91,17 @@ The manifest stays on the current prerelease version during this packet. No comm
 ## Validation evidence
 
 PR #27 adds parameterized filesystem tests for both temp commands, inclusive cutoff, literal names, junction exclusion, directory scope, WhatIf, partial failure, ErrorAction Stop, failed enumeration, a candidate replaced by a directory, and a candidate disappearing before deletion. It adds IIS and Exchange no-mutation/guard/root-type tests, export/help/alias tests, source import checks, and a fresh-process built-package probe.
+
+The following references identify the exact regression tests behind review-thread decisions, rather than claiming coverage from implementation alone:
+
+| Behavior | Test source |
+| --- | --- |
+| Local-kind clock converted to UTC for both temp commands | `src/Tests/Unit/TempCandidateSafety.Tests.ps1`: `converts a local Get-Date result to a UTC retention cutoff`; also asserts `DateTimeKind.Utc`, including on UTC-configured hosts. |
+| Candidate disappears between discovery and removal | `src/Tests/Unit/TempCandidateSafety.Tests.ps1`: `reconciles a discovered candidate that disappears before deletion`, parameterized for both temp commands. |
+| No Exchange removal-bypass parameters | `src/Tests/Unit/PreviewCommandSafety.Tests.ps1`: `does not expose a removal-bypass parameter`, using command metadata rather than a generic exception. |
+| Optional registry absence versus access failure | `src/Tests/Unit/PreviewCommandSafety.Tests.ps1`: IIS fixture uses an absent-value exception; `reports registry access failure instead of silently omitting a configured root` checks the error stream and `-ErrorAction Stop`. |
+| IIS dependency registrations restored on success/failure, existing module preserved | `src/Tests/Unit/IISDiscoverySafety.Tests.ps1`: four fresh-process fixture-module scenarios; also checks caller confirmation preferences and leaked commands. This does not claim to unload Windows assemblies. |
+| Equivalent site/default/registry roots previewed once | `src/Tests/Unit/IISDiscoverySafety.Tests.ps1`: site variants, registry dot/trailing/alternate-separator cases, and a distinct-custom-root control. |
 
 Adding tests is not evidence that they passed. Record CI run URLs, exact commit/runtime versions, counts, failures, and skips in the PR before changing a packet to validated. Windows/IIS/Exchange lab acceptance is not replaced by CI with mocked fixtures. The editing environment has no local PowerShell runtime; do not claim local Pester execution.
 
