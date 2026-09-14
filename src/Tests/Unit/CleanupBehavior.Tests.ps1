@@ -138,7 +138,7 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
     }
 
     It 'reports deletion failure without claiming reclaimed bytes or removing its parents' {
-        $FileLock = [System.IO.File]::Open($OldFile.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+        $FileLock = [System.IO.File]::Open($OldFile.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
         try {
             $Result = & $CommandName -Days 30 -RemoveEmptyDirectory -Confirm:$false -PassThru -ErrorAction SilentlyContinue -ErrorVariable CleanupErrors
             $CleanupErrors | Should -Not -BeNullOrEmpty
@@ -153,7 +153,7 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
     }
 
     It 'honors ErrorAction Stop rather than swallowing deletion errors' {
-        $FileLock = [System.IO.File]::Open($OldFile.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+        $FileLock = [System.IO.File]::Open($OldFile.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
         try {
             # Inspect actual control flow and the underlying I/O error, not just any
             # exception from a nested assertion scriptblock or unrelated path preflight.
