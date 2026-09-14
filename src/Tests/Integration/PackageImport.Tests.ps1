@@ -2,7 +2,15 @@ BeforeAll {
     $PackageRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../Artifacts')).Path
     $PackageManifest = Join-Path -Path $PackageRoot -ChildPath 'TheCleaners.psd1'
     $PackageData = Import-PowerShellDataFile -Path $PackageManifest
-    $PowerShellExecutable = (Get-Process -Id $PID).Path
+    $ProbeHosts = [System.Collections.Generic.List[string]]::new()
+    $CurrentHostPath = (Get-Process -Id $PID).Path
+    $ProbeHosts.Add($CurrentHostPath)
+    if (-not [string]::IsNullOrWhiteSpace($env:SystemRoot)) {
+        $WindowsPowerShell = Join-Path -Path $env:SystemRoot -ChildPath 'System32/WindowsPowerShell/v1.0/powershell.exe'
+        if ((Test-Path -LiteralPath $WindowsPowerShell -PathType Leaf) -and $WindowsPowerShell -ne $CurrentHostPath) {
+            $ProbeHosts.Add($WindowsPowerShell)
+        }
+    }
     $ProbePath = Join-Path -Path $TestDrive -ChildPath 'Test-PackageImport.ps1'
     @'
 param([string]$ManifestPath)
@@ -51,12 +59,14 @@ Describe 'Built-package contract' -Tag Integration {
         (Join-Path -Path $PackageRoot -ChildPath 'Invoke-TheCleaners.ps1') | Should -Not -Exist
     }
 
-    It 'passes quiet import, packaged-help, aliases, and preview-lock checks in a fresh process' {
-        $ProbeOutput = & $PowerShellExecutable -NoLogo -NoProfile -NonInteractive -File $ProbePath -ManifestPath $PackageManifest 2>&1
-        $ExitCode = $LASTEXITCODE
-        if ($ExitCode -ne 0) {
-            throw ($ProbeOutput | Out-String)
+    It 'passes quiet import, packaged-help, aliases, and preview-lock checks in every available supported host' {
+        foreach ($ProbeHost in $ProbeHosts) {
+            $ProbeOutput = & $ProbeHost -NoLogo -NoProfile -NonInteractive -File $ProbePath -ManifestPath $PackageManifest 2>&1
+            $ExitCode = $LASTEXITCODE
+            if ($ExitCode -ne 0) {
+                throw "Package probe failed under '$ProbeHost':`n$($ProbeOutput | Out-String)"
+            }
+            $ExitCode | Should -Be 0
         }
-        $ExitCode | Should -Be 0
     }
 }

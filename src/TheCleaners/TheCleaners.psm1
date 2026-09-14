@@ -14,11 +14,38 @@ $PublicScripts = @(
     'Public/Get-StaleUserProfile.ps1'
     'Public/Get-TheCleaners.ps1'
 )
+$ManifestPath = Join-Path -Path $PSScriptRoot -ChildPath 'TheCleaners.psd1'
+if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
+    throw "TheCleaners cannot load its module manifest: $ManifestPath"
+}
+$Manifest = Import-PowerShellDataFile -Path $ManifestPath
+
 foreach ($RelativePath in @($PrivateScripts + $PublicScripts)) {
-    . (Join-Path -Path $PSScriptRoot -ChildPath $RelativePath)
+    $ScriptPath = Join-Path -Path $PSScriptRoot -ChildPath $RelativePath
+    if (-not (Test-Path -LiteralPath $ScriptPath -PathType Leaf)) {
+        throw "TheCleaners cannot load a required script: $ScriptPath"
+    }
+
+    $PreviousErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Stop'
+        . $ScriptPath
+    } catch {
+        throw [System.InvalidOperationException]::new("TheCleaners failed to load '$ScriptPath': $($_.Exception.Message)", $_.Exception)
+    } finally {
+        $ErrorActionPreference = $PreviousErrorActionPreference
+    }
+}
+
+$MissingFunctions = @(
+    $Manifest.FunctionsToExport | Where-Object {
+        -not (Test-Path -LiteralPath ('Function:\{0}' -f $_))
+    }
+)
+if ($MissingFunctions.Count -gt 0) {
+    throw "TheCleaners manifest exports functions that were not loaded: $($MissingFunctions -join ', ')"
 }
 
 # The manifest is the single export contract, including compatibility aliases.
-$Manifest = Import-PowerShellDataFile -Path (Join-Path -Path $PSScriptRoot -ChildPath 'TheCleaners.psd1')
 Export-ModuleMember -Function $Manifest.FunctionsToExport -Alias $Manifest.AliasesToExport
 

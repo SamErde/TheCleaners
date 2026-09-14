@@ -71,6 +71,15 @@ Describe 'Temp candidate type-swap protection: <CommandName>' -ForEach $TempCase
         $Result.Status | Should -Be 'CompletedWithSkips'
     }
 
+    It 'converts a local Get-Date result to a UTC retention cutoff' {
+        Mock Get-Date { $Now.ToLocalTime() }
+
+        $Result = & $CommandName -Days 30 -WhatIf -PassThru
+
+        $Result.CutoffUtc | Should -Be $Now.AddDays(-30)
+        $Result.CutoffUtc.Kind | Should -Be ([DateTimeKind]::Utc)
+    }
+
     It 'uses a file-bound DeleteOnClose handle instead of provider removal' {
         $Tokens = $null
         $ParseErrors = $null
@@ -110,6 +119,13 @@ Describe 'Exchange preview root validation' -Skip:(-not $WindowsHost) -Tag Unit 
 
         { Clear-OldExchangeLog -WhatIf -WarningAction SilentlyContinue } | Should -Throw '*not a directory*'
     }
+
+    It 'does not expose a removal-bypass parameter' {
+        $CommandParameters = (Get-Command -Name Clear-OldExchangeLog -CommandType Function).Parameters
+        foreach ($ParameterName in @('Force', 'AllowRemoval', 'EnableRemoval')) {
+            $CommandParameters.ContainsKey($ParameterName) | Should -BeFalse
+        }
+    }
 }
 
 Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
@@ -122,43 +138,10 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $OldLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $env:SystemDrive = $FixtureRoot
         Mock Get-Module { $null } -ParameterFilter { $Name -eq 'WebAdministration' -and $ListAvailable }
-        Mock Get-ItemProperty { throw 'Fixture registry path is unavailable.' }
-        Mock Remove-OldFiles { throw 'IIS preview must not invoke the legacy removal helper.' }
-    }
-
-    AfterEach {
-        $env:SystemDrive = $PreviousSystemDrive
-    }
-
-    It 'rejects omission of WhatIf before discovery' {
-        { Clear-OldIISLog -Confirm:$false } | Should -Throw '*preview-only*'
-        Should -Invoke Get-Module -Exactly 0 -ParameterFilter { $Name -eq 'WebAdministration' -and $ListAvailable }
-        Should -Invoke Get-ItemProperty -Exactly 0
-        Should -Invoke Remove-OldFiles -Exactly 0
-    }
-
-    It 'previews candidates without invoking the removal helper' {
-        $Result = Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue
-
-        $Result | Should -HaveCount 1
-        $Result.FileCandidateCount | Should -Be 1
-        $Result.CandidatePaths | Should -Contain $OldLog.FullName
-        $Result.FilesRemoved | Should -Be 0
-        $OldLog.FullName | Should -Exist
-        Should -Invoke Remove-OldFiles -Exactly 0
-    }
-
-    It 'contains no deletion command or generic removal-helper call' {
-        $Tokens = $null
-        $ParseErrors = $null
-        $FunctionPath = Join-Path -Path $ModuleRoot -ChildPath 'Public/Clear-OldIISLog.ps1'
-        $Ast = [System.Management.Automation.Language.Parser]::ParseFile($FunctionPath, [ref]$Tokens, [ref]$ParseErrors)
-        $ParseErrors | Should -BeNullOrEmpty
-        $Forbidden = $Ast.FindAll({
-                param($Node)
-                ($Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -in @('Remove-Item', 'Remove-OldFiles', 'Invoke-Expression', 'Start-Process')) -or
-                ($Node -is [System.Management.Automation.Language.InvokeMemberExpressionAst] -and $Node.Member.Value -eq 'Delete')
-            }, $true)
-        @($Forbidden) | Should -HaveCount 0
-    }
-}
+        Mock Get-ItemProperty { throw 'Fixture registry pav\È[˜]˜Z[X›K‰ÈBˆ[ØÚÈ™[[İ™KSÛš[\ÈÈ›İÈ	ÒRTÈ™]šY]È]\İ›İ[›ÚÙHHYØXŞH™[[İ˜[[\‹‰ÈBˆB‚ˆY\‘XXÚÂˆ	[”Ş\İ[Qš]™HH	™]š[İ\ÔŞ\İ[Qš]™BˆB‚ˆ]	Ü™Z™XİÈÛZ\ÜÚ[ÛˆÙˆÚ]Yˆ™Y›Ü™H\ØÛİ™\IÈÂˆÈÛX\‹SÛRTÓÙÈPÛÛ™š\›N‰˜[ÙHHÚİ[U›İÈ	Êœ™]šY]Ë[Û›J‰ÂˆÚİ[R[›ÚÙHÙ]S[Ù[HQ^XİHT\˜[Y]\‘š[\ˆÈ	˜[YHY\H	ÕÙXYZ[š\İ˜][Û‰ÈX[™	\İ]˜Z[X›HBˆÚİ[R[›ÚÙHÙ]R][T›Ü\HQ^XİHˆÚİ[R[›ÚÙH™[[İ™KSÛš[\ÈQ^XİHˆB‚ˆ]	Ü™]šY]ÜÈØ[™Y]\ÈÚ]İ][›ÚÚ[™ÈH™[[İ˜[[\‰ÈÂˆ	™\İ[HÛX\‹SÛRTÓÙÈQ^\ÈŒUÚ]YˆT\ÜÕHUØ\›š[™ĞXİ[ÛˆÚ[[PÛÛ[YB‚ˆ	™\İ[Úİ[R]™PÛİ[Bˆ	™\İ[‘š[PØ[™Y]PÛİ[Úİ[P™HBˆ	™\İ[Ø[™Y]T]ÈÚİ[PÛÛZ[ˆ	ÛÙË‘[˜[YBˆ	™\İ[‘š[\Ô™[[İ™YÚİ[P™Hˆ	ÛÙË‘[˜[YHÚİ[Q^\İˆÚİ[R[›ÚÙH™[[İ™KSÛš[\ÈQ^XİHˆB‚ˆ]	ØÛÛZ[œÈ›È[][ÛˆÛÛ[X[™ÜˆÙ[™\šXÈ™[[İ˜[Z[\ˆØ[	ÈÂˆ	ÚÙ[œÈH	[ˆ	\œÙQ\œ›ÜœÈH	[ˆ	[˜İ[Û”]H›Ú[‹T]T]	[Ù[T›ÛİPÚ[]	ÔX›XËĞÛX\‹SÛRTÓÙËœÌIÂˆ	\İHÔŞ\İ[K“X[˜YÙ[Y[]]ÛX][Û‹“[™İXYÙK”\œÙ\—N”\œÙQš[J	[˜İ[Û”]Ü™Y—IÚÙ[œËÜ™Y—I\œÙQ\œ›ÜœÊBˆ	\œÙQ\œ›ÜœÈÚİ[P™S[Ü‘[\Bˆ	›Ü˜šY[ˆH	\İ‘š[™[
+Âˆ\˜[J	›ÙJBˆ
+	›ÙHZ\ÈÔŞ\İ[K“X[˜YÙ[Y[]]ÛX][Û‹“[™İXYÙKÛÛ[X[™\İHX[™	›ÙK‘Ù]ÛÛ[X[™˜[YJ
+HZ[ˆ
+	Ô™[[İ™KR][IË	Ô™[[İ™KSÛš[\ÉË	Ò[›ÚÙKQ^™\ÜÚ[Û‰Ë	Ôİ\T›ØÙ\ÜÉÊJH[Ü‚ˆ
+	›ÙHZ\ÈÔŞ\İ[K“X[˜YÙ[Y[]]ÛX][Û‹“[™İXYÙK’[›ÚÙSY[X™\‘^™\ÜÚ[Û\İHX[™	›ÙK“Y[X™\‹•˜[YHY\H	Ñ[]IÊBˆK	YJBˆ
+	›Ü˜šY[ŠHÚİ[R]™PÛİ[ˆBŸB

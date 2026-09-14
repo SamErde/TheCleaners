@@ -16,7 +16,7 @@ Select files of any extension whose `LastWriteTimeUtc` is at or before one UTC c
 
 Without `-RemoveEmptyDirectory`, directories remain untouched. With it, only prune directories emptied by the current invocation and their now-empty ancestors, deepest-first. Never remove the root or unrelated pre-existing empty branches. A retained file prevents pruning its directory.
 
-`-WhatIf` makes no filesystem changes and reports the proposed batch. `-Verbose` lists candidate paths. `-Confirm` approves the discovered file/directory plan at the root. ConfirmImpact is Medium. No Force or separate ShouldContinue prompt is implemented.
+`-WhatIf` makes no filesystem changes and reports the proposed batch. `-Verbose` lists candidate paths. `-Confirm` prompts for approval of the discovered file/directory plan at the root and lets the caller accept or decline it. ConfirmImpact is Medium. No Force or separate ShouldContinue prompt is implemented.
 
 ## Examples
 

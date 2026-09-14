@@ -16,7 +16,7 @@ Resolve the temporary directory using `[System.IO.Path]::GetTempPath()` on Windo
 
 Without `-RemoveEmptyDirectory`, directories remain untouched. With it, only prune directories emptied by the current invocation and their now-empty ancestors. Never remove the root or unrelated pre-existing empty branches. Recent files prevent their containing directories from being removed. The previous `-TimeOut` parameter is removed; pruning is a single deepest-first pass.
 
-`-WhatIf` makes no filesystem changes and reports the proposed batch. `-Verbose` lists candidate paths. `-Confirm` approves the discovered file/directory plan once at the root. No Force or separate ShouldContinue prompt is implemented.
+`-WhatIf` makes no filesystem changes and reports the proposed batch. `-Verbose` lists candidate paths. `-Confirm` prompts for approval of the discovered file/directory plan once at the root and lets the caller accept or decline it. No Force or separate ShouldContinue prompt is implemented.
 
 ## Examples
 
