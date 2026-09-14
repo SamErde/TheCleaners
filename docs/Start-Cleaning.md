@@ -1,58 +1,9 @@
----
-external help file: TheCleaners-help.xml
-Module Name: TheCleaners
-online version:
-schema: 2.0.0
----
+# Start-Cleaning (deprecated alias)
 
-# Start-Cleaning
+The public command is now [Get-TheCleaners](Get-TheCleaners.md). `Start-Cleaning` remains a compatibility alias through 1.x and accepts the same parameters. Neither name starts cleanup.
 
-## SYNOPSIS
-Show the commands you can give The Cleaners.
-
-## SYNTAX
-
-```
-Start-Cleaning [-Dedication] [<CommonParameters>]
+```powershell
+Get-TheCleaners -NoLogo
 ```
 
-## DESCRIPTION
-Get started with a menu of services The Cleaners can offer.
-
-## EXAMPLES
-
-### EXAMPLE 1
-```
-Start-Cleaning
-```
-
-View the menu of services that TheCleaners provide.
-
-## PARAMETERS
-
-### -Dedication
-Show a short dedication before the command menu.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutBuffer, -OutVariable, -PipelineVariable, -Verbose, -WarningAction, -WarningVariable, and -ProgressAction.
-For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
-
-## INPUTS
-
-## OUTPUTS
-
-## NOTES
-
-## RELATED LINKS
+This page is retained to preserve existing documentation links. See the [migration guide](migration-to-1.0.md) for the output and safety changes.

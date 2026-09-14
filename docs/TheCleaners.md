@@ -7,26 +7,33 @@ Locale: en-US
 ---
 
 # TheCleaners Module
-## Description
-The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!
 
-## TheCleaners Cmdlets
+## Description
+
+TheCleaners provides Windows temporary-file maintenance, read-only IIS and Exchange log previews, and stale-profile discovery. This is unreleased 1.0 preparation work; consult each command's maturity metadata and support gates.
+
+## TheCleaners commands
+
 ### [Clear-CurrentUserTemp](Clear-CurrentUserTemp.md)
-Clean old temp files from user profiles.
+
+Remove old files from the current user's Windows temporary directory. Empty-directory pruning is opt-in.
 
 ### [Clear-OldExchangeLog](Clear-OldExchangeLog.md)
-Clean out old Exchange Server logs.
+
+Preview experimental Exchange log candidates. Explicit `-WhatIf` is required, and removal is unavailable.
 
 ### [Clear-OldIISLog](Clear-OldIISLog.md)
-A script to clean out old IIS log files.
+
+Preview experimental IIS log candidates. Explicit `-WhatIf` is required, and removal is unavailable.
 
 ### [Clear-WindowsTemp](Clear-WindowsTemp.md)
-A script to clean out old Windows Temp files.
+
+Remove old files from the Windows temporary directory. Empty-directory pruning is opt-in.
 
 ### [Get-StaleUserProfile](Get-StaleUserProfile.md)
-A script to find old, unused user profiles in Windows.
 
-### [Start-Cleaning](Start-Cleaning.md)
-Show the commands you can give The Cleaners.
+Find old, unloaded Windows user profiles without deleting them.
 
+### [Get-TheCleaners](Get-TheCleaners.md)
 
+Return typed command and maturity metadata. `Start-Cleaning` remains a deprecated compatibility alias through 1.x.

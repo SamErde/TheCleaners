@@ -1,59 +1,19 @@
 # The Cleaners
 
-<!-- badges-start -->
-[![GitHub stars](https://img.shields.io/github/stars/samerde/TheCleaners?cacheSeconds=3600)](https://github.com/samerde/TheCleaners/stargazers/)
-![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/TheCleaners?include_prereleases)
-![PowerShell Gallery Downloads](https://img.shields.io/powershellgallery/dt/TheCleaners)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
-[![GitHub contributors](https://img.shields.io/github/contributors/samerde/TheCleaners.svg)](https://github.com/samerde/TheCleaners/graphs/contributors/)
+Windows maintenance commands with explicit safety controls. This branch contains unreleased 1.0 preparation work, not a production-ready release.
 
-![GitHub top language](https://img.shields.io/github/languages/top/SamErde/TheCleaners)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ae92f0d929de494690e712b68fb3b52c)](https://app.codacy.com/gh/SamErde/TheCleaners/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SamErde/TheCleaners/.github%2Fworkflows%2FBuild%20Module.yml)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SamErde/TheCleaners/.github%2Fworkflows%2FDeploy%20MkDocs.yml?label=MkDocs)
-<!-- badges-end -->
-
-<img src="https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-CodeHoodieNoBG.png" alt="The Cleaners logo on a code hoodie" width="400" />
-
-## Synopsis
-
-A module to help automate the cleanup of old log files and temp files on your systems.
-
-## Description
-
-The Cleaners do the dirty work in your servers for you. We take care of temp files, IIS logs, Exchange Server logs, and more!
-
-## Why
-
-- For all those hours spent manually clearing old IIS logs, Exchange logs, and temp files when a server disk gets low on space.
-- For those teammates who get woken up at night while on call because a disk hit 90% full.
-- For the fun of writing something useful in PowerShell that will hopefully make somebody's day easier!
-
-## Getting Started
-
-### Prerequisites
-
-PowerShell or Windows PowerShell 5.1
-
-There are no other strict dependencies, but the following can make things a little easier:
-
-- IIS: WebManagement Module
-- Exchange: Exchange Management Tools
-
-### Installation
+Windows PowerShell 5.1 is the minimum; the target policy also includes Microsoft-supported PowerShell 7 releases on Windows. See [support and validation](support-matrix.md).
 
 ```powershell
-# How to install TheCleaners
-Install-Module -Name TheCleaners -AllowPrerelease
+Get-TheCleaners -NoLogo
+Clear-CurrentUserTemp -Days 30 -WhatIf -PassThru
+Clear-WindowsTemp -Days 30 -RemoveEmptyDirectory -WhatIf -PassThru
+Clear-OldIISLog -Days 60 -WhatIf -PassThru
+Clear-OldExchangeLog -Days 60 -WhatIf -PassThru
 ```
 
-### Quick Start
+The temp cleaners preserve directories unless `-RemoveEmptyDirectory` is supplied. IIS and Exchange are structurally preview-only; their candidate lists are experimental and deletion is unavailable. Module import is quiet, and `Start-Cleaning` remains an alias for [Get-TheCleaners](Get-TheCleaners.md).
 
-#### Example 1
+Read [safety and confirmation](safety-and-confirmation.md), [migration notes](migration-to-1.0.md), and the [1.0 implementation ledger](release-plan-1.0.md) before using this development version. The [repository README](https://github.com/SamErde/TheCleaners#readme) distinguishes the published Gallery prerelease from a source checkout.
 
-```powershell
-# See what jobs TheCleaners can do for you.
-Start-Cleaning
-```
-
-These docs can also be found at [TheCleaners.ReadTheDocs.io/](https://thecleaners.readthedocs.io/).
+Canonical documentation: <https://day3bits.com/thecleaners/>. The [Zensical migration](https://github.com/SamErde/TheCleaners/issues/26) remains a separate follow-up.

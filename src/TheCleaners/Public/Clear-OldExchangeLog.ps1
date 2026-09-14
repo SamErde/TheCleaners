@@ -1,92 +1,133 @@
-###################################################################################
-#                                                                                 #
-# WARNING: This script is still being developed and tested. Use at your own risk. #
-#                                                                                 #
-###################################################################################
 function Clear-OldExchangeLog {
     <#
     .SYNOPSIS
-        Clean out old Exchange Server logs.
-
+        Preview old Exchange Server log candidates without removing anything.
     .DESCRIPTION
-        Remove any Exchange logs that are older than a specified date.
-
+        This command is structurally preview-only: it has no deletion implementation and
+        never invokes IIS cleanup. Explicit -WhatIf is required, even when a caller has
+        set WhatIfPreference. Discovery remains experimental and is not a validated list
+        of files safe to delete. The initial preview retains the existing .log-only scope.
+        Product-specific patterns and acceptance testing are tracked in the 1.0 plan.
     .PARAMETER Days
-        The number of days to keep logs for. Any logs older than this will be removed.
-
+        Preview files whose LastWriteTimeUtc is at or before one UTC cutoff, Days days ago.
+        The default is 60 days.
+    .PARAMETER PassThru
+        Return a TheCleaners.CleanupResult preview summary for each existing log root.
+        CandidatePaths contains the discovered file names. Nothing is removed.
     .EXAMPLE
-        Clear-OldExchangeLog -Days 60
-
-        This will remove all Exchange logs older than 60 days.
-
-    .COMPONENT
-        TheCleaners
+        Clear-OldExchangeLog -Days 60 -WhatIf
+    .EXAMPLE
+        Clear-OldExchangeLog -Days 30 -WhatIf -PassThru
+    .OUTPUTS
+        TheCleaners.CleanupResult
+    .LINK
+        https://day3bits.com/thecleaners/Clear-OldExchangeLog/
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Alias('Clean-ExchangeLog')]
-    #[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns')]
-    # Logs older than this number of days will be removed.
+    [OutputType('TheCleaners.CleanupResult')]
     param (
         [Parameter()]
-        [ValidateRange(1, [int16]::MaxValue)]
-        [int16]
-        $Days = 60
+        [ValidateRange(1, [Int16]::MaxValue)]
+        [Int16]
+        $Days = 60,
+
+        [Parameter()]
+        [switch]
+        $PassThru
     )
 
-    begin {
+    # Reject before registry access or discovery. Do not implement an unlock or a preference override.
+    if (-not $PSBoundParameters.ContainsKey('WhatIf') -or -not $PSBoundParameters['WhatIf']) {
+        $Exception = [System.NotSupportedException]::new('Exchange cleanup is preview-only. Run Clear-OldExchangeLog -WhatIf. Removal is not available in this version.')
+        $ErrorRecord = [System.Management.Automation.ErrorRecord]::new($Exception, 'ExchangeCleanupPreviewOnly', [System.Management.Automation.ErrorCategory]::NotImplemented, $null)
+        $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+    }
+    if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
+        throw [System.PlatformNotSupportedException]::new('Exchange log discovery requires Windows.')
+    }
+    Write-Warning -Message 'Exchange preview only: no files will be removed. Candidate discovery is experimental, not a deletion allowlist.'
 
+    $Setup = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup' -Name MsiInstallPath -ErrorAction Stop
+    if ([string]::IsNullOrWhiteSpace($Setup.MsiInstallPath)) {
+        throw 'The Exchange Server installation path is missing.'
+    }
+    $InstallRoot = Resolve-TheCleanersFileSystemPath -LiteralPath $Setup.MsiInstallPath
+    if ($InstallRoot -isnot [System.IO.DirectoryInfo]) {
+        throw [System.IO.InvalidDataException]::new("The Exchange Server installation path is not a directory: '$($Setup.MsiInstallPath)'.")
+    }
+    $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
+    $RelativeRoots = @(
+        'Logging'
+        'Bin/Search/Ceres/Diagnostics/ETLTraces'
+        'Bin/Search/Ceres/Diagnostics/Logs'
+        'TransportRoles/Logs/MessageTracking'
+    )
+    foreach ($RelativeRoot in $RelativeRoots) {
+        $RootPath = Join-Path -Path $InstallRoot.FullName -ChildPath $RelativeRoot
+        if (-not (Test-Path -LiteralPath $RootPath -PathType Container)) {
+            Write-Verbose -Message "Log root not present as a directory: $RootPath"
+            continue
+        }
+        $OldFiles = @()
         try {
-            $ExchangeInstallPath = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup).MsiInstallPath
-        } catch {
-            Write-Warning -WarningAction Continue 'The Exchange Server installation path could not be found. Please ensure that Exchange Server is installed on this machine.'
-            return
-        }
-
-        # Define the paths to the Exchange log files
-        $LogLocations = @{
-            ExchangeLoggingPath     = Join-Path -Path $ExchangeInstallPath -ChildPath 'Logging\'
-            ETLTracesPath           = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\ETLTraces\'
-            DiagnosticLogsPath      = Join-Path -Path $ExchangeInstallPath -ChildPath 'Bin\Search\Ceres\Diagnostics\Logs'
-            MessageTrackingLogsPath = Join-Path -Path $ExchangeInstallPath -ChildPath 'TransportRoles\Logs\MessageTracking\'
-        }
-
-        $LastWriteDate = (Get-Date).AddDays(-$Days)
-    } # end begin
-
-    process {
-        # Clean up the IIS log files
-        Clear-OldIISLog -Days $Days -WhatIf:$WhatIfPreference
-
-        foreach ($LogLocation in $LogLocations.GetEnumerator()) {
-            if (-not (Test-Path -Path $LogLocation.Value)) {
-                Write-Warning -WarningAction Continue "The folder $($LogLocation.Key) doesn't exist. Skipping this folder."
-                continue
+            $LogRoot = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath -RootPath $InstallRoot.FullName
+            if ($LogRoot -isnot [System.IO.DirectoryInfo]) {
+                throw [System.IO.InvalidDataException]::new("Exchange log root is not a directory: '$RootPath'.")
             }
-
-            try {
-                $OldFiles = @(Get-ChildItem -LiteralPath $LogLocation.Value -File -Recurse -Force -ErrorAction Stop |
-                        Where-Object { ($_.Name -like '*.log') -and ($_.LastWriteTime -le $LastWriteDate) })
-            } catch {
-                Write-Warning -WarningAction Continue "Failed to enumerate $($LogLocation.Key): $($_.Exception.Message)"
-                continue
-            }
-
-            foreach ($File in $OldFiles) {
-                if ($PSCmdlet.ShouldProcess($File.FullName, 'Remove old Exchange log file')) {
-                    try {
-                        # Confirmation is handled by the outer ShouldProcess check, so suppress
-                        # nested Remove-Item confirmation to avoid duplicate prompts.
-                        Remove-Item -LiteralPath $File.FullName -Confirm:$false -ErrorAction Stop
-                    } catch {
-                        Write-Warning -WarningAction Continue "Failed to remove Exchange log '$($File.FullName)': $($_.Exception.Message)"
+            $Pending = [System.Collections.Generic.Stack[string]]::new()
+            $Pending.Push($LogRoot.FullName)
+            $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+            while ($Pending.Count -gt 0) {
+                $DirectoryPath = $Pending.Pop()
+                if ($DirectoryPath -ne $LogRoot.FullName) {
+                    $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $LogRoot.FullName
+                    if ($Directory -isnot [System.IO.DirectoryInfo]) {
+                        throw [System.IO.InvalidDataException]::new("Exchange traversal path is not a directory: '$DirectoryPath'.")
                     }
                 }
-            } # end foreach $file
-
-        } # end foreach LogLocation
-    } # end process
-
-    end {
-        # Summarize the count and total size of files removed.
+                foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
+                    if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                        Write-Verbose -Message "Skipping reparse point: $($Item.FullName)"
+                        continue
+                    }
+                    if ($Item.PSIsContainer) {
+                        $Pending.Push($Item.FullName)
+                    } elseif ($Item.Extension -eq '.log' -and $Item.LastWriteTimeUtc -le $CutoffUtc) {
+                        $Candidates.Add($Item)
+                    }
+                }
+            }
+            $OldFiles = @($Candidates.ToArray() | Sort-Object -Property FullName)
+        } catch {
+            $PSCmdlet.WriteError($_)
+            # A failed discovery must not masquerade as an empty, successful preview.
+            continue
+        }
+        foreach ($File in $OldFiles) {
+            # This invokes normal WhatIf output. Even a true return value cannot trigger a mutation.
+            $null = $PSCmdlet.ShouldProcess($File.FullName, 'Preview candidate only; Exchange removal is unavailable')
+        }
+        if ($PassThru) {
+            [pscustomobject]@{
+                PSTypeName              = 'TheCleaners.CleanupResult'
+                Command                 = 'Clear-OldExchangeLog'
+                RootPath                = $LogRoot.FullName
+                CutoffUtc               = $CutoffUtc
+                FileCandidateCount      = $OldFiles.Count
+                FilesRemoved            = 0
+                FileFailureCount        = 0
+                FilesSkipped            = 0
+                DirectoryCandidateCount = 0
+                DirectoriesRemoved      = 0
+                DirectoryFailureCount   = 0
+                DirectoriesSkipped      = 0
+                BytesReclaimed          = [Int64]0
+                Status                  = 'WhatIf'
+                DiscoveryStatus         = 'Experimental'
+                CandidatePaths          = @($OldFiles | ForEach-Object { $_.FullName })
+            }
+        }
     }
 }
+

@@ -1,91 +1,33 @@
----
-external help file: TheCleaners-help.xml
-Module Name: TheCleaners
-online version:
-schema: 2.0.0
----
-
 # Clear-WindowsTemp
 
-## SYNOPSIS
-A script to clean out old Windows Temp files.
+## Synopsis
 
-## SYNTAX
+Remove old files from `SystemRoot\Temp` on Windows. This command remains prerelease.
 
-```
-Clear-WindowsTemp [[-Days] <Int16>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
-```
+## Syntax
 
-## DESCRIPTION
-This script will clean out Windows Temp files older than x days.
-
-## EXAMPLES
-
-### EXAMPLE 1
-```
-Clear-WindowsTemp -Days 60
+```powershell
+Clear-WindowsTemp [-Days <Int16>] [-RemoveEmptyDirectory] [-PassThru] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
-Removes all Windows Temp files that are older than 60 days.
+## Behavior
 
-## PARAMETERS
+Select files of any extension whose `LastWriteTimeUtc` is at or before one UTC cutoff. `-Days` defaults to 30 and accepts positive Int16 values. Reparse points are excluded before traversal. Literal paths, ancestry, type, and timestamps are revalidated before removal. Missing SystemRoot is an error. Run elevated for system-owned files; a dedicated elevation and actual OS-root preflight is still tracked for 1.0.
 
-### -Days
-The number of days to keep temp files.
-The default is 30 days.
+Without `-RemoveEmptyDirectory`, directories remain untouched. With it, only prune directories emptied by the current invocation and their now-empty ancestors, deepest-first. Never remove the root or unrelated pre-existing empty branches. A retained file prevents pruning its directory.
 
-```yaml
-Type: Int16
-Parameter Sets: (All)
-Aliases:
+`-WhatIf` makes no filesystem changes and reports the proposed batch. `-Verbose` lists candidate paths. `-Confirm` prompts for approval of the discovered file/directory plan at the root and lets the caller accept or decline it. ConfirmImpact is Medium. No Force or separate ShouldContinue prompt is implemented.
 
-Required: False
-Position: 1
-Default value: 30
-Accept pipeline input: False
-Accept wildcard characters: False
+## Examples
+
+```powershell
+Clear-WindowsTemp -Days 60 -WhatIf -PassThru
+Clear-WindowsTemp -Days 30 -RemoveEmptyDirectory -WhatIf -Verbose -PassThru
+Clear-WindowsTemp -Days 30 -RemoveEmptyDirectory -Confirm
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+## Output and failures
 
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
+With `-PassThru`, return `TheCleaners.CleanupResult`; see [safety and confirmation](safety-and-confirmation.md) for all fields and status values. Enumeration failure aborts without deletion and reports unknown candidate counts. Individual deletion failures use the error stream, continue by default, and respect `-ErrorAction Stop`. Bytes are logical file lengths, not a measured physical free-space change.
 
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutBuffer, -OutVariable, -PipelineVariable, -Verbose, -WarningAction, -WarningVariable, and -ProgressAction. 
-For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
-
-## INPUTS
-
-## OUTPUTS
-
-## NOTES
-
-## RELATED LINKS
+The alias `Clean-WindowsTemp` remains available. Windows PowerShell 5.1 is the minimum. See the [release plan](release-plan-1.0.md) for outstanding acceptance work.

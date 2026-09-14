@@ -1,45 +1,57 @@
 ---
 external help file: TheCleaners-help.xml
 Module Name: TheCleaners
-online version:
+online version: https://day3bits.com/thecleaners/Clear-OldIISLog/
 schema: 2.0.0
 ---
 
 # Clear-OldIISLog
 
 ## SYNOPSIS
-A script to clean out old IIS log files.
+
+Preview old IIS log candidates without removing anything.
 
 ## SYNTAX
 
-```
-Clear-OldIISLog [[-Days] <Int16>] [-WhatIf] [-Confirm]
+```powershell
+Clear-OldIISLog [[-Days] <Int16>] [-PassThru] [-WhatIf] [-Confirm]
  [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-This script will clean out IIS log files older than x days.
+
+`Clear-OldIISLog` is structurally preview-only while IIS path, file-pattern, and server acceptance work remains incomplete. Explicit `-WhatIf` is required. Calling the command without it, or with `-WhatIf:$false`, produces a terminating `IISCleanupPreviewOnly` error before module, registry, or filesystem discovery.
+
+The command discovers existing IIS log roots, skips reparse points before traversal, and previews old `.log` files using one inclusive UTC cutoff. Validated roots are normalized and deduplicated before enumeration. A WebAdministration dependency imported for discovery is removed afterward, including when discovery fails; an already loaded dependency is preserved. Candidate discovery is experimental and is not a validated deletion allowlist. This version contains no deletion command and does not call the legacy generic removal helper.
 
 ## EXAMPLES
 
-### EXAMPLE 1
-```
-Clear-OldIISLog -Days 60
+### Example 1
+
+```powershell
+Clear-OldIISLog -Days 60 -WhatIf
 ```
 
-Removes all IIS log files that are older than 60 days.
+Preview old `.log` candidates without returning summary objects.
+
+### Example 2
+
+```powershell
+Clear-OldIISLog -Days 30 -WhatIf -PassThru
+```
+
+Preview candidates and return one summary for each successfully enumerated existing root.
 
 ## PARAMETERS
 
 ### -Days
-The number of days to keep log files.
-The default is 60 days.
+
+Preview `.log` files whose `LastWriteTimeUtc` is at or before one cutoff captured `Days` days ago. The default is 60 days.
 
 ```yaml
 Type: Int16
 Parameter Sets: (All)
 Aliases:
-
 Required: False
 Position: 1
 Default value: 60
@@ -47,15 +59,29 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -PassThru
+
+Return a `TheCleaners.CleanupResult` preview summary. `CandidatePaths` contains the discovered files. All removal and reclaimed-byte counters remain zero.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+
+Required explicitly in this preview-only version. Produces normal PowerShell WhatIf output for discovered candidates. It does not enable removal.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: wi
-
 Required: False
 Position: Named
 Default value: None
@@ -64,13 +90,13 @@ Accept wildcard characters: False
 ```
 
 ### -Confirm
-Prompts you for confirmation before running the cmdlet.
+
+Present through `SupportsShouldProcess`, but confirmation cannot enable removal in this preview-only version.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: cf
-
 Required: False
 Position: Named
 Default value: None
@@ -79,19 +105,21 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutBuffer, -OutVariable, -PipelineVariable, -Verbose, -WarningAction, -WarningVariable, and -ProgressAction.
-For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
-## INPUTS
+This cmdlet supports the common parameters. For more information, see `about_CommonParameters`.
 
 ## OUTPUTS
 
+### TheCleaners.CleanupResult
+
+Returned only with `-PassThru`. Results have `Status = WhatIf`, `DiscoveryStatus = Experimental`, and zero removal counts.
+
 ## NOTES
-If the WebAdministration module is available, it will use that to check the specific log file locations for
-each web site.
-Otherwise, it checks the assumed default log folder location and the registry for the IIS
-log file location.
 
-Future enhancements may add a summary of which locations were processed and how many log files were removed.
+When WebAdministration is available, site-specific roots are discovered from IIS configuration. Otherwise, the command considers the default IIS log root and the registry-configured root. Missing or non-directory roots are skipped. Environment variables are expanded. Existing roots pass path and reparse-point validation, are normalized to absolute paths without trailing separators, and are deduplicated case-insensitively before traversal. Equivalent `..`, separator, and trailing-separator spellings produce one summary; distinct roots remain separate.
 
-## RELATED LINKS
+A dependency already loaded by the caller is not unloaded. A dependency loaded solely for this discovery is removed on success or failure. This restores the dependency's module/command registration, not every process-level effect of loading a Windows component; it is not a claim that loaded assemblies are unloaded. Caller WhatIf and Confirm preferences are preserved.
+
+An absent optional registry setting is normal. Registry access or provider failures are reported through the error stream and honor `-ErrorAction Stop`; any summaries returned with continuing error handling describe only roots that were successfully discovered and enumerated, not a complete inventory.
+
+The current `.log` filter is provisional. Do not pipe preview candidates into a separate deletion command as a substitute for the pending IIS allowlist and server acceptance work.
