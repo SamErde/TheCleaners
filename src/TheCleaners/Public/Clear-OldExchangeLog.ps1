@@ -107,7 +107,9 @@ function Clear-OldExchangeLog {
             $NormalizedRoot = Convert-TheCleanersPathForComparison -Path $LogRoot.FullName
             $RootIsProtected = $false
             foreach ($ProtectedPath in @($Protected.Paths)) {
-                if ($NormalizedRoot -eq $ProtectedPath -or $NormalizedRoot.StartsWith($ProtectedPath + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $RootContainsProtectedPath = $ProtectedPath.StartsWith($NormalizedRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)
+                $ProtectedPathContainsRoot = $NormalizedRoot.StartsWith($ProtectedPath + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)
+                if ($NormalizedRoot -eq $ProtectedPath -or $RootContainsProtectedPath -or $ProtectedPathContainsRoot) {
                     $RootIsProtected = $true
                     break
                 }

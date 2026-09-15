@@ -310,6 +310,10 @@ Add-BuildTask Test {
     } elseif ($LoadedPester.Version -lt $script:MinPesterVersion -or $LoadedPester.Version -gt $script:MaxPesterVersion) {
         throw "Loaded Pester version '$($LoadedPester.Version)' is outside the supported build range."
     }
+    if ($PSEdition -eq 'Desktop') {
+        . (Join-Path -Path $script:ModuleSourcePath -ChildPath 'Private/Initialize-TheCleanersNativeFileInterop.ps1')
+        Initialize-TheCleanersNativeFileInterop
+    }
     $Configuration = New-PesterConfiguration
     $Configuration.Run.Path = $script:UnitTestsPath
     $Configuration.Run.PassThru = $true

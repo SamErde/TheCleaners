@@ -54,3 +54,5 @@ With `-PassThru`, Exchange returns one summary per successfully enumerated exist
 ## Other commands
 
 `Get-StaleUserProfile` does not delete profiles. `Get-TheCleaners` lists maturity metadata and reports both IIS and Exchange as `PreviewOnly`. Module import itself is quiet.
+
+When `Get-StaleUserProfile -IncludeSize` enumerates a profile, it holds a native directory handle with delete access and without delete sharing for each directory while the provider reads its children. This blocks rename or replacement of that directory during the reparse check and enumeration; a failed or changed identity reports `SizeStatus = Unavailable` rather than returning a partial size. The profile command remains inventory-only and never marks the handle for deletion.

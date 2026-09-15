@@ -222,6 +222,13 @@ namespace TheCleaners
             return Open(path, FileReadAttributes, FileShareRead | FileShareWrite | FileShareDelete, directory);
         }
 
+        public static SafeFileHandle OpenForStableEnumeration(string path)
+        {
+            // DELETE is requested only to hold the directory against rename or
+            // replacement while the provider enumerates it; no disposition is set.
+            return Open(path, Delete | FileReadAttributes, FileShareRead | FileShareWrite, true);
+        }
+
         public static SafeFileHandle OpenForDeletion(string path, bool directory)
         {
             return Open(path, Delete | FileReadAttributes, FileShareRead, directory);

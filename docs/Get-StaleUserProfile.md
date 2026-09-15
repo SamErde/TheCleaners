@@ -23,7 +23,9 @@ IIS application-pool profiles are excluded.
 The command never deletes profiles or writes presentation output to the host.
 Unknown or invalid `LastUseTime` values are not classified as stale unless
 `-IncludeUnknownLastUseTime` is specified. SID translation is best effort. Optional
-size enumeration rejects reparse points anywhere in the profile path ancestry.
+size enumeration rejects reparse points anywhere in the profile path ancestry
+and holds a native directory handle without delete sharing while each directory
+is enumerated, so replacement or rename during that enumeration fails closed.
 
 ## EXAMPLES
 

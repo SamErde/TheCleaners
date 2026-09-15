@@ -5,6 +5,7 @@ BeforeDiscovery {
 BeforeAll {
     $ModuleRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners')).Path
     . (Join-Path -Path $ModuleRoot -ChildPath 'Private/ResultContracts.ps1')
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Initialize-TheCleanersNativeFileInterop.ps1')
     . (Join-Path -Path $ModuleRoot -ChildPath 'Public/Get-StaleUserProfile.ps1')
 }
 
@@ -180,6 +181,34 @@ Describe 'Typed stale-profile output' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result.SizeStatus | Should -Be 'Unavailable'
         $Result.SizeBytes | Should -BeNullOrEmpty
         @($SizeError | Where-Object { $_.FullyQualifiedErrorId -match '^ProfileSizeUnavailable' }) | Should -Not -BeNullOrEmpty
+    }
+
+    It 'holds the directory identity while enumerating' {
+        $ReplacementPath = Join-Path -Path $TestDrive -ChildPath 'ProfileReplacement'
+        Mock Get-CimInstance {
+            [pscustomobject]@{
+                LocalPath   = $OldProfilePath
+                SID         = 'S-1-5-21-1007'
+                LastUseTime = (Get-Date).AddDays(-91)
+                Special     = $false
+                Loaded      = $false
+            }
+        }
+        $script:MoveBlocked = $false
+        Mock Get-ChildItem {
+            try {
+                [System.IO.Directory]::Move($OldProfilePath, $ReplacementPath)
+            } catch {
+                $script:MoveBlocked = $true
+            }
+            return @()
+        }
+
+        $Result = Get-StaleUserProfile -Days 90 -IncludeSize -ErrorAction SilentlyContinue
+
+        $script:MoveBlocked | Should -BeTrue
+        $Result.SizeStatus | Should -Be 'Available'
+        $Result.SizeBytes | Should -Be 0
     }
 
     It 'does not write host presentation output or depend on orphaned SID helpers' {

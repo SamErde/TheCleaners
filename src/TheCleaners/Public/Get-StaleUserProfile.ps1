@@ -11,7 +11,9 @@ function Get-StaleUserProfile {
         excluded. SID translation is best effort; an unresolved SID is retained in
         the object with an explicit resolution status. Optional size enumeration
         skips reparse points throughout the profile path ancestry and reports
-        unavailable sizes without changing profile state.
+        unavailable sizes without changing profile state. During each directory
+        enumeration, a native handle is held without delete sharing so a rename
+        or replacement cannot occur between the reparse check and enumeration.
     .PARAMETER Days
         A profile is stale when its known last-use time is at or before this many
         days ago. The default is 90 days.
@@ -139,22 +141,32 @@ function Get-StaleUserProfile {
                     $PendingDirectories.Push($ProfileDirectory.FullName)
                     while ($PendingDirectories.Count -gt 0) {
                         $DirectoryPath = $PendingDirectories.Pop()
-                        $CurrentDirectory = Get-Item -LiteralPath $DirectoryPath -Force -ErrorAction Stop
-                        if ($CurrentDirectory -isnot [System.IO.DirectoryInfo]) {
-                            throw [System.IO.InvalidDataException]::new("The profile traversal path is not a directory: '$DirectoryPath'.")
-                        }
-                        if ($CurrentDirectory.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-                            throw [System.IO.InvalidDataException]::new("The profile traversal path became a reparse point and cannot be sized: '$DirectoryPath'.")
-                        }
-                        foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
-                            if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-                                continue
+                        Initialize-TheCleanersNativeFileInterop
+                        $DirectoryHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($DirectoryPath)
+                        try {
+                            $DirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryHandle)
+                            if (-not $DirectoryIdentity.IsDirectory) {
+                                throw [System.IO.InvalidDataException]::new("The profile traversal path is not a directory: '$DirectoryPath'.")
                             }
-                            if ($Item.PSIsContainer) {
-                                $PendingDirectories.Push($Item.FullName)
-                            } else {
-                                $SizeTotal += [Int64]$Item.Length
+                            if ($DirectoryIdentity.IsReparsePoint) {
+                                throw [System.IO.InvalidDataException]::new("The profile traversal path became a reparse point and cannot be sized: '$DirectoryPath'.")
                             }
+                            foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
+                                if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                                    continue
+                                }
+                                if ($Item.PSIsContainer) {
+                                    $PendingDirectories.Push($Item.FullName)
+                                } else {
+                                    $SizeTotal += [Int64]$Item.Length
+                                }
+                            }
+                            $CurrentDirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryHandle)
+                            if (-not $DirectoryIdentity.Equals($CurrentDirectoryIdentity) -or $CurrentDirectoryIdentity.IsReparsePoint) {
+                                throw [System.IO.InvalidDataException]::new("The profile traversal path changed while it was being sized: '$DirectoryPath'.")
+                            }
+                        } finally {
+                            $DirectoryHandle.Dispose()
                         }
                     }
                     $SizeBytes = $SizeTotal

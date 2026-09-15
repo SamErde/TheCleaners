@@ -47,8 +47,11 @@ Describe 'Exchange preview result edge cases' -Skip:(-not $WindowsHost) -Tag Uni
     It 'returns a failed result with unknown totals when one root cannot be enumerated' {
         $MessageTrackingRoot = Join-Path -Path $ExchangeRoot -ChildPath 'TransportRoles/Logs/MessageTracking'
         $null = New-Item -Path $MessageTrackingRoot -ItemType Directory -Force
-        Mock Get-ChildItem { throw [System.UnauthorizedAccessException]::new('Fixture Exchange root denial.') } -ParameterFilter {
-            [System.IO.Path]::GetFullPath($LiteralPath) -eq [System.IO.Path]::GetFullPath($MessageTrackingRoot)
+        Mock Get-ChildItem {
+            if ([System.IO.Path]::GetFullPath($LiteralPath) -eq [System.IO.Path]::GetFullPath($MessageTrackingRoot)) {
+                throw [System.UnauthorizedAccessException]::new('Fixture Exchange root denial.')
+            }
+            [System.IO.DirectoryInfo]::new($LiteralPath).GetFileSystemInfos()
         }
 
         $Results = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
@@ -79,6 +82,39 @@ Describe 'Exchange preview result edge cases' -Skip:(-not $WindowsHost) -Tag Uni
         $Failed.Status | Should -Be 'DiscoveryFailed'
         $Failed.FileCandidateCount | Should -BeNullOrEmpty
         $Failed.DirectoryCandidateCount | Should -BeNullOrEmpty
+        $Failed.ErrorIds | Should -Contain 'ExchangeDiscoveryFailed'
+    }
+
+    It 'fails closed when a protected path is nested below a proposed log root' {
+        $NestedProtectedPath = Join-Path -Path $LogRoot -ChildPath 'Database'
+        $null = New-Item -Path $NestedProtectedPath -ItemType Directory -Force
+        $DatabaseFilePath = Join-Path -Path $NestedProtectedPath -ChildPath 'Mailbox.edb'
+        $ExistingGetMailboxDatabase = Get-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -ErrorAction SilentlyContinue
+        function global:Get-MailboxDatabase { }
+        Mock Get-Command { [pscustomobject]@{ Name = 'Get-MailboxDatabase' } } -ParameterFilter { $Name -eq 'Get-MailboxDatabase' }
+        Mock Get-MailboxDatabase {
+            [pscustomobject]@{
+                EdbFilePath   = $DatabaseFilePath
+                LogFolderPath = $NestedProtectedPath
+            }
+        }
+
+        try {
+            $Results = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
+        } finally {
+            $ExecutionContext.InvokeProvider.Item.Remove('Function:\global:Get-MailboxDatabase', $false)
+            if ($null -ne $ExistingGetMailboxDatabase) {
+                Set-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -Value $ExistingGetMailboxDatabase.ScriptBlock -Force
+            }
+        }
+
+        $Failed = $Results | Where-Object RootPath -EQ ([System.IO.Path]::GetFullPath($LogRoot))
+        $Failed | Should -Not -BeNullOrEmpty
+        $Failed.DiscoveryStatus | Should -Be 'Failed'
+        $Failed.Status | Should -Be 'DiscoveryFailed'
+        $Failed.ProtectionStatus | Should -Be 'Validated'
+        $Failed.ProtectionPaths | Should -Contain ([System.IO.Path]::GetFullPath($NestedProtectedPath))
+        $Failed.FileCandidateCount | Should -BeNullOrEmpty
         $Failed.ErrorIds | Should -Contain 'ExchangeDiscoveryFailed'
     }
 

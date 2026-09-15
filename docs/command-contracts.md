@@ -27,8 +27,8 @@ An error ID is stable across PowerShell editions. The error record's exception a
 | --- | --- |
 | `TempWindowsRequired`, `TempRootValidationFailed`, `TempDiscoveryFailed`, `TempRootChanged` | Temp root and discovery gates. |
 | `TempFileRemovalFailed`, `TempDirectoryRemovalFailed` | Per-object temp mutation failures. |
-| `IISCleanupPreviewOnly`, `IISWindowsRequired`, `IISRegistryDiscoveryFailed`, `IISProtectedRoot`, `IISDiscoveryFailed` | IIS preview and discovery gates. |
-| `ExchangeCleanupPreviewOnly`, `ExchangeWindowsRequired`, `ExchangeRegistryDiscoveryFailed`, `ExchangeInstallRootValidationFailed`, `ExchangeProtectedPathDiscoveryFailed`, `ExchangeDiscoveryFailed` | Exchange preview and discovery gates. |
+| `IISCleanupPreviewOnly`, `IISWindowsRequired`, `IISRegistryDiscoveryFailed`, `IISFtpDiscoveryFailed`, `IISProtectedRoot`, `IISDiscoveryFailed`, `IISDiscoveryUnavailable` | IIS preview and discovery gates. |
+| `ExchangeCleanupPreviewOnly`, `ExchangeWindowsRequired`, `ExchangeRegistryDiscoveryFailed`, `ExchangeInstallRootValidationFailed`, `ExchangeProtectedPathDiscoveryFailed`, `ExchangeDiscoveryFailed`, `ExchangeDiscoveryUnavailable` | Exchange preview and discovery gates. |
 | `ProfileWindowsRequired`, `ProfileQueryFailed`, `ProfileSizeUnavailable` | Stale-profile discovery and optional-size gates. |
 
 Discovery failure is never represented as an empty successful result. Under continuing error handling, a partial result is explicitly marked `DiscoveryFailed`; with `-ErrorAction Stop`, the stable error record terminates the command.
