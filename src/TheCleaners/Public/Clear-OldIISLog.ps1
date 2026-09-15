@@ -307,5 +307,22 @@ function Clear-OldIISLog {
         $Exception = [System.InvalidOperationException]::new('IIS is not installed or no configured IIS log root could be discovered.')
         $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'IISDiscoveryUnavailable' -Category ObjectNotFound
         $PSCmdlet.WriteError($ErrorRecord)
+        if ($PassThru) {
+            $UnavailableRootPath = $null
+            if ($Roots.Count -gt 0) {
+                $UnavailableRootPath = [string]$Roots[0].Path
+            } elseif (-not [string]::IsNullOrWhiteSpace($env:SystemDrive)) {
+                $UnavailableRootPath = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
+            } else {
+                $UnavailableRootPath = 'IIS log roots'
+            }
+            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $UnavailableRootPath -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource 'IIS default, registry, and WebAdministration roots' -DisplayName 'IIS discovery' -CandidatePaths @() -Status 'DiscoveryFailed'
+            $Result.FileCandidateCount = $null
+            $Result.DirectoryCandidateCount = $null
+            $Result.DiscoveryErrorCount = 1
+            $Result.ErrorIds = @('IISDiscoveryUnavailable')
+            $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
+            $Result
+        }
     }
 }

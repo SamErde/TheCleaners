@@ -112,7 +112,13 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
 
         $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable DiscoveryError)
 
-        $Result | Should -HaveCount 0
+        $Result | Should -HaveCount 1
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DiscoveryErrorCount | Should -Be 1
+        $Result[0].ErrorIds | Should -Contain 'IISDiscoveryUnavailable'
         @($DiscoveryError | Where-Object { $_.FullyQualifiedErrorId -match '^IISDiscoveryUnavailable' }) | Should -Not -BeNullOrEmpty
     }
 
