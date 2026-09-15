@@ -33,7 +33,7 @@ Describe 'Exchange preview root validation' -Skip:(-not $WindowsHost) -Tag Unit 
         [System.IO.Directory]::Delete($LogRoot)
         $RootFile = New-Item -Path $LogRoot -ItemType File
 
-        $Result = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue)
+        $Result = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
 
         $Result | Should -HaveCount 1
         $Result[0].DiscoveryStatus | Should -Be 'Failed'

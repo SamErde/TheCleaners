@@ -146,6 +146,42 @@ Describe 'Typed stale-profile output' -Skip:(-not $WindowsHost) -Tag Unit {
         @($SizeError | Where-Object { $_.FullyQualifiedErrorId -match '^ProfileSizeUnavailable' }) | Should -Not -BeNullOrEmpty
     }
 
+    It 'fails closed when a queued directory becomes a reparse point before traversal' {
+        $QueuedDirectoryPath = Join-Path -Path $OldProfilePath -ChildPath 'QueuedDirectory'
+        $OutsidePath = Join-Path -Path $TestDrive -ChildPath 'ReplacementTarget'
+        $null = New-Item -Path $QueuedDirectoryPath -ItemType Directory -Force
+        $null = New-Item -Path $OutsidePath -ItemType Directory -Force
+        $null = New-Item -Path (Join-Path -Path $OutsidePath -ChildPath 'outside.bin') -ItemType File -Force
+        Mock Get-CimInstance {
+            [pscustomobject]@{
+                LocalPath   = $OldProfilePath
+                SID         = 'S-1-5-21-1006'
+                LastUseTime = (Get-Date).AddDays(-91)
+                Special     = $false
+                Loaded      = $false
+            }
+        }
+        Mock Get-ChildItem {
+            [System.IO.Directory]::Delete($QueuedDirectoryPath)
+            $null = Microsoft.PowerShell.Management\New-Item -Path $QueuedDirectoryPath -ItemType Junction -Target $OutsidePath -Force
+            return @([pscustomobject]@{
+                    FullName      = $QueuedDirectoryPath
+                    Name          = 'QueuedDirectory'
+                    PSIsContainer = $true
+                    Attributes    = [System.IO.FileAttributes]::Directory
+                })
+        }
+
+        $Result = Get-StaleUserProfile -Days 90 -IncludeSize -ErrorAction SilentlyContinue -ErrorVariable SizeError
+
+        Should -Invoke Get-ChildItem -Exactly 1
+        $Replacement = Get-Item -LiteralPath $QueuedDirectoryPath -Force
+        (($Replacement.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) | Should -BeTrue
+        $Result.SizeStatus | Should -Be 'Unavailable'
+        $Result.SizeBytes | Should -BeNullOrEmpty
+        @($SizeError | Where-Object { $_.FullyQualifiedErrorId -match '^ProfileSizeUnavailable' }) | Should -Not -BeNullOrEmpty
+    }
+
     It 'does not write host presentation output or depend on orphaned SID helpers' {
         $FunctionPath = Join-Path -Path $ModuleRoot -ChildPath 'Public/Get-StaleUserProfile.ps1'
         [System.IO.File]::ReadAllText($FunctionPath) | Should -Not -Match 'Out-Host'

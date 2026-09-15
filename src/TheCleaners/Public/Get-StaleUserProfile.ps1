@@ -139,6 +139,13 @@ function Get-StaleUserProfile {
                     $PendingDirectories.Push($ProfileDirectory.FullName)
                     while ($PendingDirectories.Count -gt 0) {
                         $DirectoryPath = $PendingDirectories.Pop()
+                        $CurrentDirectory = Get-Item -LiteralPath $DirectoryPath -Force -ErrorAction Stop
+                        if ($CurrentDirectory -isnot [System.IO.DirectoryInfo]) {
+                            throw [System.IO.InvalidDataException]::new("The profile traversal path is not a directory: '$DirectoryPath'.")
+                        }
+                        if ($CurrentDirectory.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                            throw [System.IO.InvalidDataException]::new("The profile traversal path became a reparse point and cannot be sized: '$DirectoryPath'.")
+                        }
                         foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
                             if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
                                 continue
