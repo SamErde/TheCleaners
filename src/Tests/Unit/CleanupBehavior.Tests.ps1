@@ -117,9 +117,16 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
 
     It 'lists candidate paths through the verbose stream' {
         $VerboseOutput = @(& $CommandName -Days 30 -RemoveEmptyDirectory -WhatIf -Verbose 4>&1)
+        $VerboseMessages = @($VerboseOutput | ForEach-Object {
+                if ($_ -is [System.Management.Automation.VerboseRecord]) {
+                    $_.Message
+                } else {
+                    [string]$_
+                }
+            })
 
-        ($VerboseOutput | Out-String) | Should -Match ([regex]::Escape($OldFile.FullName))
-        ($VerboseOutput | Out-String) | Should -Match ([regex]::Escape($NestedPath))
+        $VerboseMessages | Should -Contain ('Candidate file: {0}' -f $OldFile.FullName)
+        $VerboseMessages | Should -Contain ('Planned directory: {0}' -f $NestedPath)
     }
 
     It 'honors an explicitly false directory switch' {
