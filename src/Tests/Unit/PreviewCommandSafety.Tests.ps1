@@ -93,6 +93,11 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable RegistryError)
 
         $Result | Should -HaveCount 1
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].CandidatePaths | Should -BeNullOrEmpty
+        $Result[0].ErrorIds | Should -Contain 'IISRegistryDiscoveryFailed'
         $RegistryError | Should -Not -BeNullOrEmpty
         @($RegistryError | ForEach-Object { $_.Exception.Message } | Select-Object -Unique) | Should -Contain 'Fixture registry access denied.'
         { Clear-OldIISLog -Days 60 -WhatIf -WarningAction SilentlyContinue -ErrorAction Stop } | Should -Throw '*Fixture registry access denied*'

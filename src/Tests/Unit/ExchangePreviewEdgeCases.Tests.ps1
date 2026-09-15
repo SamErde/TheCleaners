@@ -43,5 +43,26 @@ Describe 'Exchange preview result edge cases' -Skip:(-not $WindowsHost) -Tag Uni
         $File.FullName | Should -Exist
         Should -Invoke Remove-Item -Exactly 0
     }
+
+    It 'returns a failed result with unknown totals when one root cannot be enumerated' {
+        $MessageTrackingRoot = Join-Path -Path $ExchangeRoot -ChildPath 'TransportRoles/Logs/MessageTracking'
+        $null = New-Item -Path $MessageTrackingRoot -ItemType Directory -Force
+        Mock Get-ChildItem { throw [System.UnauthorizedAccessException]::new('Fixture Exchange root denial.') } -ParameterFilter {
+            [System.IO.Path]::GetFullPath($LiteralPath) -eq [System.IO.Path]::GetFullPath($MessageTrackingRoot)
+        }
+
+        $Results = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
+
+        $Results | Should -HaveCount 2
+        $Successful = $Results | Where-Object RootPath -EQ ([System.IO.Path]::GetFullPath($LogRoot))
+        $Failed = $Results | Where-Object RootPath -EQ ([System.IO.Path]::GetFullPath($MessageTrackingRoot))
+        $Successful.Status | Should -Be 'WhatIf'
+        $Successful.FileCandidateCount | Should -Be 0
+        $Failed.DiscoveryStatus | Should -Be 'Failed'
+        $Failed.Status | Should -Be 'DiscoveryFailed'
+        $Failed.FileCandidateCount | Should -BeNullOrEmpty
+        $Failed.CandidatePaths | Should -BeNullOrEmpty
+        $Failed.ErrorIds | Should -Contain 'ExchangeDiscoveryFailed'
+    }
 }
 

@@ -56,30 +56,53 @@ function Clear-OldIISLog {
     $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
     $Roots = [System.Collections.Generic.List[object]]::new()
     $SeenRoots = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $GlobalDiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
     $IisProtectedPaths = @(Get-TheCleanersIisProtectedPaths)
     $WebAdministrationModule = Get-Module -Name 'WebAdministration' -ListAvailable | Select-Object -First 1
 
     if ($null -ne $WebAdministrationModule) {
-        $WebAdministrationWasLoaded = @(Get-Module -Name 'WebAdministration' -All).Count -gt 0
         try {
-            if (-not $WebAdministrationWasLoaded) {
-                Import-Module -Name $WebAdministrationModule.Path -Scope Local -ErrorAction Stop
+            $WebAdministrationDiscovery = [System.Management.Automation.PowerShell]::Create()
+            try {
+                $null = $WebAdministrationDiscovery.AddScript({
+                        param (
+                            [Parameter(Mandatory)]
+                            [string]
+                            $ModulePath
+                        )
+
+                        $ErrorActionPreference = 'Stop'
+                        Import-Module -Name $ModulePath -Scope Local -ErrorAction Stop
+                        @(WebAdministration\Get-Website -ErrorAction Stop)
+                    }).AddArgument($WebAdministrationModule.Path)
+                $DiscoveredSites = @($WebAdministrationDiscovery.Invoke())
+                if ($WebAdministrationDiscovery.HadErrors) {
+                    $DiscoveryError = @($WebAdministrationDiscovery.Streams.Error | Select-Object -First 1)
+                    if ($DiscoveryError.Count -gt 0) {
+                        throw $DiscoveryError[0].Exception
+                    }
+                    throw [System.InvalidOperationException]::new('IIS website discovery failed in the isolated dependency runspace.')
+                }
+            } finally {
+                $WebAdministrationDiscovery.Dispose()
             }
-            foreach ($Site in @(WebAdministration\Get-Website -ErrorAction Stop)) {
+
+            foreach ($Site in $DiscoveredSites) {
                 $ConfiguredRoot = [Environment]::ExpandEnvironmentVariables([string]$Site.LogFile.Directory)
                 $SiteName = [string]$Site.Name
+                $WebRootDefinition = $null
                 if ([string]::IsNullOrWhiteSpace($ConfiguredRoot)) {
                     Write-Verbose -Message "IIS site '$($Site.Name)' has no log directory."
                 } else {
                     $Format = if ($null -eq $Site.LogFile.LogFormat) { 'W3C' } else { [string]$Site.LogFile.LogFormat }
-                    $Roots.Add([pscustomobject]@{
-                            Path        = Join-Path -Path $ConfiguredRoot -ChildPath ('W3SVC{0}' -f $Site.Id)
-                            DisplayName = $SiteName
-                            Source      = 'WebAdministration'
-                            Format      = $Format
-                            Service     = 'W3SVC'
-                        })
+                    $WebRootDefinition = [pscustomobject]@{
+                        Path              = Join-Path -Path $ConfiguredRoot -ChildPath ('W3SVC{0}' -f $Site.Id)
+                        DisplayName       = $SiteName
+                        Source            = 'WebAdministration'
+                        Format            = $Format
+                        Service           = 'W3SVC'
+                        DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
+                    }
+                    $Roots.Add($WebRootDefinition)
                 }
 
                 $FtpBindings = @($Site.Bindings | Where-Object { [string]$_.Protocol -ieq 'ftp' })
@@ -95,40 +118,40 @@ function Clear-OldIISLog {
                         $FtpConfiguredRoot = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
                     }
                     $Roots.Add([pscustomobject]@{
-                            Path        = Join-Path -Path $FtpConfiguredRoot -ChildPath ('FTPSVC{0}' -f $Site.Id)
-                            DisplayName = "$SiteName FTP"
-                            Source      = 'WebAdministration'
-                            Format      = 'W3C'
-                            Service     = 'FTPSVC'
+                            Path              = Join-Path -Path $FtpConfiguredRoot -ChildPath ('FTPSVC{0}' -f $Site.Id)
+                            DisplayName       = "$SiteName FTP"
+                            Source            = 'WebAdministration'
+                            Format            = 'W3C'
+                            Service           = 'FTPSVC'
+                            DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
                         })
                 } catch {
-                    $null = $GlobalDiscoveryErrorIds.Add('IISFtpDiscoveryFailed')
+                    if ($null -ne $WebRootDefinition) {
+                        $null = $WebRootDefinition.DiscoveryErrorIds.Add('IISFtpDiscoveryFailed')
+                    }
                     $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISFtpDiscoveryFailed' -Category ReadError -TargetObject $SiteName
                     $PSCmdlet.WriteError($ErrorRecord)
                 }
             }
         } catch {
-            $null = $GlobalDiscoveryErrorIds.Add('IISDiscoveryFailed')
+            foreach ($RootDefinition in @($Roots | Where-Object { $_.Source -eq 'WebAdministration' })) {
+                $null = $RootDefinition.DiscoveryErrorIds.Add('IISDiscoveryFailed')
+            }
             $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError
             $PSCmdlet.WriteError($ErrorRecord)
-        } finally {
-            if (-not $WebAdministrationWasLoaded) {
-                # Restore only the dependency this invocation introduced. This is
-                # session cleanup, not file cleanup, and must ignore WhatIf.
-                foreach ($Dependency in @(Get-Module -Name 'WebAdministration' -All)) {
-                    Remove-Module -ModuleInfo $Dependency -WhatIf:$false -Confirm:$false -ErrorAction Stop
-                }
-            }
         }
     } else {
+        $DefaultRootDefinition = $null
         if (-not [string]::IsNullOrWhiteSpace($env:SystemDrive)) {
-            $Roots.Add([pscustomobject]@{
-                    Path        = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
-                    DisplayName = 'Default IIS log root'
-                    Source      = 'DefaultPath'
-                    Format      = 'W3C'
-                    Service     = 'W3SVC'
-                })
+            $DefaultRootDefinition = [pscustomobject]@{
+                Path              = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
+                DisplayName       = 'Default IIS log root'
+                Source            = 'DefaultPath'
+                Format            = 'W3C'
+                Service           = 'W3SVC'
+                DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
+            }
+            $Roots.Add($DefaultRootDefinition)
         }
         try {
             $RegistryRoot = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction Stop |
@@ -136,11 +159,12 @@ function Clear-OldIISLog {
             $RegistryRoot = [Environment]::ExpandEnvironmentVariables([string]$RegistryRoot)
             if (-not [string]::IsNullOrWhiteSpace($RegistryRoot)) {
                 $Roots.Add([pscustomobject]@{
-                        Path        = $RegistryRoot
-                        DisplayName = 'Registry IIS log root'
-                        Source      = 'Registry'
-                        Format      = 'W3C'
-                        Service     = 'W3SVC'
+                        Path              = $RegistryRoot
+                        DisplayName       = 'Registry IIS log root'
+                        Source            = 'Registry'
+                        Format            = 'W3C'
+                        Service           = 'W3SVC'
+                        DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
                     })
             }
         } catch {
@@ -152,7 +176,9 @@ function Clear-OldIISLog {
             if ($OptionalRegistryValueIsAbsent) {
                 Write-Verbose -Message "The optional alternate IIS log location is not configured: $($_.Exception.Message)"
             } else {
-                $null = $GlobalDiscoveryErrorIds.Add('IISRegistryDiscoveryFailed')
+                if ($null -ne $DefaultRootDefinition) {
+                    $null = $DefaultRootDefinition.DiscoveryErrorIds.Add('IISRegistryDiscoveryFailed')
+                }
                 $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISRegistryDiscoveryFailed' -Category ReadError
                 $PSCmdlet.WriteError($ErrorRecord)
             }
@@ -161,8 +187,8 @@ function Clear-OldIISLog {
 
     foreach ($RootDefinition in $Roots) {
         $RootDiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
-        foreach ($GlobalErrorId in @($GlobalDiscoveryErrorIds)) {
-            $null = $RootDiscoveryErrorIds.Add($GlobalErrorId)
+        foreach ($RootErrorId in @($RootDefinition.DiscoveryErrorIds)) {
+            $null = $RootDiscoveryErrorIds.Add($RootErrorId)
         }
         if (Test-TheCleanersIisProtectedPath -Path $RootDefinition.Path) {
             $null = $RootDiscoveryErrorIds.Add('IISProtectedRoot')
@@ -184,11 +210,23 @@ function Clear-OldIISLog {
                 throw [System.IO.InvalidDataException]::new("IIS log root is not a directory: '$($RootDefinition.Path)'.")
             }
             $NormalizedRoot = Convert-TheCleanersPathForComparison -Path $LogRoot.FullName
+            $RootDefinition.Path = $NormalizedRoot
+            if ($RootDiscoveryErrorIds.Count -gt 0) {
+                if ($PassThru) {
+                    $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
+                    $Result.FileCandidateCount = $null
+                    $Result.DirectoryCandidateCount = $null
+                    $Result.DiscoveryErrorCount = $RootDiscoveryErrorIds.Count
+                    $Result.ErrorIds = @($RootDiscoveryErrorIds | Sort-Object -Unique)
+                    $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
+                    $Result
+                }
+                continue
+            }
             if (-not $SeenRoots.Add($NormalizedRoot)) {
                 Write-Verbose -Message "Skipping duplicate IIS log root: $NormalizedRoot"
                 continue
             }
-            $RootDefinition.Path = $NormalizedRoot
             $Pending = [System.Collections.Generic.Stack[string]]::new()
             $Pending.Push($NormalizedRoot)
             $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
@@ -217,6 +255,15 @@ function Clear-OldIISLog {
             $null = $RootDiscoveryErrorIds.Add('IISDiscoveryFailed')
             $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError -TargetObject $RootDefinition.Path
             $PSCmdlet.WriteError($ErrorRecord)
+            if ($PassThru -and $null -ne $NormalizedRoot) {
+                $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
+                $Result.FileCandidateCount = $null
+                $Result.DirectoryCandidateCount = $null
+                $Result.DiscoveryErrorCount = $RootDiscoveryErrorIds.Count
+                $Result.ErrorIds = @($RootDiscoveryErrorIds | Sort-Object -Unique)
+                $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
+                $Result
+            }
             continue
         }
 

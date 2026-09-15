@@ -137,7 +137,7 @@ function New-DeterministicZipArchive {
     try {
         $Archive = [System.IO.Compression.ZipArchive]::new($ArchiveStream, [System.IO.Compression.ZipArchiveMode]::Create, $false)
         $Epoch = [DateTimeOffset]::new(1980, 1, 1, 0, 0, 0, [TimeSpan]::Zero)
-        $Files = @(Get-ChildItem -LiteralPath $SourcePath -File -Recurse | Sort-Object FullName)
+        $Files = @(Get-ChildItem -LiteralPath $SourcePath -File -Recurse -Force | Sort-Object FullName)
         foreach ($File in $Files) {
             $RelativePath = Get-RelativeArtifactPath -Path $File.FullName -Root $SourcePath
             $Entry = $Archive.CreateEntry($RelativePath, [System.IO.Compression.CompressionLevel]::Optimal)
@@ -467,7 +467,7 @@ Add-BuildTask Archive {
     New-DeterministicZipArchive -SourcePath $script:ArtifactsPath -DestinationPath $ZipPath
 
     $FileRecords = @()
-    foreach ($File in @(Get-ChildItem -LiteralPath $script:ArtifactsPath -File -Recurse | Sort-Object FullName)) {
+    foreach ($File in @(Get-ChildItem -LiteralPath $script:ArtifactsPath -File -Recurse -Force | Sort-Object FullName)) {
         $FileRecords += [ordered]@{
             Path   = Get-RelativeArtifactPath -Path $File.FullName -Root $script:ArtifactsPath
             Length = $File.Length

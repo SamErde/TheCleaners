@@ -87,6 +87,28 @@ Describe 'Typed stale-profile output' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result.SizeBytes | Should -Be 3
     }
 
+    It 'does not size a reparse-point profile root' {
+        $OutsidePath = Join-Path -Path $TestDrive -ChildPath 'OutsideProfileRoot'
+        $ReparseProfilePath = Join-Path -Path $TestDrive -ChildPath 'ReparseProfileRoot'
+        $null = New-Item -Path $OutsidePath -ItemType Directory -Force
+        $null = New-Item -Path $ReparseProfilePath -ItemType Junction -Target $OutsidePath -Force
+        Mock Get-CimInstance {
+            [pscustomobject]@{
+                LocalPath   = $ReparseProfilePath
+                SID         = 'S-1-5-21-1004'
+                LastUseTime = (Get-Date).AddDays(-91)
+                Special     = $false
+                Loaded      = $false
+            }
+        }
+
+        $Result = Get-StaleUserProfile -Days 90 -IncludeSize -ErrorAction SilentlyContinue -ErrorVariable SizeError
+
+        $Result.SizeStatus | Should -Be 'Unavailable'
+        $Result.SizeBytes | Should -BeNullOrEmpty
+        @($SizeError | Where-Object { $_.FullyQualifiedErrorId -match '^ProfileSizeUnavailable' }) | Should -Not -BeNullOrEmpty
+    }
+
     It 'does not write host presentation output or depend on orphaned SID helpers' {
         $FunctionPath = Join-Path -Path $ModuleRoot -ChildPath 'Public/Get-StaleUserProfile.ps1'
         [System.IO.File]::ReadAllText($FunctionPath) | Should -Not -Match 'Out-Host'

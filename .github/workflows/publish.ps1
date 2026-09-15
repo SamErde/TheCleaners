@@ -127,7 +127,7 @@ try {
 
 $ArtifactRoot = $ResolvedArtifactPath.TrimEnd([char[]]@('\', '/'))
 $ExpectedArtifactFiles = @($ArchiveManifest.Files | ForEach-Object { [string]$_.Path } | Sort-Object)
-$ActualArtifactFiles = @(Get-ChildItem -LiteralPath $ResolvedArtifactPath -File -Recurse | ForEach-Object {
+$ActualArtifactFiles = @(Get-ChildItem -LiteralPath $ResolvedArtifactPath -File -Recurse -Force | ForEach-Object {
         $_.FullName.Substring($ArtifactRoot.Length + 1).Replace('\', '/')
     } | Sort-Object)
 $ArtifactFileDifferences = @(Compare-Object -ReferenceObject $ExpectedArtifactFiles -DifferenceObject $ActualArtifactFiles)

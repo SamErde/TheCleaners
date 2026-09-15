@@ -114,10 +114,17 @@ function Get-StaleUserProfile {
         if ($IncludeSize) {
             $SizeStatus = 'Unavailable'
             try {
-                if (-not [string]::IsNullOrWhiteSpace($LocalPath) -and [System.IO.Directory]::Exists($LocalPath)) {
+                if (-not [string]::IsNullOrWhiteSpace($LocalPath)) {
+                    $ProfileDirectory = Get-Item -LiteralPath $LocalPath -Force -ErrorAction Stop
+                    if ($ProfileDirectory -isnot [System.IO.DirectoryInfo]) {
+                        throw [System.IO.InvalidDataException]::new("The profile path is not a directory: '$LocalPath'.")
+                    }
+                    if ($ProfileDirectory.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                        throw [System.IO.InvalidDataException]::new("The profile path is a reparse point and cannot be sized: '$LocalPath'.")
+                    }
                     $SizeTotal = [Int64]0
                     $PendingDirectories = [System.Collections.Generic.Stack[string]]::new()
-                    $PendingDirectories.Push($LocalPath)
+                    $PendingDirectories.Push($ProfileDirectory.FullName)
                     while ($PendingDirectories.Count -gt 0) {
                         $DirectoryPath = $PendingDirectories.Pop()
                         foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {

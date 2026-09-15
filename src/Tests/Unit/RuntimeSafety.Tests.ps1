@@ -45,6 +45,25 @@ Describe 'Windows runtime and preflight safety' -Skip:(-not $WindowsHost) -Tag U
         Get-TheCleanersPrivilegeStatus | Should -Be $Expected
     }
 
+    It 'rejects broad, other-user, and UNC current-user temp roots' {
+        $PreviousTemp = $env:TEMP
+        $PreviousTmp = $env:TMP
+        try {
+            $UnsafeRoots = @(
+                (Join-Path -Path (Split-Path -Path $env:USERPROFILE -Parent) -ChildPath 'Public')
+                '\\server\share\temp'
+            )
+            foreach ($UnsafeRoot in $UnsafeRoots) {
+                $env:TEMP = $UnsafeRoot
+                $env:TMP = $UnsafeRoot
+                { Clear-CurrentUserTemp -Days 30 -WhatIf -Confirm:$false -ErrorAction Stop } | Should -Throw
+            }
+        } finally {
+            $env:TEMP = $PreviousTemp
+            $env:TMP = $PreviousTmp
+        }
+    }
+
     It 'includes the actual privilege state in a fixture-only WhatIf result' {
         $PreviousTemp = $env:TEMP
         $PreviousTmp = $env:TMP

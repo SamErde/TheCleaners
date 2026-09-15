@@ -55,7 +55,19 @@ function Clear-CurrentUserTemp {
 
     $Root = $null
     try {
-        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath ([System.IO.Path]::GetTempPath())
+        $RequestedTempPath = [System.IO.Path]::GetTempPath()
+        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RequestedTempPath
+        $LocalApplicationData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
+        if ([string]::IsNullOrWhiteSpace($LocalApplicationData)) {
+            throw [System.InvalidOperationException]::new('The current user local application-data directory could not be resolved.')
+        }
+        $CanonicalUserTemp = Resolve-TheCleanersFileSystemPath -LiteralPath (Join-Path -Path $LocalApplicationData -ChildPath 'Temp')
+        $CanonicalUserTempPath = Convert-TheCleanersPathForComparison -Path $CanonicalUserTemp.FullName
+        $RequestedTempComparison = Convert-TheCleanersPathForComparison -Path $Root.FullName
+        $AllowedDescendantPrefix = $CanonicalUserTempPath + [System.IO.Path]::DirectorySeparatorChar
+        if ($RequestedTempComparison -ne $CanonicalUserTempPath -and -not $RequestedTempComparison.StartsWith($AllowedDescendantPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw [System.UnauthorizedAccessException]::new("The current-user temporary path is outside the canonical user temp root: '$($Root.FullName)'.")
+        }
     } catch {
         $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'TempRootValidationFailed' -Category InvalidData
         $PSCmdlet.ThrowTerminatingError($ErrorRecord)
