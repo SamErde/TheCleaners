@@ -24,9 +24,9 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
     It 'rejects unsupported IIS and Exchange filename families and protected roots' {
         Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format 'W3C' -Service 'UnknownService' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format 'Custom' | Should -BeFalse
-        Test-TheCleanersIisLogFileName -Name 'inetsv01.log' -Format '0' | Should -BeTrue
-        Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format '1' | Should -BeTrue
-        Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format '2' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format '0' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'inetsv01.log' -Format '1' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format '2' | Should -BeTrue
         Test-TheCleanersExchangeLogFileName -Name 'old.log' -RelativeRoot 'UnknownRoot' | Should -BeFalse
         Test-TheCleanersIisProtectedPath -Path (Join-Path -Path $TestDrive -ChildPath 'ordinary-logs') | Should -BeFalse
     }
@@ -49,7 +49,7 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         }
     }
 
-    It 'records discovery candidates but leaves identity fields empty when identity capture fails' {
+    It 'fails closed when identity capture fails during discovery' {
         $RootPath = Join-Path -Path $TestDrive -ChildPath 'IdentityFailureRoot'
         $ChildPath = Join-Path -Path $RootPath -ChildPath 'Child'
         $GrandchildPath = Join-Path -Path $ChildPath -ChildPath 'Grandchild'
@@ -67,12 +67,52 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
             throw [System.UnauthorizedAccessException]::new('Identity fixture denial.')
         }
 
-        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -RemoveEmptyDirectory -CaptureIdentity -Verbose 4> $null
+        { Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -RemoveEmptyDirectory -CaptureIdentity -Verbose 4> $null } | Should -Throw '*identity required for safe mutation*'
+    }
 
-        $Plan.Files | Should -HaveCount 1
-        $Plan.Files[0].Identity | Should -BeNullOrEmpty
-        $Plan.Directories.Count | Should -BeGreaterThan 0
-        $Plan.Directories[0].Identity | Should -BeNullOrEmpty
+    It 'fails closed when a parent identity cannot be captured for directory pruning' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'ParentIdentityFailureRoot'
+        $ChildPath = Join-Path -Path $RootPath -ChildPath 'Child'
+        $null = New-Item -Path $ChildPath -ItemType Directory -Force
+        $FilePath = Join-Path -Path $ChildPath -ChildPath 'old.tmp'
+        $null = New-Item -Path $FilePath -ItemType File -Force
+        [System.IO.File]::SetLastWriteTimeUtc($FilePath, [DateTime]::UtcNow.AddDays(-31))
+        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
+        $RootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+        $CandidateIdentity = Get-TheCleanersFileIdentity -LiteralPath $FilePath
+
+        Mock Get-TheCleanersFileIdentity {
+            if ($LiteralPath -eq $RootPath) {
+                return $RootIdentity
+            }
+            if ($LiteralPath -eq $FilePath) {
+                return $CandidateIdentity
+            }
+            throw [System.UnauthorizedAccessException]::new('Parent identity fixture denial.')
+        }
+
+        { Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -RemoveEmptyDirectory -CaptureIdentity } | Should -Throw '*parent identity required for safe directory pruning*'
+    }
+
+    It 'skips a candidate that disappears during identity capture' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'DisappearingIdentityRoot'
+        $null = New-Item -Path $RootPath -ItemType Directory -Force
+        $FilePath = Join-Path -Path $RootPath -ChildPath 'old.tmp'
+        $null = New-Item -Path $FilePath -ItemType File -Force
+        [System.IO.File]::SetLastWriteTimeUtc($FilePath, [DateTime]::UtcNow.AddDays(-31))
+        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
+        $RootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+
+        Mock Get-TheCleanersFileIdentity {
+            if ($LiteralPath -eq $RootPath) {
+                return $RootIdentity
+            }
+            throw [System.Management.Automation.ItemNotFoundException]::new('Candidate disappeared.')
+        }
+
+        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity -Verbose 4> $null
+
+        $Plan.Files | Should -BeNullOrEmpty
     }
 
     It 'rejects a reparse-point cleanup root before planning' {
@@ -96,6 +136,19 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
 
     It 'normalizes extended UNC paths for comparison' {
         Convert-TheCleanersPathForComparison -Path '\\?\UNC\server\share\folder' | Should -Be '\\server\share\folder'
+    }
+
+    It 'normalizes an extended-length path without a legacy MAX_PATH call' {
+        $Segments = @()
+        for ($Index = 0; $Index -lt 24; $Index++) {
+            $Segments += ('segment{0:D2}abcdefgh' -f $Index)
+        }
+        $ExtendedPath = '\\?\C:\' + ($Segments -join '\')
+
+        $ComparablePath = Convert-TheCleanersPathForComparison -Path $ExtendedPath
+
+        $ComparablePath | Should -Be ('C:\' + ($Segments -join '\'))
+        Convert-TheCleanersPathForComparison -Path '\\?\C:\segment00abcdefgh\segment01abcdefgh\..\segment02abcdefgh' | Should -Be 'C:\segment00abcdefgh\segment02abcdefgh'
     }
 
     It 'covers string profile timestamps, unresolved SIDs, nested size, and reparse skipping' {
@@ -179,10 +232,11 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         }
         Mock Get-ChildItem { throw [System.UnauthorizedAccessException]::new('Size fixture denial.') }
 
-        $Result = Get-StaleUserProfile -Days 90 -IncludeSize -WarningAction SilentlyContinue
+        $Result = Get-StaleUserProfile -Days 90 -IncludeSize -ErrorAction SilentlyContinue -ErrorVariable SizeError
 
         $Result.SizeStatus | Should -Be 'Unavailable'
         $Result.SizeBytes | Should -BeNullOrEmpty
+        @($SizeError | Where-Object { $_.FullyQualifiedErrorId -match '^ProfileSizeUnavailable' }) | Should -Not -BeNullOrEmpty
     }
 
     It 'renders the explicit logo path without affecting import output' {

@@ -207,7 +207,7 @@ function Clear-CurrentUserTemp {
         } catch {
             $BaseException = $_.Exception.GetBaseException()
             $NativeErrorCode = if ($BaseException -is [System.ComponentModel.Win32Exception]) { $BaseException.NativeErrorCode } else { -1 }
-            $MissingDirectory = $BaseException -is [System.IO.DirectoryNotFoundException] -or $NativeErrorCode -in @(2, 3, 53, 123)
+            $MissingDirectory = $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or $BaseException -is [System.IO.DirectoryNotFoundException] -or $NativeErrorCode -in @(2, 3, 53, 123)
             if ($MissingDirectory) {
                 $Result.DirectoriesSkipped++
             } else {

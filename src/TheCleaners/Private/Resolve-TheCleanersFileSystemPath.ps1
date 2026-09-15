@@ -80,11 +80,38 @@ function Convert-TheCleanersPathForComparison {
     )
 
     $ComparablePath = $Path.Replace('/', '\')
-    if ($ComparablePath.StartsWith('\\?\UNC\', [System.StringComparison]::OrdinalIgnoreCase)) {
-        $ComparablePath = '\\' + $ComparablePath.Substring(8)
-    } elseif ($ComparablePath.StartsWith('\\?\', [System.StringComparison]::OrdinalIgnoreCase)) {
-        $ComparablePath = $ComparablePath.Substring(4)
+    $IsExtendedLength = $ComparablePath.StartsWith('\\?\', [System.StringComparison]::OrdinalIgnoreCase)
+    if ($IsExtendedLength) {
+        if ($ComparablePath.StartsWith('\\?\UNC\', [System.StringComparison]::OrdinalIgnoreCase)) {
+            $ComparablePath = '\\' + $ComparablePath.Substring(8)
+        } else {
+            $ComparablePath = $ComparablePath.Substring(4)
+        }
+
+        # Windows PowerShell 5.1 can reject a long path after the namespace
+        # prefix has been removed. Normalize the already-qualified string without
+        # asking the legacy Path implementation to enforce MAX_PATH.
+        $PathRoot = [System.IO.Path]::GetPathRoot($ComparablePath)
+        if ([string]::IsNullOrWhiteSpace($PathRoot)) {
+            throw "The extended-length path has no usable root: '$Path'."
+        }
+        $Remainder = $ComparablePath.Substring($PathRoot.Length)
+        $Segments = [System.Collections.Generic.List[string]]::new()
+        foreach ($Segment in @($Remainder -split '\\')) {
+            if ([string]::IsNullOrWhiteSpace($Segment) -or $Segment -eq '.') {
+                continue
+            }
+            if ($Segment -eq '..') {
+                if ($Segments.Count -gt 0) {
+                    $Segments.RemoveAt($Segments.Count - 1)
+                }
+                continue
+            }
+            $Segments.Add($Segment)
+        }
+        return ($PathRoot.TrimEnd([char[]]@('\', '/')) + '\' + ($Segments -join '\')).TrimEnd([char[]]@('\', '/'))
     }
+
     [System.IO.Path]::GetFullPath($ComparablePath).TrimEnd([char[]]@('\', '/'))
 }
 

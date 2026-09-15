@@ -26,7 +26,7 @@
         'Start-Cleaning'
     )
     PrivateData          = @{
-        PSData = @{
+        PSData          = @{
             Tags                       = @('Windows', 'WindowsServer', 'Windows-Server', 'PowerShell', 'SysAdmin', 'Maintenance', 'Utility', 'Utilities', 'Exchange', 'ExchangeServer', 'IIS')
             LicenseUri                 = 'https://github.com/SamErde/TheCleaners/blob/main/LICENSE'
             ProjectUri                 = 'https://github.com/SamErde/TheCleaners'

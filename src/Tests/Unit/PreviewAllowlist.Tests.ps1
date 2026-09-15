@@ -25,6 +25,14 @@ Describe 'IIS format and protected-path allowlists' -Skip:(-not $WindowsHost) -T
         Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format 'Custom' | Should -BeFalse
     }
 
+    It 'maps the IIS numeric logging enum and rejects non-rollover digit lengths' {
+        Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format '0' -Service 'W3SVC' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'inetsv01.log' -Format '1' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format '2' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'inetsv010.log' -Format 'IIS' | Should -BeFalse
+        Test-TheCleanersIisLogFileName -Name 'u_ex2401010.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
+    }
+
     It 'protects IIS executable, configuration, and history paths' {
         $WindowsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Windows)
         $Protected = Join-Path -Path $WindowsRoot -ChildPath 'System32/inetsrv/config'
@@ -32,6 +40,7 @@ Describe 'IIS format and protected-path allowlists' -Skip:(-not $WindowsHost) -T
 
         Test-TheCleanersIisProtectedPath -Path $Protected | Should -BeTrue
         Test-TheCleanersIisProtectedPath -Path (Join-Path -Path $Protected -ChildPath 'applicationHost.config') | Should -BeTrue
+        Test-TheCleanersIisProtectedPath -Path (Join-Path -Path $WindowsRoot -ChildPath 'System32') | Should -BeTrue
         Test-TheCleanersIisProtectedPath -Path $Outside | Should -BeFalse
     }
 }

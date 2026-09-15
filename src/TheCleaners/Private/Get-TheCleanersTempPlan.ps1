@@ -76,10 +76,18 @@ function Get-TheCleanersTempPlan {
                 try {
                     $CandidateIdentity = Get-TheCleanersFileIdentity -LiteralPath $Item.FullName
                 } catch {
-                    # The candidate remains visible in the plan. The mutation phase will
-                    # report an access or sharing failure, or skip it when identity cannot
-                    # be compared safely. A failed inspection must never authorize deletion.
-                    Write-Verbose -Message "Could not capture candidate identity for '$($Item.FullName)': $($_.Exception.Message)"
+                    $BaseException = $_.Exception.GetBaseException()
+                    $CandidateMissing = (
+                        $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
+                        $BaseException -is [System.IO.FileNotFoundException] -or
+                        $BaseException -is [System.IO.DirectoryNotFoundException] -or
+                        ($BaseException -is [System.ComponentModel.Win32Exception] -and $BaseException.NativeErrorCode -in @(2, 3, 53, 123))
+                    )
+                    if ($CandidateMissing) {
+                        Write-Verbose -Message "The candidate disappeared during identity capture and will be skipped: '$($Item.FullName)'"
+                        continue
+                    }
+                    throw [System.InvalidOperationException]::new("Could not capture the candidate identity required for safe mutation: '$($Item.FullName)'.", $BaseException)
                 }
             }
 
@@ -88,7 +96,8 @@ function Get-TheCleanersTempPlan {
                 try {
                     $ParentIdentity = Get-TheCleanersFileIdentity -LiteralPath $Item.Directory.FullName -Directory
                 } catch {
-                    Write-Verbose -Message "Could not capture parent identity for '$($Item.FullName)': $($_.Exception.Message)"
+                    $BaseException = $_.Exception.GetBaseException()
+                    throw [System.InvalidOperationException]::new("Could not capture the parent identity required for safe directory pruning: '$($Item.Directory.FullName)'.", $BaseException)
                 }
             }
 
@@ -128,7 +137,8 @@ function Get-TheCleanersTempPlan {
             try {
                 $DirectoryIdentity = Get-TheCleanersFileIdentity -LiteralPath $DirectoryPath -Directory
             } catch {
-                Write-Verbose -Message "Could not capture directory identity for '$DirectoryPath': $($_.Exception.Message)"
+                $BaseException = $_.Exception.GetBaseException()
+                throw [System.InvalidOperationException]::new("Could not capture the directory identity required for safe pruning: '$DirectoryPath'.", $BaseException)
             }
         }
         $ParentPath = Split-Path -Path $DirectoryPath -Parent
@@ -137,7 +147,8 @@ function Get-TheCleanersTempPlan {
             try {
                 $ParentIdentity = Get-TheCleanersFileIdentity -LiteralPath $ParentPath -Directory
             } catch {
-                Write-Verbose -Message "Could not capture ancestor identity for '$DirectoryPath': $($_.Exception.Message)"
+                $BaseException = $_.Exception.GetBaseException()
+                throw [System.InvalidOperationException]::new("Could not capture the ancestor identity required for safe pruning: '$ParentPath'.", $BaseException)
             }
         }
 

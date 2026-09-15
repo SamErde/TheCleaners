@@ -1,3 +1,31 @@
+function Get-TheCleanersIisProtectedPaths {
+    <#
+    .SYNOPSIS
+        Return the IIS paths excluded from log-root discovery.
+    .DESCRIPTION
+        Keep the protected-path inventory in one place so the validation result
+        and preview-lab evidence describe the same paths.
+    .OUTPUTS
+        System.String
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param ()
+
+    $WindowsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Windows)
+    if ([string]::IsNullOrWhiteSpace($WindowsRoot)) {
+        return @()
+    }
+
+    foreach ($ProtectedPath in @(
+            (Join-Path -Path $WindowsRoot -ChildPath 'System32/inetsrv/config')
+            (Join-Path -Path $WindowsRoot -ChildPath 'System32/inetsrv/history')
+            (Join-Path -Path $WindowsRoot -ChildPath 'System32/inetsrv')
+        )) {
+        Convert-TheCleanersPathForComparison -Path $ProtectedPath
+    }
+}
+
 function Test-TheCleanersIisProtectedPath {
     <#
     .SYNOPSIS
@@ -21,18 +49,18 @@ function Test-TheCleanersIisProtectedPath {
         $Path
     )
 
-    $WindowsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Windows)
-    if ([string]::IsNullOrWhiteSpace($WindowsRoot)) {
+    $ProtectedPaths = @(Get-TheCleanersIisProtectedPaths)
+    if ($ProtectedPaths.Count -eq 0) {
         return $false
     }
     $ComparablePath = Convert-TheCleanersPathForComparison -Path $Path
-    foreach ($ProtectedPath in @(
-            (Join-Path -Path $WindowsRoot -ChildPath 'System32/inetsrv/config')
-            (Join-Path -Path $WindowsRoot -ChildPath 'System32/inetsrv/history')
-            (Join-Path -Path $WindowsRoot -ChildPath 'System32/inetsrv')
-        )) {
-        $ComparableProtectedPath = Convert-TheCleanersPathForComparison -Path $ProtectedPath
-        if ($ComparablePath -eq $ComparableProtectedPath -or $ComparablePath.StartsWith($ComparableProtectedPath + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+    foreach ($ComparableProtectedPath in $ProtectedPaths) {
+        $PathContainsProtectedLocation = (
+            $ComparablePath -eq $ComparableProtectedPath -or
+            $ComparablePath.StartsWith($ComparableProtectedPath + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)
+        )
+        $ProtectedLocationContainsPath = $ComparableProtectedPath.StartsWith($ComparablePath + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)
+        if ($PathContainsProtectedLocation -or $ProtectedLocationContainsPath) {
             return $true
         }
     }

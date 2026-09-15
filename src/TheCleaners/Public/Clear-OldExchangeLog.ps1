@@ -158,7 +158,7 @@ function Clear-OldExchangeLog {
             $null = $PSCmdlet.ShouldProcess($File.FullName, 'Preview allowlisted candidate only; Exchange removal is unavailable')
         }
         if ($PassThru) {
-            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldExchangeLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Experimental' -ProtectionStatus $Protected.Status -ProtectionPathCount @($Protected.Paths).Count -ProductVersion 'Exchange Server v15' -DiscoverySource 'v15 setup registry and fixed product roots' -CandidatePaths @($OldFiles | ForEach-Object { $_.FullName }) -Status 'WhatIf'
+            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldExchangeLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Experimental' -ProtectionStatus $Protected.Status -ProtectionPathCount @($Protected.Paths).Count -ProtectionPaths @($Protected.Paths) -ProductVersion 'Exchange Server v15' -DiscoverySource 'v15 setup registry and fixed product roots' -CandidatePaths @($OldFiles | ForEach-Object { $_.FullName }) -Status 'WhatIf'
             $Result.FileCandidateCount = $OldFiles.Count
             $Result
         }

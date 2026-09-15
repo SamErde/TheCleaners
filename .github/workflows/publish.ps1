@@ -41,6 +41,9 @@ if ([System.IO.Path]::GetFileName($ResolvedArtifactPath) -eq 'TheCleaners' -and 
 
 $ManifestPath = Join-Path -Path $ResolvedArtifactPath -ChildPath 'TheCleaners.psd1'
 $ModuleManifest = Test-ModuleManifest -Path $ManifestPath -ErrorAction Stop
+if ([string]$env:GITHUB_REF_TYPE -ne 'tag') {
+    throw "Publishing requires a tag ref; GITHUB_REF_TYPE was '$($env:GITHUB_REF_TYPE)'."
+}
 $Tag = [string]$env:GITHUB_REF_NAME
 if ($Tag -notmatch '^v(?<Version>\d+\.\d+\.\d+)(-(?<Prerelease>[A-Za-z0-9.-]+))?$') {
     throw "Publishing requires a release tag such as v1.0.0 or v1.0.0-beta; GITHUB_REF_NAME was '$Tag'."
@@ -95,6 +98,29 @@ try {
     if ($EntryDifferences.Count -gt 0) {
         throw 'The tested archive entries do not match its content manifest.'
     }
+
+    foreach ($FileRecord in @($ArchiveManifest.Files)) {
+        $ExpectedEntryPath = [string]$FileRecord.Path
+        $ArchiveEntry = @($Archive.Entries | Where-Object { $_.FullName.Replace('\', '/') -eq $ExpectedEntryPath }) | Select-Object -First 1
+        if ($null -eq $ArchiveEntry) {
+            throw "The tested archive is missing a manifest file: $ExpectedEntryPath"
+        }
+        if ([int64]$ArchiveEntry.Length -ne [int64]$FileRecord.Length) {
+            throw "Archive length mismatch: $ExpectedEntryPath"
+        }
+        $EntryStream = $null
+        try {
+            $EntryStream = $ArchiveEntry.Open()
+            $EntryHash = (Get-FileHash -InputStream $EntryStream -Algorithm SHA256).Hash.ToLowerInvariant()
+        } finally {
+            if ($null -ne $EntryStream) {
+                $EntryStream.Dispose()
+            }
+        }
+        if ($EntryHash -ne [string]$FileRecord.SHA256) {
+            throw "Archive digest mismatch: $ExpectedEntryPath"
+        }
+    }
 } finally {
     $Archive.Dispose()
 }
@@ -110,9 +136,17 @@ foreach ($FileRecord in @($ArchiveManifest.Files)) {
     }
 }
 
-$Existing = @(Find-Module -Name TheCleaners -RequiredVersion $ModuleManifest.Version -AllowPrerelease -Repository PSGallery -ErrorAction SilentlyContinue)
+$GalleryVersion = [string]$ModuleManifest.Version
+if (-not [string]::IsNullOrWhiteSpace($ManifestPrerelease)) {
+    $GalleryVersion = '{0}-{1}' -f $GalleryVersion, $ManifestPrerelease
+}
+try {
+    $Existing = @(Find-Module -Name TheCleaners -RequiredVersion $GalleryVersion -AllowPrerelease -Repository PSGallery -ErrorAction Stop)
+} catch {
+    throw "Could not verify whether TheCleaners version '$GalleryVersion' already exists in PSGallery: $($_.Exception.Message)"
+}
 if ($Existing.Count -gt 0) {
-    throw "TheCleaners version '$($ModuleManifest.Version)' already exists in PSGallery."
+    throw "TheCleaners version '$GalleryVersion' already exists in PSGallery."
 }
 
 Publish-Module -Path $ResolvedArtifactPath -NuGetApiKey $PSGalleryApiKey -Repository PSGallery -ErrorAction Stop

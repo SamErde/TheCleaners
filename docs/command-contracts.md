@@ -11,7 +11,7 @@ The release plan is the authority for maturity. Exported does not mean stable. E
 | `Command`, `ContractVersion` | Command name and result contract version. |
 | `RootPath`, `CutoffUtc` | Validated root and the inclusive UTC retention boundary. |
 | `DiscoveryStatus`, `DiscoverySource`, `ProductVersion` | Whether discovery is validated, experimental, or failed, and how it was obtained. |
-| `ProtectionStatus`, `ProtectionPathCount` | Protected-path validation state and count. |
+| `ProtectionStatus`, `ProtectionPathCount`, `ProtectionPaths` | Protected-path validation state, count, and exact paths used by product-specific preview validation. |
 | `PrivilegeStatus` | Informational Windows elevation state; it never grants access. |
 | `CandidatePaths` | File paths discovered in the proposal. |
 | `FileCandidateCount`, `DirectoryCandidateCount` | Discovery totals. They are null when discovery failed. |
@@ -29,7 +29,7 @@ An error ID is stable across PowerShell editions. The error record's exception a
 | `TempFileRemovalFailed`, `TempDirectoryRemovalFailed` | Per-object temp mutation failures. |
 | `IISCleanupPreviewOnly`, `IISWindowsRequired`, `IISRegistryDiscoveryFailed`, `IISProtectedRoot`, `IISDiscoveryFailed` | IIS preview and discovery gates. |
 | `ExchangeCleanupPreviewOnly`, `ExchangeWindowsRequired`, `ExchangeRegistryDiscoveryFailed`, `ExchangeInstallRootValidationFailed`, `ExchangeProtectedPathDiscoveryFailed`, `ExchangeDiscoveryFailed` | Exchange preview and discovery gates. |
-| `ProfileWindowsRequired`, `ProfileQueryFailed` | Stale-profile discovery gates. |
+| `ProfileWindowsRequired`, `ProfileQueryFailed`, `ProfileSizeUnavailable` | Stale-profile discovery and optional-size gates. |
 
 Discovery failure is never represented as an empty successful result. Under continuing error handling, a partial result is explicitly marked `DiscoveryFailed`; with `-ErrorAction Stop`, the stable error record terminates the command.
 

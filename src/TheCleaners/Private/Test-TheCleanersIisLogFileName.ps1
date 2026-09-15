@@ -34,11 +34,11 @@ function Test-TheCleanersIisLogFileName {
     )
 
     $NormalizedFormat = switch ($Format.ToString().ToUpperInvariant()) {
-        '0' { 'IIS'; break }
+        '0' { 'W3C'; break }
         'IIS' { 'IIS'; break }
-        '1' { 'NCSA'; break }
+        '1' { 'IIS'; break }
         'NCSA' { 'NCSA'; break }
-        '2' { 'W3C'; break }
+        '2' { 'NCSA'; break }
         'W3C' { 'W3C'; break }
         default { 'Custom' }
     }
@@ -46,10 +46,10 @@ function Test-TheCleanersIisLogFileName {
     switch ($NormalizedFormat) {
         'W3C' {
             if ($ServiceName -eq 'MSFTPSVC') {
-                return $Name -match '^u_ft\d{2,8}\.log$'
+                return $Name -match '^u_ft(?:\d{2}|\d{4}|\d{6}|\d{8})\.log$'
             }
             if ($ServiceName -eq 'W3SVC') {
-                return $Name -match '^u_ex\d{2,8}\.log$'
+                return $Name -match '^u_ex(?:\d{2}|\d{4}|\d{6}|\d{8})\.log$'
             }
             return $false
         }

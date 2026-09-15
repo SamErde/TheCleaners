@@ -61,6 +61,8 @@ function Get-TheCleanersCleanupResult {
         Current operation status.
     .PARAMETER CandidatePaths
         Discovered file paths. Directory candidates are represented by their count.
+    .PARAMETER ProtectionPaths
+        Exact paths excluded by product-specific protection validation.
     .OUTPUTS
         TheCleaners.CleanupResult
     #>
@@ -114,6 +116,10 @@ function Get-TheCleanersCleanupResult {
 
         [Parameter()]
         [string[]]
+        $ProtectionPaths = @(),
+
+        [Parameter()]
+        [string[]]
         $CandidatePaths = @(),
 
         [Parameter()]
@@ -133,6 +139,7 @@ function Get-TheCleanersCleanupResult {
         DisplayName             = $DisplayName
         ProtectionStatus        = $ProtectionStatus
         ProtectionPathCount     = $ProtectionPathCount
+        ProtectionPaths         = @($ProtectionPaths)
         PrivilegeStatus         = $PrivilegeStatus
         ProductVersion          = $ProductVersion
         CandidatePaths          = @($CandidatePaths)

@@ -17,6 +17,7 @@ Describe 'Shared result and error contracts' -Tag Unit {
             'DisplayName'
             'ProtectionStatus'
             'ProtectionPathCount'
+            'ProtectionPaths'
             'PrivilegeStatus'
             'ProductVersion'
             'CandidatePaths'

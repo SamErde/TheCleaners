@@ -49,23 +49,35 @@ function Get-PreviewEvidence {
     )
 
     try {
-        $Results = @(& $CommandName -WhatIf -Confirm:$false -PassThru -ErrorAction Stop)
-        $CandidatePaths = @($Results | ForEach-Object { $_.CandidatePaths } | Where-Object { $_ })
+        $BeforeResults = @(& $CommandName -WhatIf -Confirm:$false -PassThru -ErrorAction Stop)
+        if ($BeforeResults.Count -eq 0) {
+            $NoResultErrorId = if ($CommandName -eq 'Clear-OldIISLog') { 'IISPreviewNoResults' } else { 'ExchangePreviewNoResults' }
+            throw [System.InvalidOperationException]::new("$CommandName returned no preview result for an existing product or configured root.")
+        }
+        $AfterResults = @(& $CommandName -WhatIf -Confirm:$false -PassThru -ErrorAction Stop)
+        if ($AfterResults.Count -eq 0) {
+            $NoResultErrorId = if ($CommandName -eq 'Clear-OldIISLog') { 'IISPreviewNoResults' } else { 'ExchangePreviewNoResults' }
+            throw [System.InvalidOperationException]::new("$CommandName returned no preview result during the after snapshot.")
+        }
+        $CandidatesBefore = @($BeforeResults | ForEach-Object { $_.CandidatePaths } | Where-Object { $_ })
+        $CandidatesAfter = @($AfterResults | ForEach-Object { $_.CandidatePaths } | Where-Object { $_ })
+        $ProtectedPaths = @($AfterResults | ForEach-Object { $_.ProtectionPaths } | Where-Object { $_ } | Sort-Object -Unique)
         [ordered]@{
             ResultStatus        = 'Completed'
             ErrorId             = $null
             ErrorMessage        = $null
-            CandidatesBefore    = $CandidatePaths
-            CandidateCountBefore = $CandidatePaths.Count
-            CandidatesAfter     = $CandidatePaths
-            CandidateCountAfter = $CandidatePaths.Count
-            ProtectedPaths      = @($Results | ForEach-Object { $_.ProtectionPathCount })
-            Results             = $Results
+            CandidatesBefore    = $CandidatesBefore
+            CandidateCountBefore = $CandidatesBefore.Count
+            CandidatesAfter     = $CandidatesAfter
+            CandidateCountAfter = $CandidatesAfter.Count
+            ProtectedPaths      = $ProtectedPaths
+            Results             = $AfterResults
         }
     } catch {
+        $ErrorId = if ($null -ne $NoResultErrorId) { $NoResultErrorId } else { $_.FullyQualifiedErrorId }
         [ordered]@{
             ResultStatus        = 'Unavailable'
-            ErrorId             = $_.FullyQualifiedErrorId
+            ErrorId             = $ErrorId
             ErrorMessage        = $_.Exception.Message
             CandidatesBefore    = @()
             CandidateCountBefore = $null
@@ -84,6 +96,8 @@ $ExchangeCommands = @(
     Get-Command -Name 'Get-ExchangeServer', 'Get-MailboxDatabase' -ErrorAction SilentlyContinue |
         Select-Object Name, CommandType, Version
 )
+$IisPreview = Get-PreviewEvidence -CommandName 'Clear-OldIISLog'
+$ExchangePreview = Get-PreviewEvidence -CommandName 'Clear-OldExchangeLog'
 
 [ordered]@{
     RecordedUtc       = [DateTime]::UtcNow.ToString('o')
@@ -102,16 +116,16 @@ $ExchangeCommands = @(
         ProductBuild    = if ($null -eq $IisRegistry) { $null } else { [ordered]@{ Major = $IisRegistry.MajorVersion; Minor = $IisRegistry.MinorVersion; Build = $IisRegistry.BuildNumber; Version = $IisRegistry.VersionString } }
         WebAdministration = if ($null -eq $IisModule) { $null } else { [ordered]@{ Version = $IisModule.Version.ToString(); Path = $IisModule.Path } }
         Services         = @(Get-ServiceEvidence -Names @('W3SVC', 'WAS'))
-        ProtectedPaths   = @()
-        Preview         = Get-PreviewEvidence -CommandName 'Clear-OldIISLog'
+        ProtectedPaths   = @($IisPreview.ProtectedPaths)
+        Preview         = $IisPreview
     }
     Exchange           = [ordered]@{
         ProductDetected = $null -ne $ExchangeRegistry
         ProductBuild    = if ($null -eq $ExchangeRegistry) { $null } else { [ordered]@{ DisplayVersion = $ExchangeRegistry.AdminDisplayVersion; ProductVersion = $ExchangeRegistry.MsiProductVersion; InstallPath = $ExchangeRegistry.MsiInstallPath } }
         ManagementCommands = $ExchangeCommands
         Services         = @(Get-ServiceEvidence -Names @('MSExchangeADTopology', 'MSExchangeTransport', 'MSExchangeIS', 'MSExchangeFrontEndTransport'))
-        ProtectedPaths   = @()
-        Preview          = Get-PreviewEvidence -CommandName 'Clear-OldExchangeLog'
+        ProtectedPaths   = @($ExchangePreview.ProtectedPaths)
+        Preview          = $ExchangePreview
     }
     DeletionEnabled    = $false
     Note               = 'This probe never enables or performs IIS or Exchange deletion. Product absence leaves acceptance evidence unavailable.'

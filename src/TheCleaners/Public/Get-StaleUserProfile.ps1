@@ -135,7 +135,8 @@ function Get-StaleUserProfile {
                     $SizeStatus = 'Available'
                 }
             } catch {
-                Write-Warning -Message ('ProfileSizeUnavailable: failed to measure profile ''{0}'': {1}' -f $LocalPath, $_.Exception.Message)
+                $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'ProfileSizeUnavailable' -Category ReadError -TargetObject $LocalPath
+                $PSCmdlet.WriteError($ErrorRecord)
             }
         }
 

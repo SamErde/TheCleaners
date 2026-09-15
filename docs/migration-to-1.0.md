@@ -1,6 +1,6 @@
 # Migrating prerelease scripts toward 1.0
 
-These changes are in PR #27, not a published 1.0 release. The Gallery version is not automatically updated when a PR is opened or merged.
+This stabilization work is still draft and is not a published 1.0 release. The Gallery version is not automatically updated when a PR is opened or merged.
 
 ## Command inventory
 
@@ -21,7 +21,7 @@ Clear-WindowsTemp -Days 30 -RemoveEmptyDirectory -WhatIf -PassThru
 
 The retention boundary remains inclusive but is now evaluated using UTC last-write times and a single cutoff. Candidate deletion uses a same-handle native `DELETE` operation without `FILE_READ_DATA` instead of provider `Remove-Item`; a missing candidate is skipped, and a directory or different identity substituted at the same path is preserved. Locked/access-denied removals produce stable error IDs on the error stream; review automation that relies on error-stream behavior. `-ErrorAction Stop` is honored. `-PassThru` returns the shared result contract, with preview counts distinct from successful removals.
 
-Temp roots and literal paths must be fully qualified Windows filesystem paths. Drive-relative, root-relative, provider-qualified, device, and unsupported extended-length forms are rejected before resolution.
+Temp roots and literal paths must be fully qualified Windows filesystem paths. Drive-relative, root-relative, provider-qualified, and device paths are rejected before resolution. Supported extended-length drive and UNC forms are accepted when the Windows provider and long-path policy can resolve them; otherwise discovery fails closed.
 
 ## IIS
 

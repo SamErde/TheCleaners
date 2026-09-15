@@ -32,6 +32,10 @@ $PreviousTemp = $env:TEMP
 $PreviousTmp = $env:TMP
 $CleanupErrors = @()
 
+if (-not $PSCmdlet.ShouldProcess($FixtureRoot, 'Run Clear-CurrentUserTemp against the isolated ACL fixture')) {
+    return
+}
+
 try {
     $null = New-Item -Path $FixtureRoot -ItemType Directory -Force
     $null = New-Item -Path $OldReadablePath -ItemType File
@@ -87,10 +91,6 @@ try {
     $env:TEMP = $FixtureRoot
     $env:TMP = $FixtureRoot
     Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath '../src/TheCleaners/TheCleaners.psd1') -Force
-
-    if (-not $PSCmdlet.ShouldProcess($FixtureRoot, 'Run Clear-CurrentUserTemp against the isolated ACL fixture')) {
-        return
-    }
 
     $Result = Clear-CurrentUserTemp -Days 30 -Confirm:$false -PassThru -ErrorAction SilentlyContinue -ErrorVariable CleanupErrors
     $AfterCandidates = @($BeforeCandidates | Where-Object {

@@ -55,7 +55,8 @@ function Clear-OldIISLog {
     $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
     $Roots = [System.Collections.Generic.List[object]]::new()
     $SeenRoots = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $DiscoveryFailed = $false
+    $GlobalDiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
+    $IisProtectedPaths = @(Get-TheCleanersIisProtectedPaths)
     $WebAdministrationModule = Get-Module -Name 'WebAdministration' -ListAvailable | Select-Object -First 1
 
     if ($null -ne $WebAdministrationModule) {
@@ -80,7 +81,7 @@ function Clear-OldIISLog {
                     })
             }
         } catch {
-            $DiscoveryFailed = $true
+            $null = $GlobalDiscoveryErrorIds.Add('IISDiscoveryFailed')
             $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError
             $PSCmdlet.WriteError($ErrorRecord)
         } finally {
@@ -124,7 +125,7 @@ function Clear-OldIISLog {
             if ($OptionalRegistryValueIsAbsent) {
                 Write-Verbose -Message "The optional alternate IIS log location is not configured: $($_.Exception.Message)"
             } else {
-                $DiscoveryFailed = $true
+                $null = $GlobalDiscoveryErrorIds.Add('IISRegistryDiscoveryFailed')
                 $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISRegistryDiscoveryFailed' -Category ReadError
                 $PSCmdlet.WriteError($ErrorRecord)
             }
@@ -132,8 +133,12 @@ function Clear-OldIISLog {
     }
 
     foreach ($RootDefinition in $Roots) {
+        $RootDiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
+        foreach ($GlobalErrorId in @($GlobalDiscoveryErrorIds)) {
+            $null = $RootDiscoveryErrorIds.Add($GlobalErrorId)
+        }
         if (Test-TheCleanersIisProtectedPath -Path $RootDefinition.Path) {
-            $DiscoveryFailed = $true
+            $null = $RootDiscoveryErrorIds.Add('IISProtectedRoot')
             $Exception = [System.UnauthorizedAccessException]::new("The IIS path is protected and cannot be used as a log root: '$($RootDefinition.Path)'.")
             $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'IISProtectedRoot' -Category PermissionDenied -TargetObject $RootDefinition.Path
             $PSCmdlet.WriteError($ErrorRecord)
@@ -182,7 +187,7 @@ function Clear-OldIISLog {
             }
             $OldFiles = @($Candidates.ToArray() | Sort-Object -Property FullName)
         } catch {
-            $DiscoveryFailed = $true
+            $null = $RootDiscoveryErrorIds.Add('IISDiscoveryFailed')
             $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError -TargetObject $RootDefinition.Path
             $PSCmdlet.WriteError($ErrorRecord)
             continue
@@ -193,13 +198,14 @@ function Clear-OldIISLog {
         }
         if ($PassThru) {
             $ResultDiscoveryStatus = 'Experimental'
-            if ($DiscoveryFailed) {
+            $ResultErrorIds = @($RootDiscoveryErrorIds | Sort-Object -Unique)
+            if ($ResultErrorIds.Count -gt 0) {
                 $ResultDiscoveryStatus = 'Failed'
             }
-            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus $ResultDiscoveryStatus -ProtectionStatus 'Validated' -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @($OldFiles | ForEach-Object { $_.FullName }) -Status 'WhatIf'
-            if ($DiscoveryFailed) {
-                $Result.DiscoveryErrorCount = 1
-                $Result.ErrorIds = @('IISDiscoveryFailed')
+            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus $ResultDiscoveryStatus -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @($OldFiles | ForEach-Object { $_.FullName }) -Status 'WhatIf'
+            if ($ResultErrorIds.Count -gt 0) {
+                $Result.DiscoveryErrorCount = $ResultErrorIds.Count
+                $Result.ErrorIds = $ResultErrorIds
             }
             $Result.FileCandidateCount = $OldFiles.Count
             $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
