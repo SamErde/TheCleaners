@@ -87,6 +87,11 @@ try {
     $Volume = Get-Volume -DriveLetter $DriveLetter -ErrorAction SilentlyContinue | Select-Object -First 1
     $IsElevated = ([System.Security.Principal.WindowsPrincipal]$Identity).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
     $BeforeCandidates = @($OldReadablePath, $OldNoContentReadPath)
+    $ExpectedFileCount = $BeforeCandidates.Count
+    $ExpectedBytes = [int64]0
+    foreach ($CandidatePath in $BeforeCandidates) {
+        $ExpectedBytes += [int64](Get-Item -LiteralPath $CandidatePath -Force -ErrorAction Stop).Length
+    }
 
     $env:TEMP = $FixtureRoot
     $env:TMP = $FixtureRoot
@@ -96,6 +101,20 @@ try {
     $AfterCandidates = @($BeforeCandidates | Where-Object {
             [System.IO.File]::Exists($_) -or [System.IO.Directory]::Exists($_)
         })
+    $ResultErrorCount = if ($null -eq $Result) { $null } else { @($Result.ErrorIds).Count }
+    $OutcomeReconciles = $null -ne $Result -and
+        $Result.Status -eq 'Completed' -and
+        $Result.DiscoveryStatus -eq 'Validated' -and
+        $Result.FileCandidateCount -eq $ExpectedFileCount -and
+        $Result.FilesRemoved -eq $ExpectedFileCount -and
+        $Result.FileFailureCount -eq 0 -and
+        $Result.FilesSkipped -eq 0 -and
+        $Result.BytesReclaimed -eq $ExpectedBytes -and
+        $Result.DirectoryCandidateCount -eq 0 -and
+        $Result.DirectoriesRemoved -eq 0 -and
+        $Result.DirectoryFailureCount -eq 0 -and
+        $Result.DirectoriesSkipped -eq 0 -and
+        $ResultErrorCount -eq 0
     [ordered]@{
         FixtureRoot           = $FixtureRoot
         Runtime               = $PSVersionTable.PSVersion.ToString()
@@ -112,12 +131,16 @@ try {
         ReadDenyRuleFound     = ($null -ne $ReadDenyRule)
         ReadDenyAccessMask    = [int][System.Security.AccessControl.FileSystemRights]::ReadData
         BeforeCandidates      = $BeforeCandidates
+        ExpectedFileCount     = $ExpectedFileCount
+        ExpectedBytes         = $ExpectedBytes
         AfterCandidates       = $AfterCandidates
         Result                = $Result
         ErrorIds              = @($Result.ErrorIds)
         ErrorCount            = @($CleanupErrors).Count
+        ResultErrorCount      = $ResultErrorCount
         RemainingNoReadFile   = [System.IO.File]::Exists($OldNoContentReadPath)
-        Acceptance            = (@($CleanupErrors).Count -eq 0 -and $ReadWasDenied -and $null -ne $DeleteAllowRule -and -not [System.IO.File]::Exists($OldNoContentReadPath))
+        OutcomeReconciles     = $OutcomeReconciles
+        Acceptance            = (@($CleanupErrors).Count -eq 0 -and $ReadWasDenied -and $null -ne $DeleteAllowRule -and $null -ne $ReadDenyRule -and $AfterCandidates.Count -eq 0 -and $OutcomeReconciles)
         Note                  = 'This is an isolated fixture. It does not authorize cleanup of a real Windows temporary root.'
     } | ConvertTo-Json -Depth 8
 } finally {
