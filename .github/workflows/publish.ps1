@@ -125,6 +125,16 @@ try {
     $Archive.Dispose()
 }
 
+$ArtifactRoot = $ResolvedArtifactPath.TrimEnd([char[]]@('\', '/'))
+$ExpectedArtifactFiles = @($ArchiveManifest.Files | ForEach-Object { [string]$_.Path } | Sort-Object)
+$ActualArtifactFiles = @(Get-ChildItem -LiteralPath $ResolvedArtifactPath -File -Recurse | ForEach-Object {
+        $_.FullName.Substring($ArtifactRoot.Length + 1).Replace('\', '/')
+    } | Sort-Object)
+$ArtifactFileDifferences = @(Compare-Object -ReferenceObject $ExpectedArtifactFiles -DifferenceObject $ActualArtifactFiles)
+if ($ArtifactFileDifferences.Count -gt 0) {
+    throw 'The artifact file set does not match its content manifest.'
+}
+
 foreach ($FileRecord in @($ArchiveManifest.Files)) {
     $ArtifactFile = Join-Path -Path $ResolvedArtifactPath -ChildPath ($FileRecord.Path -replace '/', [System.IO.Path]::DirectorySeparatorChar)
     if (-not (Test-Path -LiteralPath $ArtifactFile -PathType Leaf)) {

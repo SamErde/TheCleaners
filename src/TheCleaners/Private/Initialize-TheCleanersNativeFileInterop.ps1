@@ -150,8 +150,8 @@ namespace TheCleaners
             public long AllocationSize;
             public long EndOfFile;
             public uint NumberOfLinks;
-            public int DeletePending;
-            public int Directory;
+            public byte DeletePending;
+            public byte Directory;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -164,7 +164,7 @@ namespace TheCleaners
         [StructLayout(LayoutKind.Sequential)]
         private struct FileDispositionInfoData
         {
-            public int DeleteFile;
+            public byte DeleteFile;
         }
 
         private static SafeFileHandle Open(string path, uint desiredAccess, bool directory)

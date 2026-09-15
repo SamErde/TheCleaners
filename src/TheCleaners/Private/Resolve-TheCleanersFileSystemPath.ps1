@@ -98,7 +98,7 @@ function Convert-TheCleanersPathForComparison {
         $Remainder = $ComparablePath.Substring($PathRoot.Length)
         $Segments = [System.Collections.Generic.List[string]]::new()
         foreach ($Segment in @($Remainder -split '\\')) {
-            if ([string]::IsNullOrWhiteSpace($Segment) -or $Segment -eq '.') {
+            if ([string]::IsNullOrEmpty($Segment) -or $Segment -eq '.') {
                 continue
             }
             if ($Segment -eq '..') {

@@ -151,6 +151,10 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         Convert-TheCleanersPathForComparison -Path '\\?\C:\segment00abcdefgh\segment01abcdefgh\..\segment02abcdefgh' | Should -Be 'C:\segment00abcdefgh\segment02abcdefgh'
     }
 
+    It 'preserves whitespace-only extended-length path components' {
+        Convert-TheCleanersPathForComparison -Path '\\?\C:\safe\ \child' | Should -Be 'C:\safe\ \child'
+    }
+
     It 'covers string profile timestamps, unresolved SIDs, nested size, and reparse skipping' {
         $Now = [DateTime]::UtcNow
         $ProfilePath = Join-Path -Path $TestDrive -ChildPath 'StringDateProfile'
