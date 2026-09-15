@@ -11,9 +11,11 @@ function Get-StaleUserProfile {
         excluded. SID translation is best effort; an unresolved SID is retained in
         the object with an explicit resolution status. Optional size enumeration
         skips reparse points throughout the profile path ancestry and reports
-        unavailable sizes without changing profile state. During each directory
-        enumeration, a native handle is held without delete sharing so a rename
-        or replacement cannot occur between the reparse check and enumeration.
+        unavailable sizes without changing profile state. Identity-checked native
+        handles are held from the filesystem root through the profile and for
+        every queued directory until traversal completes. Stable no-delete-sharing
+        handles are used where the current token permits them; protected ancestors
+        retain an identity handle and are revalidated before a size is reported.
     .PARAMETER Days
         A profile is stale when its known last-use time is at or before this many
         days ago. The default is 90 days.
@@ -118,6 +120,8 @@ function Get-StaleUserProfile {
         $SizeStatus = 'NotRequested'
         if ($IncludeSize) {
             $SizeStatus = 'Unavailable'
+            $HeldDirectoryHandles = [System.Collections.Generic.List[object]]::new()
+            $HeldDirectoryHandleByPath = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::OrdinalIgnoreCase)
             try {
                 if (-not [string]::IsNullOrWhiteSpace($LocalPath)) {
                     $ProfileDirectory = Get-Item -LiteralPath $LocalPath -Force -ErrorAction Stop
@@ -125,16 +129,43 @@ function Get-StaleUserProfile {
                         throw [System.IO.InvalidDataException]::new("The profile path is not a directory: '$LocalPath'.")
                     }
                     $ProfilePath = [System.IO.Path]::GetFullPath($LocalPath)
+                    $AncestorPaths = [System.Collections.Generic.List[string]]::new()
                     while (-not [string]::IsNullOrWhiteSpace($ProfilePath)) {
                         $ProfilePathItem = Get-Item -LiteralPath $ProfilePath -Force -ErrorAction Stop
+                        if ($ProfilePathItem -isnot [System.IO.DirectoryInfo]) {
+                            throw [System.IO.InvalidDataException]::new("The profile path or an ancestor is not a directory and cannot be sized: '$LocalPath'.")
+                        }
                         if ($ProfilePathItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
                             throw [System.IO.InvalidDataException]::new("The profile path or an ancestor is a reparse point and cannot be sized: '$LocalPath'.")
                         }
+                        $AncestorPaths.Add($ProfilePathItem.FullName)
                         $ParentPath = [System.IO.Path]::GetDirectoryName($ProfilePath)
                         if ([string]::IsNullOrWhiteSpace($ParentPath) -or $ParentPath -eq $ProfilePath) {
                             break
                         }
                         $ProfilePath = $ParentPath
+                    }
+                    $AncestorPaths.Reverse()
+                    Initialize-TheCleanersNativeFileInterop
+                    foreach ($AncestorPath in $AncestorPaths) {
+                        $AncestorHandle = $null
+                        try {
+                            $AncestorHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($AncestorPath)
+                        } catch {
+                            $AncestorHandle = [TheCleaners.NativeFileInterop]::OpenForIdentityInspection($AncestorPath)
+                        }
+                        $AncestorEntry = [pscustomobject]@{
+                            Path     = $AncestorPath
+                            Handle   = $AncestorHandle
+                            Identity = $null
+                        }
+                        $HeldDirectoryHandles.Add($AncestorEntry)
+                        $HeldDirectoryHandleByPath[$AncestorPath] = $AncestorEntry
+                        $AncestorIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($AncestorHandle)
+                        $AncestorEntry.Identity = $AncestorIdentity
+                        if (-not $AncestorIdentity.IsDirectory -or $AncestorIdentity.IsReparsePoint) {
+                            throw [System.IO.InvalidDataException]::new("The profile path or an ancestor changed before sizing: '$AncestorPath'.")
+                        }
                     }
                     $SizeTotal = [Int64]0
                     $PendingDirectories = [System.Collections.Generic.Stack[string]]::new()
@@ -142,31 +173,49 @@ function Get-StaleUserProfile {
                     while ($PendingDirectories.Count -gt 0) {
                         $DirectoryPath = $PendingDirectories.Pop()
                         Initialize-TheCleanersNativeFileInterop
-                        $DirectoryHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($DirectoryPath)
+                        $DirectoryEntry = $null
+                        if (-not $HeldDirectoryHandleByPath.TryGetValue($DirectoryPath, [ref]$DirectoryEntry)) {
+                            $DirectoryHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($DirectoryPath)
+                            $DirectoryEntry = [pscustomobject]@{
+                                Path     = $DirectoryPath
+                                Handle   = $DirectoryHandle
+                                Identity = $null
+                            }
+                            $HeldDirectoryHandles.Add($DirectoryEntry)
+                            $HeldDirectoryHandleByPath[$DirectoryPath] = $DirectoryEntry
+                        }
+                        $DirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryEntry.Handle)
+                        $DirectoryEntry.Identity = $DirectoryIdentity
+                        if (-not $DirectoryIdentity.IsDirectory) {
+                            throw [System.IO.InvalidDataException]::new("The profile traversal path is not a directory: '$DirectoryPath'.")
+                        }
+                        if ($DirectoryIdentity.IsReparsePoint) {
+                            throw [System.IO.InvalidDataException]::new("The profile traversal path became a reparse point and cannot be sized: '$DirectoryPath'.")
+                        }
+                        foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
+                            if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                                continue
+                            }
+                            if ($Item.PSIsContainer) {
+                                $PendingDirectories.Push($Item.FullName)
+                            } else {
+                                $SizeTotal += [Int64]$Item.Length
+                            }
+                        }
+                        $CurrentDirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryEntry.Handle)
+                        if (-not $DirectoryIdentity.Equals($CurrentDirectoryIdentity) -or $CurrentDirectoryIdentity.IsReparsePoint) {
+                            throw [System.IO.InvalidDataException]::new("The profile traversal path changed while it was being sized: '$DirectoryPath'.")
+                        }
+                    }
+                    foreach ($AncestorEntry in $HeldDirectoryHandles) {
+                        $CurrentAncestorHandle = [TheCleaners.NativeFileInterop]::OpenForIdentityInspection($AncestorEntry.Path)
                         try {
-                            $DirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryHandle)
-                            if (-not $DirectoryIdentity.IsDirectory) {
-                                throw [System.IO.InvalidDataException]::new("The profile traversal path is not a directory: '$DirectoryPath'.")
-                            }
-                            if ($DirectoryIdentity.IsReparsePoint) {
-                                throw [System.IO.InvalidDataException]::new("The profile traversal path became a reparse point and cannot be sized: '$DirectoryPath'.")
-                            }
-                            foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
-                                if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-                                    continue
-                                }
-                                if ($Item.PSIsContainer) {
-                                    $PendingDirectories.Push($Item.FullName)
-                                } else {
-                                    $SizeTotal += [Int64]$Item.Length
-                                }
-                            }
-                            $CurrentDirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryHandle)
-                            if (-not $DirectoryIdentity.Equals($CurrentDirectoryIdentity) -or $CurrentDirectoryIdentity.IsReparsePoint) {
-                                throw [System.IO.InvalidDataException]::new("The profile traversal path changed while it was being sized: '$DirectoryPath'.")
+                            $CurrentAncestorIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($CurrentAncestorHandle)
+                            if (-not $CurrentAncestorIdentity.IsDirectory -or $CurrentAncestorIdentity.IsReparsePoint -or -not $AncestorEntry.Identity.Equals($CurrentAncestorIdentity)) {
+                                throw [System.IO.InvalidDataException]::new("The profile path or an ancestor changed while it was being sized: '$($AncestorEntry.Path)'.")
                             }
                         } finally {
-                            $DirectoryHandle.Dispose()
+                            $CurrentAncestorHandle.Dispose()
                         }
                     }
                     $SizeBytes = $SizeTotal
@@ -175,6 +224,12 @@ function Get-StaleUserProfile {
             } catch {
                 $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'ProfileSizeUnavailable' -Category ReadError -TargetObject $LocalPath
                 $PSCmdlet.WriteError($ErrorRecord)
+            } finally {
+                foreach ($HeldDirectoryEntry in $HeldDirectoryHandles) {
+                    if ($null -ne $HeldDirectoryEntry.Handle) {
+                        $HeldDirectoryEntry.Handle.Dispose()
+                    }
+                }
             }
         }
 

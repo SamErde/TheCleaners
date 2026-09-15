@@ -222,6 +222,14 @@ namespace TheCleaners
             return Open(path, FileReadAttributes, FileShareRead | FileShareWrite | FileShareDelete, directory);
         }
 
+        public static SafeFileHandle OpenForIdentityInspection(string path)
+        {
+            // FILE_READ_ATTRIBUTES is sufficient for identity and reparse checks.
+            // This handle retains the inspected object for revalidation but does
+            // not request DELETE access, so callers must compare identity again.
+            return Open(path, FileReadAttributes, FileShareRead | FileShareWrite, true);
+        }
+
         public static SafeFileHandle OpenForStableEnumeration(string path)
         {
             // DELETE is requested only to hold the directory against rename or

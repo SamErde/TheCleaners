@@ -211,6 +211,47 @@ Describe 'Typed stale-profile output' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result.SizeBytes | Should -Be 0
     }
 
+    It 'holds profile ancestors while traversing queued directories' {
+        $QueuedDirectoryPath = Join-Path -Path $OldProfilePath -ChildPath 'QueuedSizeDirectory'
+        $ReplacementPath = Join-Path -Path $TestDrive -ChildPath 'ProfileQueuedReplacement'
+        $null = New-Item -Path $QueuedDirectoryPath -ItemType Directory -Force
+        Mock Get-CimInstance {
+            [pscustomobject]@{
+                LocalPath   = $OldProfilePath
+                SID         = 'S-1-5-21-1008'
+                LastUseTime = (Get-Date).AddDays(-91)
+                Special     = $false
+                Loaded      = $false
+            }
+        }
+        $script:MoveBlocked = $false
+        Mock Get-ChildItem {
+            if ($LiteralPath -eq $OldProfilePath) {
+                return @([pscustomobject]@{
+                        FullName      = $QueuedDirectoryPath
+                        Name          = 'QueuedSizeDirectory'
+                        PSIsContainer = $true
+                        Attributes    = [System.IO.FileAttributes]::Directory
+                    })
+            }
+            if ($LiteralPath -eq $QueuedDirectoryPath) {
+                try {
+                    [System.IO.Directory]::Move($OldProfilePath, $ReplacementPath)
+                } catch {
+                    $script:MoveBlocked = $true
+                }
+                return @()
+            }
+            throw "Unexpected profile traversal path: $LiteralPath"
+        }
+
+        $Result = Get-StaleUserProfile -Days 90 -IncludeSize -ErrorAction SilentlyContinue
+
+        $script:MoveBlocked | Should -BeTrue
+        $Result.SizeStatus | Should -Be 'Available'
+        $Result.SizeBytes | Should -Be 0
+    }
+
     It 'does not write host presentation output or depend on orphaned SID helpers' {
         $FunctionPath = Join-Path -Path $ModuleRoot -ChildPath 'Public/Get-StaleUserProfile.ps1'
         [System.IO.File]::ReadAllText($FunctionPath) | Should -Not -Match 'Out-Host'

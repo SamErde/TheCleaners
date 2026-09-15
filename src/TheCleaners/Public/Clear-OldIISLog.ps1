@@ -200,12 +200,19 @@ function Clear-OldIISLog {
         foreach ($RootErrorId in @($RootDefinition.DiscoveryErrorIds)) {
             $null = $RootDiscoveryErrorIds.Add($RootErrorId)
         }
-        if (Test-TheCleanersIisProtectedPath -Path $RootDefinition.Path) {
-            $FoundExistingRoot = $true
+        $RootExists = $false
+        $ProtectedRoot = $false
+        try {
+            if (-not (Test-TheCleanersFullyQualifiedPath -Path $RootDefinition.Path)) {
+                throw [System.IO.InvalidDataException]::new("The IIS log root is not a fully qualified filesystem path: '$($RootDefinition.Path)'.")
+            }
+            $ProtectedRoot = Test-TheCleanersIisProtectedPath -Path $RootDefinition.Path
+            $RootExists = Test-Path -LiteralPath $RootDefinition.Path -PathType Container -ErrorAction Stop
+        } catch {
             $DiscoveryErrorReported = $true
-            $null = $RootDiscoveryErrorIds.Add('IISProtectedRoot')
-            $Exception = [System.UnauthorizedAccessException]::new("The IIS path is protected and cannot be used as a log root: '$($RootDefinition.Path)'.")
-            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'IISProtectedRoot' -Category PermissionDenied -TargetObject $RootDefinition.Path
+            $DiscoveryFailureResultReported = $true
+            $null = $RootDiscoveryErrorIds.Add('IISDiscoveryFailed')
+            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError -TargetObject $RootDefinition.Path
             $PSCmdlet.WriteError($ErrorRecord)
             if ($PassThru) {
                 $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $RootDefinition.Path -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
@@ -218,17 +225,12 @@ function Clear-OldIISLog {
             }
             continue
         }
-        $RootExists = $false
-        try {
-            if (-not (Test-TheCleanersFullyQualifiedPath -Path $RootDefinition.Path)) {
-                throw [System.IO.InvalidDataException]::new("The IIS log root is not a fully qualified filesystem path: '$($RootDefinition.Path)'.")
-            }
-            $RootExists = Test-Path -LiteralPath $RootDefinition.Path -PathType Container -ErrorAction Stop
-        } catch {
+        if ($ProtectedRoot) {
+            $FoundExistingRoot = $true
             $DiscoveryErrorReported = $true
-            $DiscoveryFailureResultReported = $true
-            $null = $RootDiscoveryErrorIds.Add('IISDiscoveryFailed')
-            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError -TargetObject $RootDefinition.Path
+            $null = $RootDiscoveryErrorIds.Add('IISProtectedRoot')
+            $Exception = [System.UnauthorizedAccessException]::new("The IIS path is protected and cannot be used as a log root: '$($RootDefinition.Path)'.")
+            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'IISProtectedRoot' -Category PermissionDenied -TargetObject $RootDefinition.Path
             $PSCmdlet.WriteError($ErrorRecord)
             if ($PassThru) {
                 $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $RootDefinition.Path -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'

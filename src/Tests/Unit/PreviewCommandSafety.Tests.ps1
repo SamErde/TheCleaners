@@ -180,6 +180,30 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         }
     }
 
+    It 'returns a structured failure for a malformed root before probing protection' {
+        $PreviousSystemDrive = $env:SystemDrive
+        try {
+            $env:SystemDrive = ''
+            $BadRoot = '\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1\logs'
+            Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $BadRoot } }
+            Mock Test-TheCleanersIisProtectedPath { throw 'Protection should not be probed for a malformed IIS root.' }
+
+            $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable DiscoveryError)
+
+            $Result | Should -HaveCount 1
+            $Result[0].RootPath | Should -Be $BadRoot
+            $Result[0].DiscoveryStatus | Should -Be 'Failed'
+            $Result[0].Status | Should -Be 'DiscoveryFailed'
+            $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+            $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
+            $Result[0].ErrorIds | Should -Contain 'IISDiscoveryFailed'
+            $DiscoveryError | Should -Not -BeNullOrEmpty
+            Should -Invoke Test-TheCleanersIisProtectedPath -Exactly 0
+        } finally {
+            $env:SystemDrive = $PreviousSystemDrive
+        }
+    }
+
     It 'reports registry access failure instead of silently omitting a configured root' {
         Mock Get-ItemProperty { throw [System.UnauthorizedAccessException]::new('Fixture registry access denied.') }
 
