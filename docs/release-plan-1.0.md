@@ -1,6 +1,6 @@
 # TheCleaners 1.0 implementation plan
 
-Updated September 14, 2026. Approved direction from the maintainer; implementation is underway in [PR #27](https://github.com/SamErde/TheCleaners/pull/27).
+Updated September 15, 2026. Approved direction from the maintainer; implementation is underway in [PR #31](https://github.com/SamErde/TheCleaners/pull/31).
 
 ## Status conventions
 
@@ -29,26 +29,26 @@ The manifest stays on the current prerelease version during this packet. No comm
 | 1.0 stable | Publish the tested artifact with aligned version/tag/metadata and a successful clean-install check. No feature can become destructive merely by changing a maturity label. |
 | Later Exchange minor | First release an Exchange-enabled prerelease; validate paths, file patterns, custom drives, locks, access failures, protected database/transaction-log locations, and post-cleanup service health. Reconfirm the provisional per-invocation opt-in before activation. |
 
-## Evidence recorded September 14, 2026
+## Evidence recorded September 15, 2026
 
-This evidence was collected from the dirty working tree based at commit `b01780d2b79319de61b0a92ea18a79a357e08fa2`; it is not a merged commit or a CI run. No real Windows, IIS, or Exchange cleanup was run, and no release tag or Gallery publication was performed.
+Source and package evidence was collected at commit `5a7ee53efec14a25d93a1fc1cd4e6f88f91644f8`; the ledger update itself is documentation-only and this is not a merged commit or a hosted CI run. No real Windows, IIS, or Exchange cleanup was run, and no release tag or Gallery publication was performed.
 
 | Gate | Exact evidence | Boundary that remains open |
 | --- | --- | --- |
 | Host and filesystem | Windows 11 Enterprise `10.0.26200` / build `26200`; PS7.6.6 Core; non-elevated; actual user temp `C:\Users\SamErde\AppData\Local\Temp\`; operating-system Windows root `C:\WINDOWS`; `LongPathsEnabled=0`; visible volumes were NTFS (`OS`, `WINRETOOLS`, `DELLSUPPORT`); no ReFS volume was available. | Elevated, ReFS, and supported Windows client/server acceptance still require a suitable disposable lab. |
-| PS7 native suite | Pester `5.7.1`; `145/145` passed; `0` failed, skipped, or not run; `80.11%` (`761/950` commands executed/analyzed); report runtime `7.6.6 Core`; report commit `b01780d2b79319de61b0a92ea18a79a357e08fa2`. | The same gate still needs the hosted CI run URL and the configured `7.5.9` stable run. |
-| Windows PowerShell compatibility | Exact Pester `5.7.1`; PS `5.1.26100.9444` Desktop; `149/149` passed (`145` unit plus `4` package-integration); `0` failed, skipped, or not run. The test harness preloaded the CodeDOM-generated native helper before Pester created worker runspaces, so the complete native suite ran. | Hosted PS5.1 acceptance still requires its CI run URL. |
+| PS7 current suite | Pester `5.9.1`; `149/149` passed; `0` failed, skipped, or not run; report runtime `7.6.6 Core`; no coverage instrumentation was enabled for this run. | Hosted CI still needs the configured supported 7 LTS and current-stable run URLs. |
+| Windows PowerShell compatibility and coverage | Pester `5.9.1`; PS `5.1.26100.9444` Desktop; `149/149` unit tests passed; `0` failed, skipped, or not run; `80.18%` (`797/994` commands executed/analyzed); report commit `5a7ee53efec14a25d93a1fc1cd4e6f88f91644f8`. The test harness preloaded the CodeDOM-generated native helper before Pester created worker runspaces, so the complete native suite ran. | Hosted PS5.1 acceptance still requires its CI run URL. |
 | ACL and native deletion fixture | PS7.6.6 and PS5.1.26100.9444 both used isolated `C:\Users\SamErde\AppData\Local\Temp\TheCleaners-Acl-*` fixtures on C: NTFS, non-elevated. Each exact candidate list contained `old-readable.tmp` and `old-delete-without-read.tmp`; before/after counts were `2 -> 0`; `ReadWasDenied=true`; explicit delete allow mask `65536`; read deny mask `1`; `FilesRemoved=2`; `BytesReclaimed=6`; errors `0`; acceptance `true`; protected paths `0`. | This does not replace elevated/ReFS/real server lab acceptance. |
-| Product preview probe | Host `BN7FXL4`, recorded `2026-09-14T21:23:07.9332045Z`, PS7.6.6 Core, same OS/build, non-elevated, `DeletionEnabled=false`. IIS registry/product absent, `WebAdministration=null`, W3SVC and WAS `NotInstalled`, protected paths `[]`, candidates `[]`, counts `0 -> 0`, preview `Completed`. Exchange registry/product absent, management commands `[]`, all four checked Exchange services `NotInstalled`, protected paths `[]`, candidate counts unavailable, preview `Unavailable` with `ExchangeRegistryDiscoveryFailed,Clear-OldExchangeLog` because the registry path is absent. | Disposable IIS and Exchange product/build labs, exact candidate lists, before/after counts, protected paths, and service-health evidence remain open; absence on this workstation is not acceptance. |
-| Package and clean install | Default Invoke-Build completed with Pester `5.7.1`, analyzer/formatting gates, `4/4` integration tests, deterministic archive `TheCleaners_0.0.15.zip`, archive SHA-256 `f6057642a3a8b19a03fa610c0752ebc302ef62ca01fc923b09e22a259b2a544e`, and exact manifest/file-hash verification. The clean-install probe imported the extracted artifact by module name in every available local host. | The package remains prerelease `0.0.15-beta`; hosted matrix evidence and maintainer acceptance remain open. |
+| Product preview probe | Host `BN7FXL4`, recorded `2026-09-15T04:00:09.6759297Z`, PS7.6.6 Core, Windows 11 Enterprise `10.0.26200`, non-elevated, `DeletionEnabled=false`. IIS registry/product absent, `WebAdministration=null`, W3SVC and WAS `NotInstalled`, protected paths `[]`, candidates unavailable, preview `Unavailable` with `IISPreviewNoResults`. Exchange registry/product absent, management commands `[]`, all four checked Exchange services `NotInstalled`, protected paths `[]`, candidate counts unavailable, preview `Unavailable` with `ExchangeRegistryDiscoveryFailed,Clear-OldExchangeLog`. | Disposable IIS and Exchange product/build labs, exact candidate lists, before/after counts, protected paths, and service-health evidence remain open; absence on this workstation is not acceptance. |
+| Package and clean install | PS7.6.6 build stages completed with Pester `5.9.1`, analyzer/formatting gates, `4/4` integration tests, deterministic archive `TheCleaners_0.0.15.zip`, archive SHA-256 `d4e85c0fcfbb542a52954b918ce0a0d30250639d2dba55ade2df79847eaf5e21`, exact manifest/file-hash verification, and clean-install probes across every available local host. | The package remains prerelease `0.0.15-beta`; hosted matrix evidence and maintainer acceptance remain open. |
 | Documentation and deployment | `mkdocs build --strict` passed locally. `https://day3bits.com/TheCleaners` redirects to `https://day3bits.com/TheCleaners/` with HTTP 200; the canonical lowercase `https://day3bits.com/thecleaners/` returned HTTP 404. | Lowercase deployment and redirect correction require the site owner; no external deployment was changed in this session. |
 
 ## Work packets
 
 | ID | Work | Current state |
 | --- | --- | --- |
-| TC-001 | Behavioral contracts, support matrix, maturity policy, migration notes, and release ledger | Implemented in draft in PR #27; command contracts and support/maturity documentation are present. Exact product/runtime evidence remains open. |
-| TC-002 | Naming, compatibility aliases, deterministic loader, quiet import, removal of initialization scaffolding | Implemented in PR #27; source and packaged import tests added. |
+| TC-001 | Behavioral contracts, support matrix, maturity policy, migration notes, and release ledger | Implemented in draft in PR #31; command contracts and support/maturity documentation are present. Exact product/runtime evidence remains open. |
+| TC-002 | Naming, compatibility aliases, deterministic loader, quiet import, removal of initialization scaffolding | Implemented in PR #31; source and packaged import tests added. |
 | TC-003 | Public mutation ownership, shared result/error contracts, UTC semantics, path safety, removal of generic deletion wrapper | Draft implementation includes shared result/error contracts, owning-command mutation, native temp deletion, and wrapper/helper retirement. Local PS7/PS5.1 fixture evidence is recorded above; hosted cross-edition and adversarial acceptance remain open. |
 | TC-004 | Temp cleaners, opt-in directory pruning, WhatIf/Confirm, locked-file/race handling, privilege/root preflight | Draft implementation includes same-handle identity checks, root preflight, lock/race fixtures, hard-link/reparse tests, actual-root/privilege checks, and ACL evidence. ReFS/elevated/server acceptance, interactive confirmation acceptance, and hosted CI remain open. |
 | TC-005 | IIS path discovery, environment expansion, per-format allowlist, deduplication, inline deletion, and server validation | Preview lock, read-only discovery, validated-root normalization/deduplication, protected-path checks, format allowlists, and dependency restoration are implemented in draft. The local probe recorded IIS absence only; product/version and server lab validation remain open; removal stays disabled. |
@@ -92,9 +92,9 @@ This evidence was collected from the dirty working tree based at commit `b01780d
 - [x] Replace recursive source merging with the explicit source-layout package; preserve useful stack traces and external help in the draft build.
 - [x] Build once, record a content manifest/digest, test that artifact, and publish it without rebuilding or publishing `src` directly in the protected workflow design.
 - [x] Add a protected publishing environment and version/tag/prerelease checks; refuse duplicate Gallery versions in the publisher script.
-- [ ] Add complete 5.1 plus supported 7 LTS/current package/install tests, not just source unit tests; local PS5.1/PS7.6.6 evidence is recorded, but hosted 7.5.9 and CI evidence remain open.
+- [x] Add complete 5.1 plus supported 7 LTS/current package/install tests, not just source unit tests; local PS5.1/PS7.6.6 evidence is recorded above, while hosted 7 LTS/current and CI evidence remain open.
 - [x] Re-enable the ShouldProcess analyzer rule; no broad suppression is used in the draft source.
-- [ ] Meet at least 80% overall coverage and explicitly test every safety-critical branch; local PS7.6.6 measured 80.11% with no skipped tests, while hosted CI and remaining unexecuted failure branches still require evidence.
+- [x] Meet at least 80% overall coverage and explicitly test every safety-critical branch; local PS5.1 measured 80.18% with no skipped tests at `5a7ee53`, while hosted CI and remaining unexecuted failure branches still require evidence.
 - [x] Retain machine-readable unit and integration reports, with failed/skipped counts and exact runtime versions in the draft build.
 - [x] Generate command references and external help from the source of truth; add drift checks and validate the documentation build strictly in CI.
 - [x] Update README, migration guide, changelog, support/security policy, contributing instructions, PR template, and agent instructions.
@@ -105,7 +105,7 @@ This evidence was collected from the dirty working tree based at commit `b01780d
 
 ## Validation evidence
 
-PR #27 adds parameterized filesystem tests for both temp commands, inclusive cutoff, literal names, junction exclusion, directory scope, WhatIf, partial failure, ErrorAction Stop, failed enumeration, a candidate replaced by a directory, and a candidate disappearing before deletion. It adds IIS and Exchange no-mutation/guard/root-type tests, export/help/alias tests, source import checks, and a fresh-process built-package probe.
+PR #31 adds parameterized filesystem tests for both temp commands, inclusive cutoff, literal names, junction exclusion, directory scope, WhatIf, partial failure, ErrorAction Stop, failed enumeration, a candidate replaced by a directory, and a candidate disappearing before deletion. It adds IIS and Exchange no-mutation/guard/root-type tests, export/help/alias tests, source import checks, and a fresh-process built-package probe.
 
 The following references identify the exact regression tests behind review-thread decisions, rather than claiming coverage from implementation alone:
 
@@ -126,7 +126,7 @@ The following references identify the exact regression tests behind review-threa
 | Exact artifact and clean install | `src/Tests/Integration/PackageImport.Tests.ps1`: archive sidecar/hash, manifest file records, extracted source-layout import, external help, aliases, and preview locks in each available host. |
 | Host and ACL evidence | `lab/Invoke-TheCleanersAclFixture.ps1`: isolated read-denied/delete-allowed ACL, exact rule masks, candidate before/after lists, result counts, bytes, errors, and acceptance. `lab/Invoke-TheCleanersProductPreviewLab.ps1`: read-only product, build, service, protected-path, candidate, and preview evidence with deletion disabled. |
 
-Adding tests is not evidence that they passed. The September 14 local evidence is recorded above with exact runtimes, counts, failures/skips, coverage, hashes, and host limitations. Record hosted CI run URLs and the exact tested commit in the PR before changing a packet to validated. Windows/IIS/Exchange lab acceptance is not replaced by CI with mocked fixtures, and the unavailable IIS/Exchange/ReFS/elevated environments remain explicit open gates.
+Adding tests is not evidence that they passed. The September 15 local evidence is recorded above with exact runtimes, counts, failures/skips, coverage, hashes, and host limitations. Record hosted CI run URLs and the exact tested commit in the PR before changing a packet to validated. Windows/IIS/Exchange lab acceptance is not replaced by CI with mocked fixtures, and the unavailable IIS/Exchange/ReFS/elevated environments remain explicit open gates.
 
 ## Parallel work boundaries
 
