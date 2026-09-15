@@ -65,6 +65,23 @@ Describe 'Exchange preview result edge cases' -Skip:(-not $WindowsHost) -Tag Uni
         $Failed.ErrorIds | Should -Contain 'ExchangeDiscoveryFailed'
     }
 
+    It 'returns a failed result when an existing root fails before normalization' {
+        $OutsideRoot = Join-Path -Path $TestDrive -ChildPath 'ExchangeOutsideRoot'
+        $null = New-Item -Path $OutsideRoot -ItemType Directory -Force
+        [System.IO.Directory]::Delete($LogRoot, $true)
+        $null = New-Item -Path $LogRoot -ItemType Junction -Target $OutsideRoot -Force
+
+        $Results = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
+
+        $Failed = $Results | Where-Object RootPath -EQ ([System.IO.Path]::GetFullPath($LogRoot))
+        $Failed | Should -Not -BeNullOrEmpty
+        $Failed.DiscoveryStatus | Should -Be 'Failed'
+        $Failed.Status | Should -Be 'DiscoveryFailed'
+        $Failed.FileCandidateCount | Should -BeNullOrEmpty
+        $Failed.DirectoryCandidateCount | Should -BeNullOrEmpty
+        $Failed.ErrorIds | Should -Contain 'ExchangeDiscoveryFailed'
+    }
+
     It 'reports an unavailable product when no configured log root exists' {
         [System.IO.Directory]::Delete($LogRoot, $true)
 

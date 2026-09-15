@@ -153,8 +153,9 @@ function Clear-OldExchangeLog {
         } catch {
             $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'ExchangeDiscoveryFailed' -Category ReadError -TargetObject $RootPath
             $PSCmdlet.WriteError($ErrorRecord)
-            if ($PassThru -and $null -ne $NormalizedRoot) {
-                $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldExchangeLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus $Protected.Status -ProtectionPathCount @($Protected.Paths).Count -ProtectionPaths @($Protected.Paths) -ProductVersion 'Exchange Server v15' -DiscoverySource 'v15 setup registry and fixed product roots' -CandidatePaths @() -Status 'DiscoveryFailed'
+            if ($PassThru) {
+                $ResultRootPath = if ($null -ne $NormalizedRoot) { $NormalizedRoot } else { $RootPath }
+                $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldExchangeLog' -RootPath $ResultRootPath -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus $Protected.Status -ProtectionPathCount @($Protected.Paths).Count -ProtectionPaths @($Protected.Paths) -ProductVersion 'Exchange Server v15' -DiscoverySource 'v15 setup registry and fixed product roots' -CandidatePaths @() -Status 'DiscoveryFailed'
                 $Result.FileCandidateCount = $null
                 $Result.DirectoryCandidateCount = $null
                 $Result.DiscoveryErrorCount = 1

@@ -59,6 +59,7 @@ function Clear-OldIISLog {
     $IisProtectedPaths = @(Get-TheCleanersIisProtectedPaths)
     $WebAdministrationModule = Get-Module -Name 'WebAdministration' -ListAvailable | Select-Object -First 1
     $DiscoveryErrorReported = $false
+    $DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
 
     if ($null -ne $WebAdministrationModule) {
         try {
@@ -127,6 +128,8 @@ function Clear-OldIISLog {
                             DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
                         })
                 } catch {
+                    $DiscoveryErrorReported = $true
+                    $null = $DiscoveryErrorIds.Add('IISFtpDiscoveryFailed')
                     if ($null -ne $WebRootDefinition) {
                         $null = $WebRootDefinition.DiscoveryErrorIds.Add('IISFtpDiscoveryFailed')
                     }
@@ -136,6 +139,7 @@ function Clear-OldIISLog {
             }
         } catch {
             $DiscoveryErrorReported = $true
+            $null = $DiscoveryErrorIds.Add('IISDiscoveryFailed')
             foreach ($RootDefinition in @($Roots | Where-Object { $_.Source -eq 'WebAdministration' })) {
                 $null = $RootDefinition.DiscoveryErrorIds.Add('IISDiscoveryFailed')
             }
@@ -179,6 +183,7 @@ function Clear-OldIISLog {
                 Write-Verbose -Message "The optional alternate IIS log location is not configured: $($_.Exception.Message)"
             } else {
                 $DiscoveryErrorReported = $true
+                $null = $DiscoveryErrorIds.Add('IISRegistryDiscoveryFailed')
                 if ($null -ne $DefaultRootDefinition) {
                     $null = $DefaultRootDefinition.DiscoveryErrorIds.Add('IISRegistryDiscoveryFailed')
                 }
@@ -303,10 +308,16 @@ function Clear-OldIISLog {
         }
     }
 
-    if (-not $FoundExistingRoot -and -not $DiscoveryErrorReported) {
-        $Exception = [System.InvalidOperationException]::new('IIS is not installed or no configured IIS log root could be discovered.')
-        $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'IISDiscoveryUnavailable' -Category ObjectNotFound
-        $PSCmdlet.WriteError($ErrorRecord)
+    if (-not $FoundExistingRoot) {
+        $FinalErrorIds = @($DiscoveryErrorIds | Sort-Object -Unique)
+        if (-not $DiscoveryErrorReported) {
+            $Exception = [System.InvalidOperationException]::new('IIS is not installed or no configured IIS log root could be discovered.')
+            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'IISDiscoveryUnavailable' -Category ObjectNotFound
+            $PSCmdlet.WriteError($ErrorRecord)
+            $FinalErrorIds = @('IISDiscoveryUnavailable')
+        } elseif ($FinalErrorIds.Count -eq 0) {
+            $FinalErrorIds = @('IISDiscoveryFailed')
+        }
         if ($PassThru) {
             $UnavailableRootPath = $null
             if ($Roots.Count -gt 0) {
@@ -319,8 +330,8 @@ function Clear-OldIISLog {
             $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $UnavailableRootPath -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource 'IIS default, registry, and WebAdministration roots' -DisplayName 'IIS discovery' -CandidatePaths @() -Status 'DiscoveryFailed'
             $Result.FileCandidateCount = $null
             $Result.DirectoryCandidateCount = $null
-            $Result.DiscoveryErrorCount = 1
-            $Result.ErrorIds = @('IISDiscoveryUnavailable')
+            $Result.DiscoveryErrorCount = $FinalErrorIds.Count
+            $Result.ErrorIds = $FinalErrorIds
             $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
             $Result
         }
