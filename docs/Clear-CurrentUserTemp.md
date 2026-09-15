@@ -12,7 +12,7 @@ Clear-CurrentUserTemp [-Days <Int16>] [-RemoveEmptyDirectory] [-PassThru] [-What
 
 ## Behavior
 
-Resolve the temporary directory using `[System.IO.Path]::GetTempPath()` on Windows. Select files of any extension whose `LastWriteTimeUtc` is at or before one UTC cutoff. `-Days` defaults to 30 and accepts positive Int16 values. Reparse points are excluded before traversal. Literal paths, ancestry, type, identity, and timestamps are revalidated before removal. The native deletion handle requests `DELETE` without file-content read access.
+Resolve the temporary directory using `[System.IO.Path]::GetTempPath()` on Windows. Select files of any extension whose `LastWriteTimeUtc` is at or before one UTC cutoff. `-Days` defaults to 30 and accepts positive Int16 values. Reparse points are excluded before traversal. Literal paths, ancestry, type, identity, and timestamps are revalidated before removal. The native deletion handle requests `DELETE` without file-content read access and without sharing writes, so an active writer is not removed after the timestamp check.
 
 Without `-RemoveEmptyDirectory`, directories remain untouched. With it, only prune directories emptied by the current invocation and their now-empty ancestors. Never remove the root or unrelated pre-existing empty branches. Recent files prevent their containing directories from being removed. The previous `-TimeOut` parameter is removed; pruning is a single deepest-first pass.
 

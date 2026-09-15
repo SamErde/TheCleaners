@@ -18,10 +18,12 @@ Get-StaleUserProfile [[-Days] <Int16>] [-IncludeSize] [-IncludeUnknownLastUseTim
 
 ## DESCRIPTION
 Queries `Win32_UserProfile` and returns one `TheCleaners.StaleUserProfile` object per
-eligible profile. Special, loaded, default, and service profiles are excluded.
+eligible profile. Special, loaded, default, built-in service, virtual service, and
+IIS application-pool profiles are excluded.
 The command never deletes profiles or writes presentation output to the host.
 Unknown or invalid `LastUseTime` values are not classified as stale unless
-`-IncludeUnknownLastUseTime` is specified. SID translation is best effort.
+`-IncludeUnknownLastUseTime` is specified. SID translation is best effort. Optional
+size enumeration rejects reparse points anywhere in the profile path ancestry.
 
 ## EXAMPLES
 

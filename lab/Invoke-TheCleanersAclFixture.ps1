@@ -9,7 +9,7 @@
 .PARAMETER FixtureParent
     Existing disposable parent directory. A new uniquely named child is used.
 .EXAMPLE
-    .\lab\Invoke-TheCleanersAclFixture.ps1 -FixtureParent C:\Lab\TheCleaners
+    .\lab\Invoke-TheCleanersAclFixture.ps1 -FixtureParent (Join-Path $env:LOCALAPPDATA 'Temp')
 #>
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
 param (

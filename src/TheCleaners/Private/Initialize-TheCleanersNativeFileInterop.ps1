@@ -167,7 +167,7 @@ namespace TheCleaners
             public byte DeleteFile;
         }
 
-        private static SafeFileHandle Open(string path, uint desiredAccess, bool directory)
+        private static SafeFileHandle Open(string path, uint desiredAccess, uint shareMode, bool directory)
         {
             uint flags = FileFlagOpenReparsePoint;
             if (directory)
@@ -178,7 +178,7 @@ namespace TheCleaners
             SafeFileHandle handle = CreateFile(
                 path,
                 desiredAccess,
-                FileShareRead | FileShareWrite | FileShareDelete,
+                shareMode,
                 IntPtr.Zero,
                 OpenExisting,
                 flags,
@@ -196,12 +196,12 @@ namespace TheCleaners
 
         public static SafeFileHandle OpenForInspection(string path, bool directory)
         {
-            return Open(path, 0U, directory);
+            return Open(path, 0U, FileShareRead | FileShareWrite | FileShareDelete, directory);
         }
 
         public static SafeFileHandle OpenForDeletion(string path, bool directory)
         {
-            return Open(path, Delete, directory);
+            return Open(path, Delete, FileShareRead | FileShareDelete, directory);
         }
 
         public static NativeFileIdentity ReadIdentity(SafeFileHandle handle)

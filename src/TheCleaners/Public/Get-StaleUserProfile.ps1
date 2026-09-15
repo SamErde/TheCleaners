@@ -7,9 +7,11 @@ function Get-StaleUserProfile {
         per eligible profile. Missing or invalid LastUseTime is unknown and is not
         classified as stale unless -IncludeUnknownLastUseTime is requested. The
         command never deletes profiles and never writes presentation output to the
-        host. SID translation is best effort; an unresolved SID is retained in the
-        object with an explicit resolution status. Optional size enumeration skips
-        reparse points and reports unavailable sizes without changing profile state.
+        host. Built-in, virtual service, and IIS application-pool SID families are
+        excluded. SID translation is best effort; an unresolved SID is retained in
+        the object with an explicit resolution status. Optional size enumeration
+        skips reparse points throughout the profile path ancestry and reports
+        unavailable sizes without changing profile state.
     .PARAMETER Days
         A profile is stale when its known last-use time is at or before this many
         days ago. The default is 90 days.
@@ -71,7 +73,8 @@ function Get-StaleUserProfile {
         $LocalPath = [string]$ProfileRecord.LocalPath
         $Sid = [string]$ProfileRecord.SID
         $Leaf = if ([string]::IsNullOrWhiteSpace($LocalPath)) { '' } else { (Split-Path -Path $LocalPath.TrimEnd([char[]]@('\', '/')) -Leaf) }
-        $IsService = $ServiceSids -contains $Sid.ToUpperInvariant() -or $Leaf -in @('systemprofile', 'LocalService', 'NetworkService')
+        $IsServiceSid = $Sid.ToUpperInvariant() -match '^S-1-5-(80|82)-\d+$'
+        $IsService = $ServiceSids -contains $Sid.ToUpperInvariant() -or $IsServiceSid -or $Leaf -in @('systemprofile', 'LocalService', 'NetworkService')
         $IsDefault = $ProtectedLeaves -contains $Leaf
         $IsSystem = $ServiceSids -contains $Sid.ToUpperInvariant()
         if ($ProfileRecord.Special -or $ProfileRecord.Loaded -or $IsDefault -or $IsService) {
@@ -119,8 +122,17 @@ function Get-StaleUserProfile {
                     if ($ProfileDirectory -isnot [System.IO.DirectoryInfo]) {
                         throw [System.IO.InvalidDataException]::new("The profile path is not a directory: '$LocalPath'.")
                     }
-                    if ($ProfileDirectory.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-                        throw [System.IO.InvalidDataException]::new("The profile path is a reparse point and cannot be sized: '$LocalPath'.")
+                    $ProfilePath = [System.IO.Path]::GetFullPath($LocalPath)
+                    while (-not [string]::IsNullOrWhiteSpace($ProfilePath)) {
+                        $ProfilePathItem = Get-Item -LiteralPath $ProfilePath -Force -ErrorAction Stop
+                        if ($ProfilePathItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                            throw [System.IO.InvalidDataException]::new("The profile path or an ancestor is a reparse point and cannot be sized: '$LocalPath'.")
+                        }
+                        $ParentPath = [System.IO.Path]::GetDirectoryName($ProfilePath)
+                        if ([string]::IsNullOrWhiteSpace($ParentPath) -or $ParentPath -eq $ProfilePath) {
+                            break
+                        }
+                        $ProfilePath = $ParentPath
                     }
                     $SizeTotal = [Int64]0
                     $PendingDirectories = [System.Collections.Generic.Stack[string]]::new()

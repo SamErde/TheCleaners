@@ -115,6 +115,13 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
         Should -Invoke Remove-Item -Exactly 0
     }
 
+    It 'lists candidate paths through the verbose stream' {
+        $VerboseOutput = @(& $CommandName -Days 30 -RemoveEmptyDirectory -WhatIf -Verbose 4>&1)
+
+        ($VerboseOutput | Out-String) | Should -Match ([regex]::Escape($OldFile.FullName))
+        ($VerboseOutput | Out-String) | Should -Match ([regex]::Escape($NestedPath))
+    }
+
     It 'honors an explicitly false directory switch' {
         & $CommandName -Days 30 -RemoveEmptyDirectory:$false -Confirm:$false
         $OldFile.FullName | Should -Not -Exist
@@ -157,6 +164,21 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
             $NestedPath | Should -Exist
         } finally {
             $FileLock.Dispose()
+        }
+    }
+
+    It 'does not delete a file that remains open for writing' {
+        $Writer = [System.IO.File]::Open($OldFile.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::Read -bor [System.IO.FileShare]::Delete)
+        try {
+            $Result = & $CommandName -Days 30 -Confirm:$false -PassThru -ErrorAction SilentlyContinue -ErrorVariable CleanupErrors
+            $CleanupErrors | Should -Not -BeNullOrEmpty
+            $Result.FileFailureCount | Should -Be 1
+            $Result.FilesRemoved | Should -Be 0
+            $Result.BytesReclaimed | Should -Be 0
+            $Result.Status | Should -Be 'PartialFailure'
+            $OldFile.FullName | Should -Exist
+        } finally {
+            $Writer.Dispose()
         }
     }
 
@@ -321,7 +343,9 @@ Describe 'IIS is structurally preview-only' -Skip:(-not $WindowsHost) -Tag Unit 
         Mock Test-Path { $false }
         Mock Get-ChildItem { throw 'IIS preview test must not enumerate host paths.' }
 
-        Clear-OldIISLog -WhatIf
+        $DiscoveryErrors = @()
+        Clear-OldIISLog -WhatIf -ErrorAction SilentlyContinue -ErrorVariable DiscoveryErrors
+        @($DiscoveryErrors | Where-Object { $_.FullyQualifiedErrorId -match '^IISDiscoveryUnavailable' }) | Should -Not -BeNullOrEmpty
 
     }
 }

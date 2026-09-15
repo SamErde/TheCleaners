@@ -97,6 +97,12 @@ function Clear-CurrentUserTemp {
     $Result.CandidatePaths = @($Files | ForEach-Object { $_.Path })
     $Result.FileCandidateCount = $Files.Count
     $Result.DirectoryCandidateCount = $Directories.Count
+    foreach ($File in $Files) {
+        Write-Verbose -Message ('Candidate file: {0}' -f $File.Path)
+    }
+    foreach ($Directory in $Directories) {
+        Write-Verbose -Message ('Planned directory: {0}' -f $Directory.Path)
+    }
     if ($Files.Count -eq 0) {
         if ($PassThru) {
             $Result

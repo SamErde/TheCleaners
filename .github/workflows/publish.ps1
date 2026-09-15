@@ -163,4 +163,31 @@ if ($Existing.Count -gt 0) {
     throw "TheCleaners version '$GalleryVersion' already exists in PSGallery."
 }
 
-Publish-Module -Path $ResolvedArtifactPath -NuGetApiKey $PSGalleryApiKey -Repository PSGallery -ErrorAction Stop
+$PublishRoot = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ('TheCleaners-Publish-{0}' -f ([guid]::NewGuid().Guid))
+$PublishPath = Join-Path -Path $PublishRoot -ChildPath 'TheCleaners'
+try {
+    $null = New-Item -Path $PublishPath -ItemType Directory -Force -ErrorAction Stop
+    foreach ($ArtifactItem in @(Get-ChildItem -LiteralPath $ResolvedArtifactPath -Force)) {
+        Copy-Item -LiteralPath $ArtifactItem.FullName -Destination $PublishPath -Recurse -Force -ErrorAction Stop
+    }
+
+    $StagedManifestPath = Join-Path -Path $PublishPath -ChildPath 'TheCleaners.psd1'
+    $StagedManifest = Test-ModuleManifest -Path $StagedManifestPath -ErrorAction Stop
+    if ($StagedManifest.Name -ne $ModuleManifest.Name -or [string]$StagedManifest.Version -ne [string]$ModuleManifest.Version) {
+        throw 'The staged publish directory does not contain the exact tested module manifest.'
+    }
+    $StagedRoot = $PublishPath.TrimEnd([char[]]@('\', '/'))
+    $ActualStagedFiles = @(Get-ChildItem -LiteralPath $PublishPath -File -Recurse -Force | ForEach-Object {
+            $_.FullName.Substring($StagedRoot.Length + 1).Replace('\', '/')
+        } | Sort-Object)
+    $StagedFileDifferences = @(Compare-Object -ReferenceObject $ExpectedArtifactFiles -DifferenceObject $ActualStagedFiles)
+    if ($StagedFileDifferences.Count -gt 0) {
+        throw 'The staged publish directory does not contain the exact tested artifact file set.'
+    }
+
+    Publish-Module -Path $PublishPath -NuGetApiKey $PSGalleryApiKey -Repository PSGallery -ErrorAction Stop
+} finally {
+    if (Test-Path -LiteralPath $PublishRoot) {
+        Remove-Item -LiteralPath $PublishRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}

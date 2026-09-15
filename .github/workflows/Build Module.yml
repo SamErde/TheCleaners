@@ -5,6 +5,7 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -126,7 +127,8 @@ jobs:
         shell: powershell
         run: |
           $ConfirmPreference = 'None'
-          $Evidence = & .\lab\Invoke-TheCleanersAclFixture.ps1 -FixtureParent $env:RUNNER_TEMP | ConvertFrom-Json
+          $FixtureParent = Join-Path -Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)) -ChildPath 'Temp'
+          $Evidence = & .\lab\Invoke-TheCleanersAclFixture.ps1 -FixtureParent $FixtureParent | ConvertFrom-Json
           $Evidence | ConvertTo-Json -Depth 8
           if (-not $Evidence.Acceptance) {
               throw 'The Windows PowerShell 5.1 native ACL fixture did not pass acceptance checks.'

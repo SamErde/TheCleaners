@@ -12,7 +12,7 @@ Clear-WindowsTemp [-Days <Int16>] [-RemoveEmptyDirectory] [-PassThru] [-WhatIf] 
 
 ## Behavior
 
-Select files of any extension whose `LastWriteTimeUtc` is at or before one UTC cutoff. `-Days` defaults to 30 and accepts positive Int16 values. Reparse points are excluded before traversal. Literal paths, ancestry, type, identity, and timestamps are revalidated before removal. The Windows temp root is derived from the Windows special-folder API with a SystemRoot fallback, not from an environment variable alone. Run elevated for system-owned files; actual OS-root acceptance remains a 1.0 gate.
+Select files of any extension whose `LastWriteTimeUtc` is at or before one UTC cutoff. `-Days` defaults to 30 and accepts positive Int16 values. Reparse points are excluded before traversal. Literal paths, ancestry, type, identity, and timestamps are revalidated before removal. The native deletion handle requests `DELETE` without file-content read access and without sharing writes, so an active writer is not removed after the timestamp check. The Windows temp root is derived from the Windows special-folder API with a SystemRoot fallback, not from an environment variable alone. Run elevated for system-owned files; actual OS-root acceptance remains a 1.0 gate.
 
 Without `-RemoveEmptyDirectory`, directories remain untouched. With it, only prune directories emptied by the current invocation and their now-empty ancestors, deepest-first. Never remove the root or unrelated pre-existing empty branches. A retained file prevents pruning its directory.
 

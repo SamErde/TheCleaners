@@ -103,6 +103,15 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         { Clear-OldIISLog -Days 60 -WhatIf -WarningAction SilentlyContinue -ErrorAction Stop } | Should -Throw '*Fixture registry access denied*'
     }
 
+    It 'reports an unavailable product when no IIS root can be discovered' {
+        [System.IO.Directory]::Delete($IISRoot, $true)
+
+        $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable DiscoveryError)
+
+        $Result | Should -HaveCount 0
+        @($DiscoveryError | Where-Object { $_.FullyQualifiedErrorId -match '^IISDiscoveryUnavailable' }) | Should -Not -BeNullOrEmpty
+    }
+
     It 'contains no deletion command or generic removal-helper call' {
         $Tokens = $null
         $ParseErrors = $null

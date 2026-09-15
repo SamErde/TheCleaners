@@ -52,11 +52,25 @@ Describe 'Typed stale-profile output' -Skip:(-not $WindowsHost) -Tag Unit {
                     Special    = $false
                     Loaded     = $true
                 }
+                [pscustomobject]@{
+                    LocalPath  = (Join-Path -Path $TestDrive -ChildPath 'VirtualService')
+                    SID        = 'S-1-5-80-12345'
+                    LastUseTime = $Now.AddDays(-91)
+                    Special    = $false
+                    Loaded     = $false
+                }
+                [pscustomobject]@{
+                    LocalPath  = (Join-Path -Path $TestDrive -ChildPath 'IISAppPool')
+                    SID        = 'S-1-5-82-54321'
+                    LastUseTime = $Now.AddDays(-91)
+                    Special    = $false
+                    Loaded     = $false
+                }
             )
         }
     }
 
-    It 'returns typed stable fields and excludes unknown/default/loaded profiles by default' {
+    It 'returns typed stable fields and excludes unknown/default/loaded/service profiles by default' {
         $Result = Get-StaleUserProfile -Days 90
 
         $Result | Should -HaveCount 1
@@ -96,6 +110,29 @@ Describe 'Typed stale-profile output' -Skip:(-not $WindowsHost) -Tag Unit {
             [pscustomobject]@{
                 LocalPath   = $ReparseProfilePath
                 SID         = 'S-1-5-21-1004'
+                LastUseTime = (Get-Date).AddDays(-91)
+                Special     = $false
+                Loaded      = $false
+            }
+        }
+
+        $Result = Get-StaleUserProfile -Days 90 -IncludeSize -ErrorAction SilentlyContinue -ErrorVariable SizeError
+
+        $Result.SizeStatus | Should -Be 'Unavailable'
+        $Result.SizeBytes | Should -BeNullOrEmpty
+        @($SizeError | Where-Object { $_.FullyQualifiedErrorId -match '^ProfileSizeUnavailable' }) | Should -Not -BeNullOrEmpty
+    }
+
+    It 'does not size a profile below a reparse-point ancestor' {
+        $OutsideParent = Join-Path -Path $TestDrive -ChildPath 'OutsideProfileParent'
+        $ReparseParent = Join-Path -Path $TestDrive -ChildPath 'ReparseProfileParent'
+        $ProfileThroughLink = Join-Path -Path $ReparseParent -ChildPath 'NestedProfile'
+        $null = New-Item -Path (Join-Path -Path $OutsideParent -ChildPath 'NestedProfile') -ItemType Directory -Force
+        $null = New-Item -Path $ReparseParent -ItemType Junction -Target $OutsideParent -Force
+        Mock Get-CimInstance {
+            [pscustomobject]@{
+                LocalPath   = $ProfileThroughLink
+                SID         = 'S-1-5-21-1005'
                 LastUseTime = (Get-Date).AddDays(-91)
                 Special     = $false
                 Loaded      = $false
