@@ -414,7 +414,9 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
         }
         $ModulePage = $ModulePage.Substring(0, $MarkerIndex) + [string]$Synopsis + $ModulePage.Substring($MarkerIndex + $DescriptionMarker.Length)
     }
-    Write-BuildTextFile -Path $ModulePagePath -Content $ModulePage
+    # PlatyPS 0.14.2 on Windows PowerShell requires the generated page's
+    # UTF-8 BOM; make that choice explicit so both supported hosts agree.
+    Write-BuildTextFile -Path $ModulePagePath -Content $ModulePage -Encoding ([System.Text.UTF8Encoding]::new($true))
     $Missing = @(Select-String -Path $GeneratedFiles.FullName -Pattern '({{.*}})' -ErrorAction SilentlyContinue)
     if ($Missing.Count -gt 0) {
         throw "Generated help contains unresolved template markers: $($Missing -join '; ')"

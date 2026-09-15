@@ -75,8 +75,10 @@ function Add-MissingCommonParameterToMarkdown {
                 $NewParameter = "-$($NewParameter)"
             }
             $pattern = '(?m)^This cmdlet supports the common parameters:(.+?)\.'
-            $replacement = {
-                $Params = $_.Groups[1].Captures[0].ToString() -split ' '
+            $Replacement = [System.Text.RegularExpressions.MatchEvaluator]{
+                param ($Match)
+
+                $Params = $Match.Groups[1].Captures[0].ToString() -split ' '
                 $CommonParameters = @()
                 foreach ($CommonParameter in $Params) {
                     if ($CommonParameter.StartsWith('-')) {
@@ -96,7 +98,7 @@ function Add-MissingCommonParameterToMarkdown {
                 $CommonParameters[-1] = "and $($CommonParameters[-1]). "
                 return 'This cmdlet supports the common parameters: ' + (($CommonParameters | Sort-Object) -join ', ')
             }
-            $newContent = $content -replace $pattern, $replacement
+            $newContent = [System.Text.RegularExpressions.Regex]::Replace($content, $pattern, $Replacement)
             if ($null -ne (Compare-Object -ReferenceObject $content -DifferenceObject $newContent)) {
                 Write-Verbose "Added $NewParameter to $p"
                 $updateFile = $true
