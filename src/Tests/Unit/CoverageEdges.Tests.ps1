@@ -24,9 +24,9 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
     It 'rejects unsupported IIS and Exchange filename families and protected roots' {
         Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format 'W3C' -Service 'UnknownService' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format 'Custom' | Should -BeFalse
-        Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format '0' | Should -BeTrue
-        Test-TheCleanersIisLogFileName -Name 'inetsv01.log' -Format '1' | Should -BeTrue
-        Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format '2' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'inetsv01.log' -Format '0' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format '1' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format '2' | Should -BeTrue
         Test-TheCleanersExchangeLogFileName -Name 'old.log' -RelativeRoot 'UnknownRoot' | Should -BeFalse
         Test-TheCleanersIisProtectedPath -Path (Join-Path -Path $TestDrive -ChildPath 'ordinary-logs') | Should -BeFalse
     }

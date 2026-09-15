@@ -143,7 +143,11 @@ if (-not [string]::IsNullOrWhiteSpace($ManifestPrerelease)) {
 try {
     $Existing = @(Find-Module -Name TheCleaners -RequiredVersion $GalleryVersion -AllowPrerelease -Repository PSGallery -ErrorAction Stop)
 } catch {
-    throw "Could not verify whether TheCleaners version '$GalleryVersion' already exists in PSGallery: $($_.Exception.Message)"
+    if ([string]$_.FullyQualifiedErrorId -like 'NoMatchFoundForCriteria*') {
+        $Existing = @()
+    } else {
+        throw "Could not verify whether TheCleaners version '$GalleryVersion' already exists in PSGallery: $($_.Exception.Message)"
+    }
 }
 if ($Existing.Count -gt 0) {
     throw "TheCleaners version '$GalleryVersion' already exists in PSGallery."

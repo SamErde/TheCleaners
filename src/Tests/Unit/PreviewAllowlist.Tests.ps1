@@ -26,9 +26,11 @@ Describe 'IIS format and protected-path allowlists' -Skip:(-not $WindowsHost) -T
     }
 
     It 'maps the IIS numeric logging enum and rejects non-rollover digit lengths' {
-        Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format '0' -Service 'W3SVC' | Should -BeTrue
-        Test-TheCleanersIisLogFileName -Name 'inetsv01.log' -Format '1' | Should -BeTrue
-        Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format '2' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'inetsv01.log' -Format '0' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format '1' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format '2' -Service 'W3SVC' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format '0' -Service 'W3SVC' | Should -BeFalse
+        Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format '3' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'inetsv010.log' -Format 'IIS' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'u_ex2401010.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
     }

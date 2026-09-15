@@ -34,12 +34,13 @@ function Test-TheCleanersIisLogFileName {
     )
 
     $NormalizedFormat = switch ($Format.ToString().ToUpperInvariant()) {
-        '0' { 'W3C'; break }
+        '0' { 'IIS'; break }
         'IIS' { 'IIS'; break }
-        '1' { 'IIS'; break }
+        '1' { 'NCSA'; break }
         'NCSA' { 'NCSA'; break }
-        '2' { 'NCSA'; break }
+        '2' { 'W3C'; break }
         'W3C' { 'W3C'; break }
+        '3' { 'Custom'; break }
         default { 'Custom' }
     }
     $ServiceName = $Service.ToUpperInvariant()
