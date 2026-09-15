@@ -99,4 +99,26 @@ Describe 'Exchange filename and protected-location allowlists' -Skip:(-not $Wind
         $Protection.Paths | Should -Contain ([System.IO.Path]::GetFullPath($DatabasePath))
         $Protection.Paths | Should -Contain ([System.IO.Path]::GetFullPath($TransactionPath))
     }
+
+    It 'reports unknown protection when a database omits path metadata' {
+        $InstallRoot = New-Item -Path (Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)) -ItemType Directory
+        $DatabasePath = Join-Path -Path $TestDrive -ChildPath 'Databases/Mailbox.edb'
+        function global:Get-MailboxDatabase { }
+        Mock Get-Command { [pscustomobject]@{ Name = 'Get-MailboxDatabase' } } -ParameterFilter { $Name -eq 'Get-MailboxDatabase' }
+        Mock Get-MailboxDatabase {
+            [pscustomobject]@{
+                EdbFilePath   = $DatabasePath
+                LogFolderPath = $null
+            }
+        }
+
+        try {
+            $Protection = Get-TheCleanersExchangeProtectedPaths -InstallRoot $InstallRoot
+        } finally {
+            Remove-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -Force -ErrorAction SilentlyContinue
+        }
+
+        $Protection.Status | Should -Be 'Unknown'
+        $Protection.Paths | Should -Contain ([System.IO.Path]::GetFullPath($DatabasePath))
+    }
 }

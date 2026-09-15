@@ -29,14 +29,19 @@ function Get-TheCleanersExchangeProtectedPaths {
     }
 
     $ProtectedPaths = [System.Collections.Generic.List[string]]::new()
+    $MetadataIncomplete = $false
+    $DatabaseCount = 0
     foreach ($Database in @(& $DatabaseCommand.Name -Status -ErrorAction Stop)) {
+        $DatabaseCount++
         foreach ($PropertyName in @('EdbFilePath', 'LogFolderPath')) {
             $Value = $Database.$PropertyName
             if ($null -eq $Value) {
+                $MetadataIncomplete = $true
                 continue
             }
             $CandidatePath = if ($Value -is [string]) { $Value } elseif ($Value.PSObject.Properties['PathName']) { [string]$Value.PathName } else { [string]$Value }
             if ([string]::IsNullOrWhiteSpace($CandidatePath)) {
+                $MetadataIncomplete = $true
                 continue
             }
             $ExpandedPath = [Environment]::ExpandEnvironmentVariables($CandidatePath)
@@ -50,6 +55,6 @@ function Get-TheCleanersExchangeProtectedPaths {
     [pscustomobject]@{
         InstallRoot = $InstallRoot.FullName
         Paths       = @($ProtectedPaths | Sort-Object -Unique)
-        Status      = 'Validated'
+        Status      = if ($DatabaseCount -eq 0 -or $MetadataIncomplete -or $ProtectedPaths.Count -eq 0) { 'Unknown' } else { 'Validated' }
     }
 }
