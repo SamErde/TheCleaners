@@ -7,6 +7,9 @@ function Get-TheCleanersTempPlan {
         candidates and touched directories so the owning public command can compare
         the object opened for mutation with the object found during discovery.
         Discovery errors are terminating to prevent partial plans from being used.
+        When identity capture is enabled, each queued directory is opened with a
+        stable native handle while the provider enumerates it and its identity is
+        captured, so directory replacement or rename fails closed.
     .PARAMETER Root
         Previously validated temporary directory.
     .PARAMETER CutoffUtc
@@ -53,72 +56,112 @@ function Get-TheCleanersTempPlan {
     $Candidates = [System.Collections.Generic.List[object]]::new()
     $FilePaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $DirectoryPaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $Pending = [System.Collections.Generic.Stack[string]]::new()
-    $Pending.Push($RootPath)
+    $Pending = [System.Collections.Generic.Stack[object]]::new()
+    $Pending.Push([pscustomobject]@{
+            Path     = $RootPath
+            Identity = $RootIdentity
+        })
 
     while ($Pending.Count -gt 0) {
-        $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $Pending.Pop()
+        $DirectoryState = $Pending.Pop()
+        $DirectoryPath = [string]$DirectoryState.Path
+        $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath
         if ($Directory -isnot [System.IO.DirectoryInfo]) {
-            throw [System.IO.InvalidDataException]::new("The temp traversal path is not a directory: '$($Directory.FullName)'.")
+            throw [System.IO.InvalidDataException]::new("The temp traversal path is not a directory: '$DirectoryPath'.")
         }
-        foreach ($Item in @(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop)) {
-            if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-                Write-Verbose -Message "Skipping reparse point: $($Item.FullName)"
-                continue
-            }
-            if ($Item.PSIsContainer) {
-                $Pending.Push($Item.FullName)
-                continue
-            }
-            if ($Item.LastWriteTimeUtc -gt $CutoffUtc) {
-                continue
-            }
-
-            $CandidateIdentity = $null
+        $DirectoryHandle = $null
+        try {
             if ($CaptureIdentity) {
-                try {
-                    $CandidateIdentity = Get-TheCleanersFileIdentity -LiteralPath $Item.FullName
-                } catch {
-                    $BaseException = $_.Exception.GetBaseException()
-                    $CandidateMissing = (
-                        $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
-                        $BaseException -is [System.IO.FileNotFoundException] -or
-                        $BaseException -is [System.IO.DirectoryNotFoundException] -or
-                        ($BaseException -is [System.ComponentModel.Win32Exception] -and $BaseException.NativeErrorCode -in @(2, 3, 53, 123))
-                    )
-                    if ($CandidateMissing) {
-                        Write-Verbose -Message "The candidate disappeared during identity capture and will be skipped: '$($Item.FullName)'"
-                        continue
+                Initialize-TheCleanersNativeFileInterop
+                $DirectoryHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($DirectoryPath)
+                $DirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryHandle)
+                if (-not $DirectoryIdentity.IsDirectory -or $DirectoryIdentity.IsReparsePoint -or $null -eq $DirectoryState.Identity -or -not $DirectoryIdentity.Equals($DirectoryState.Identity)) {
+                    throw [System.IO.InvalidDataException]::new("The queued temp directory changed before traversal: '$DirectoryPath'.")
+                }
+            }
+
+            foreach ($Item in @(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop)) {
+                if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                    Write-Verbose -Message "Skipping reparse point: $($Item.FullName)"
+                    continue
+                }
+                if ($Item.PSIsContainer) {
+                    $ChildIdentity = $null
+                    if ($CaptureIdentity) {
+                        try {
+                            $ChildIdentity = Get-TheCleanersFileIdentity -LiteralPath $Item.FullName -Directory
+                        } catch {
+                            $BaseException = $_.Exception.GetBaseException()
+                            throw [System.InvalidOperationException]::new("Could not capture the queued directory identity required for safe mutation: '$($Item.FullName)'.", $BaseException)
+                        }
                     }
-                    throw [System.InvalidOperationException]::new("Could not capture the candidate identity required for safe mutation: '$($Item.FullName)'.", $BaseException)
+                    $Pending.Push([pscustomobject]@{
+                            Path     = $Item.FullName
+                            Identity = $ChildIdentity
+                        })
+                    continue
+                }
+                if ($Item.LastWriteTimeUtc -gt $CutoffUtc) {
+                    continue
+                }
+
+                $CandidateIdentity = $null
+                if ($CaptureIdentity) {
+                    try {
+                        $CandidateIdentity = Get-TheCleanersFileIdentity -LiteralPath $Item.FullName
+                    } catch {
+                        $BaseException = $_.Exception.GetBaseException()
+                        $CandidateMissing = (
+                            $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
+                            $BaseException -is [System.IO.FileNotFoundException] -or
+                            $BaseException -is [System.IO.DirectoryNotFoundException] -or
+                            ($BaseException -is [System.ComponentModel.Win32Exception] -and $BaseException.NativeErrorCode -in @(2, 3, 53, 123))
+                        )
+                        if ($CandidateMissing) {
+                            Write-Verbose -Message "The candidate disappeared during identity capture and will be skipped: '$($Item.FullName)'"
+                            continue
+                        }
+                        throw [System.InvalidOperationException]::new("Could not capture the candidate identity required for safe mutation: '$($Item.FullName)'.", $BaseException)
+                    }
+                }
+
+                $ParentIdentity = $null
+                if ($RemoveEmptyDirectory -and $CaptureIdentity) {
+                    try {
+                        $ParentIdentity = Get-TheCleanersFileIdentity -LiteralPath $Item.Directory.FullName -Directory
+                    } catch {
+                        $BaseException = $_.Exception.GetBaseException()
+                        throw [System.InvalidOperationException]::new("Could not capture the parent identity required for safe directory pruning: '$($Item.Directory.FullName)'.", $BaseException)
+                    }
+                }
+
+                $Candidates.Add([pscustomobject]@{
+                        Path             = $Item.FullName
+                        Identity         = $CandidateIdentity
+                        LastWriteTimeUtc = $Item.LastWriteTimeUtc
+                        ParentPath       = $Item.Directory.FullName
+                        ParentIdentity   = $ParentIdentity
+                    })
+                $null = $FilePaths.Add($Item.FullName)
+
+                if ($RemoveEmptyDirectory) {
+                    $Parent = $Item.Directory
+                    while ($null -ne $Parent -and $Parent.FullName -ne $RootPath) {
+                        $null = $DirectoryPaths.Add($Parent.FullName)
+                        $Parent = $Parent.Parent
+                    }
                 }
             }
 
-            $ParentIdentity = $null
-            if ($RemoveEmptyDirectory -and $CaptureIdentity) {
-                try {
-                    $ParentIdentity = Get-TheCleanersFileIdentity -LiteralPath $Item.Directory.FullName -Directory
-                } catch {
-                    $BaseException = $_.Exception.GetBaseException()
-                    throw [System.InvalidOperationException]::new("Could not capture the parent identity required for safe directory pruning: '$($Item.Directory.FullName)'.", $BaseException)
+            if ($CaptureIdentity) {
+                $CurrentDirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryHandle)
+                if (-not $DirectoryIdentity.Equals($CurrentDirectoryIdentity) -or $CurrentDirectoryIdentity.IsReparsePoint) {
+                    throw [System.IO.InvalidDataException]::new("The temp traversal path changed while it was being enumerated: '$DirectoryPath'.")
                 }
             }
-
-            $Candidates.Add([pscustomobject]@{
-                    Path             = $Item.FullName
-                    Identity         = $CandidateIdentity
-                    LastWriteTimeUtc = $Item.LastWriteTimeUtc
-                    ParentPath       = $Item.Directory.FullName
-                    ParentIdentity   = $ParentIdentity
-                })
-            $null = $FilePaths.Add($Item.FullName)
-
-            if ($RemoveEmptyDirectory) {
-                $Parent = $Item.Directory
-                while ($null -ne $Parent -and $Parent.FullName -ne $RootPath) {
-                    $null = $DirectoryPaths.Add($Parent.FullName)
-                    $Parent = $Parent.Parent
-                }
+        } finally {
+            if ($null -ne $DirectoryHandle) {
+                $DirectoryHandle.Dispose()
             }
         }
     }

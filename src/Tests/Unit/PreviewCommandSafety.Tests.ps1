@@ -50,6 +50,23 @@ Describe 'Exchange preview root validation' -Skip:(-not $WindowsHost) -Tag Unit 
         { Clear-OldExchangeLog -WhatIf -WarningAction SilentlyContinue } | Should -Throw '*not a directory*'
     }
 
+    It 'returns a failed result when Exchange registry discovery fails' {
+        $RegistryPath = 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup'
+        Mock Get-ItemProperty { throw [System.UnauthorizedAccessException]::new('Fixture Exchange registry access denied.') }
+
+        $Result = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Continue -ErrorVariable RegistryError)
+
+        $Result | Should -HaveCount 1
+        $Result[0].RootPath | Should -Be $RegistryPath
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DiscoveryErrorCount | Should -Be 1
+        $Result[0].ErrorIds | Should -Contain 'ExchangeRegistryDiscoveryFailed'
+        $RegistryError | Should -Not -BeNullOrEmpty
+    }
+
     It 'does not expose a removal-bypass parameter' {
         $CommandParameters = (Get-Command -Name Clear-OldExchangeLog -CommandType Function).Parameters
         foreach ($ParameterName in @('Force', 'AllowRemoval', 'EnableRemoval')) {

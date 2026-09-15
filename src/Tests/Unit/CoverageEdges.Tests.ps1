@@ -62,11 +62,19 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         $null = New-Item -Path $FilePath -ItemType File -Force
         [System.IO.File]::SetLastWriteTimeUtc($FilePath, [DateTime]::UtcNow.AddDays(-31))
         $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
-        $RootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+        $ExpectedRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+        $ExpectedChildIdentity = Get-TheCleanersFileIdentity -LiteralPath $ChildPath -Directory
+        $ExpectedGrandchildIdentity = Get-TheCleanersFileIdentity -LiteralPath $GrandchildPath -Directory
 
         Mock Get-TheCleanersFileIdentity {
             if ($LiteralPath -eq $RootPath) {
-                return $RootIdentity
+                return $ExpectedRootIdentity
+            }
+            if ($LiteralPath -eq $ChildPath) {
+                return $ExpectedChildIdentity
+            }
+            if ($LiteralPath -eq $GrandchildPath) {
+                return $ExpectedGrandchildIdentity
             }
             throw [System.UnauthorizedAccessException]::new('Identity fixture denial.')
         }
@@ -82,15 +90,21 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         $null = New-Item -Path $FilePath -ItemType File -Force
         [System.IO.File]::SetLastWriteTimeUtc($FilePath, [DateTime]::UtcNow.AddDays(-31))
         $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
-        $RootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
-        $CandidateIdentity = Get-TheCleanersFileIdentity -LiteralPath $FilePath
+        $ExpectedRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+        $ExpectedCandidateIdentity = Get-TheCleanersFileIdentity -LiteralPath $FilePath
+        $ExpectedChildIdentity = Get-TheCleanersFileIdentity -LiteralPath $ChildPath -Directory
+        $script:QueuedChildIdentityCaptured = $false
 
         Mock Get-TheCleanersFileIdentity {
             if ($LiteralPath -eq $RootPath) {
-                return $RootIdentity
+                return $ExpectedRootIdentity
+            }
+            if ($LiteralPath -eq $ChildPath -and -not $script:QueuedChildIdentityCaptured) {
+                $script:QueuedChildIdentityCaptured = $true
+                return $ExpectedChildIdentity
             }
             if ($LiteralPath -eq $FilePath) {
-                return $CandidateIdentity
+                return $ExpectedCandidateIdentity
             }
             throw [System.UnauthorizedAccessException]::new('Parent identity fixture denial.')
         }
@@ -105,11 +119,11 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         $null = New-Item -Path $FilePath -ItemType File -Force
         [System.IO.File]::SetLastWriteTimeUtc($FilePath, [DateTime]::UtcNow.AddDays(-31))
         $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
-        $RootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+        $ExpectedRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
 
         Mock Get-TheCleanersFileIdentity {
             if ($LiteralPath -eq $RootPath) {
-                return $RootIdentity
+                return $ExpectedRootIdentity
             }
             throw [System.Management.Automation.ItemNotFoundException]::new('Candidate disappeared.')
         }
@@ -139,6 +153,29 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         }
 
         { Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity:$false } | Should -Throw '*not a directory*'
+    }
+
+    It 'holds a stable directory identity during provider enumeration' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'StableEnumerationRoot'
+        $ChildPath = Join-Path -Path $RootPath -ChildPath 'Child'
+        $ReplacementPath = Join-Path -Path $TestDrive -ChildPath 'StableEnumerationReplacement'
+        $null = New-Item -Path $ChildPath -ItemType Directory -Force
+        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
+        $script:MoveBlocked = $false
+
+        Mock Get-ChildItem {
+            try {
+                [System.IO.Directory]::Move($ChildPath, $ReplacementPath)
+            } catch {
+                $script:MoveBlocked = $true
+            }
+            return @()
+        } -ParameterFilter { $LiteralPath -eq $ChildPath }
+
+        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity
+
+        $script:MoveBlocked | Should -BeTrue
+        $Plan.Files | Should -BeNullOrEmpty
     }
 
     It 'rejects a reparse-point cleanup root before planning' {

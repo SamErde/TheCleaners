@@ -52,15 +52,28 @@ function Clear-OldExchangeLog {
     }
     Write-Warning -Message 'Exchange preview only: no files will be removed. Candidate discovery is experimental, not a deletion allowlist.'
 
+    $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
+    $RegistryPath = 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup'
     $Setup = $null
     try {
-        $Setup = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup' -Name MsiInstallPath -ErrorAction Stop
+        $Setup = Get-ItemProperty -LiteralPath $RegistryPath -Name MsiInstallPath -ErrorAction Stop
         if ([string]::IsNullOrWhiteSpace($Setup.MsiInstallPath)) {
             throw [System.IO.InvalidDataException]::new('The Exchange Server installation path is missing.')
         }
     } catch {
         $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'ExchangeRegistryDiscoveryFailed' -Category ReadError
-        $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+        if ($PassThru) {
+            $PSCmdlet.WriteError($ErrorRecord)
+            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldExchangeLog' -RootPath $RegistryPath -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Unknown' -ProductVersion 'Exchange Server v15' -DiscoverySource 'v15 setup registry' -CandidatePaths @() -Status 'DiscoveryFailed'
+            $Result.FileCandidateCount = $null
+            $Result.DirectoryCandidateCount = $null
+            $Result.DiscoveryErrorCount = 1
+            $Result.ErrorIds = @('ExchangeRegistryDiscoveryFailed')
+            $Result
+        } else {
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+        }
+        return
     }
 
     $InstallRoot = $null
@@ -82,7 +95,6 @@ function Clear-OldExchangeLog {
         $PSCmdlet.ThrowTerminatingError($ErrorRecord)
     }
 
-    $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
     $RelativeRoots = @(
         'Logging'
         'Bin/Search/Ceres/Diagnostics/ETLTraces'
