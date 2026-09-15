@@ -32,16 +32,19 @@ namespace TheCleaners
     {
         private readonly byte[] _fileId;
 
-        public NativeFileIdentity(ulong volumeSerialNumber, byte[] fileId, long length, uint attributes)
+        public NativeFileIdentity(ulong volumeSerialNumber, byte[] fileId, long length, long lastWriteTimeUtcFileTime, uint attributes)
         {
             VolumeSerialNumber = volumeSerialNumber;
             _fileId = (byte[])fileId.Clone();
             Length = length;
+            LastWriteTimeUtcFileTime = lastWriteTimeUtcFileTime;
             Attributes = attributes;
         }
 
         public ulong VolumeSerialNumber { get; private set; }
         public long Length { get; private set; }
+        public long LastWriteTimeUtcFileTime { get; private set; }
+        public DateTime LastWriteTimeUtc { get { return DateTime.FromFileTimeUtc(LastWriteTimeUtcFileTime); } }
         public uint Attributes { get; private set; }
         public bool IsDirectory { get { return (Attributes & 0x10U) != 0; } }
         public bool IsReparsePoint { get { return (Attributes & 0x400U) != 0; } }
@@ -86,6 +89,7 @@ namespace TheCleaners
     public static class NativeFileInterop
     {
         private const uint Delete = 0x00010000U;
+        private const uint FileReadAttributes = 0x00000080U;
         private const uint FileShareRead = 0x00000001U;
         private const uint FileShareWrite = 0x00000002U;
         private const uint FileShareDelete = 0x00000004U;
@@ -94,6 +98,7 @@ namespace TheCleaners
         private const uint FileFlagBackupSemantics = 0x02000000U;
         private const int FileIdInfoClass = 0x12;
         private const int FileStandardInfoClass = 0x01;
+        private const int FileBasicInfoClass = 0x00;
         private const int FileAttributeTagInfoClass = 0x09;
         private const int FileDispositionInfoClass = 0x04;
 
@@ -119,6 +124,13 @@ namespace TheCleaners
             SafeFileHandle file,
             int fileInformationClass,
             ref FileStandardInfo fileInformation,
+            uint bufferSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GetFileInformationByHandleEx(
+            SafeFileHandle file,
+            int fileInformationClass,
+            ref FileBasicInfo fileInformation,
             uint bufferSize);
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -152,6 +164,17 @@ namespace TheCleaners
             public uint NumberOfLinks;
             public byte DeletePending;
             public byte Directory;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct FileBasicInfo
+        {
+            public long CreationTime;
+            public long LastAccessTime;
+            public long LastWriteTime;
+            public long ChangeTime;
+            public uint FileAttributes;
+            public uint Reserved;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -196,12 +219,13 @@ namespace TheCleaners
 
         public static SafeFileHandle OpenForInspection(string path, bool directory)
         {
-            return Open(path, 0U, FileShareRead | FileShareWrite | FileShareDelete, directory);
+            return Open(path, FileReadAttributes, FileShareRead | FileShareWrite | FileShareDelete, directory);
         }
 
         public static SafeFileHandle OpenForDeletion(string path, bool directory)
         {
-            return Open(path, Delete, FileShareRead | FileShareDelete, directory);
+            uint shareMode = directory ? FileShareRead : FileShareRead | FileShareDelete;
+            return Open(path, Delete | FileReadAttributes, shareMode, directory);
         }
 
         public static NativeFileIdentity ReadIdentity(SafeFileHandle handle)
@@ -218,13 +242,19 @@ namespace TheCleaners
                 throw new Win32Exception(Marshal.GetLastWin32Error(), "The Windows file standard information could not be read.");
             }
 
+            FileBasicInfo basicInfo = new FileBasicInfo();
+            if (!GetFileInformationByHandleEx(handle, FileBasicInfoClass, ref basicInfo, (uint)Marshal.SizeOf(typeof(FileBasicInfo))))
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "The Windows file basic information could not be read.");
+            }
+
             FileAttributeTagInfo attributes = new FileAttributeTagInfo();
             if (!GetFileInformationByHandleEx(handle, FileAttributeTagInfoClass, ref attributes, (uint)Marshal.SizeOf(typeof(FileAttributeTagInfo))))
             {
                 throw new Win32Exception(Marshal.GetLastWin32Error(), "The Windows file attributes could not be read.");
             }
 
-            return new NativeFileIdentity(idInfo.VolumeSerialNumber, idInfo.FileId, standardInfo.EndOfFile, attributes.FileAttributes);
+            return new NativeFileIdentity(idInfo.VolumeSerialNumber, idInfo.FileId, standardInfo.EndOfFile, basicInfo.LastWriteTime, attributes.FileAttributes);
         }
 
         public static void MarkForDeletion(SafeFileHandle handle)

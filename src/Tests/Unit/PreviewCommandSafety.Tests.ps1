@@ -112,6 +112,22 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         @($DiscoveryError | Where-Object { $_.FullyQualifiedErrorId -match '^IISDiscoveryUnavailable' }) | Should -Not -BeNullOrEmpty
     }
 
+    It 'returns a failed result for a protected IIS root' {
+        Mock Test-TheCleanersIisProtectedPath { $true }
+
+        $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable ProtectedError)
+
+        $Result | Should -HaveCount 1
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
+        $Result[0].CandidatePaths | Should -BeNullOrEmpty
+        $Result[0].DiscoveryErrorCount | Should -Be 1
+        $Result[0].ErrorIds | Should -Contain 'IISProtectedRoot'
+        $ProtectedError | Should -Not -BeNullOrEmpty
+    }
+
     It 'contains no deletion command or generic removal-helper call' {
         $Tokens = $null
         $ParseErrors = $null

@@ -85,7 +85,8 @@ try {
     $DriveQualifier = Split-Path -Path $FixtureRoot -Qualifier
     $DriveLetter = $DriveQualifier.TrimEnd([char[]]@(':', '\'))
     $Volume = Get-Volume -DriveLetter $DriveLetter -ErrorAction SilentlyContinue | Select-Object -First 1
-    $IsElevated = ([System.Security.Principal.WindowsPrincipal]$Identity).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+    $Principal = [System.Security.Principal.WindowsPrincipal]::new($Identity)
+    $IsElevated = $Principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
     $BeforeCandidates = @($OldReadablePath, $OldNoContentReadPath)
     $ExpectedFileCount = $BeforeCandidates.Count
     $ExpectedBytes = [int64]0

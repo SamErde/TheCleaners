@@ -54,14 +54,14 @@ Describe 'Typed stale-profile output' -Skip:(-not $WindowsHost) -Tag Unit {
                 }
                 [pscustomobject]@{
                     LocalPath  = (Join-Path -Path $TestDrive -ChildPath 'VirtualService')
-                    SID        = 'S-1-5-80-12345'
+                    SID        = 'S-1-5-80-0-0-0-0-12345'
                     LastUseTime = $Now.AddDays(-91)
                     Special    = $false
                     Loaded     = $false
                 }
                 [pscustomobject]@{
                     LocalPath  = (Join-Path -Path $TestDrive -ChildPath 'IISAppPool')
-                    SID        = 'S-1-5-82-54321'
+                    SID        = 'S-1-5-82-0-0-0-0-54321'
                     LastUseTime = $Now.AddDays(-91)
                     Special    = $false
                     Loaded     = $false

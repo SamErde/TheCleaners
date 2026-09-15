@@ -7,8 +7,8 @@ function Clear-WindowsTemp {
         API, not only a mutable process environment variable. Discover candidates
         under the validated root using one inclusive UTC cutoff. Candidate file IDs
         and directory IDs are captured during discovery and compared with the same
-        native handle used for the deletion request. The handle requests DELETE
-        access only; it does not read file contents. Directory removal is opt-in,
+        native handle used for the deletion request. The handle requests DELETE and
+        FILE_READ_ATTRIBUTES only; it does not read file contents. Directory removal is opt-in,
         non-recursive, deepest-first, and limited to directories emptied by this
         invocation. Reparse points, roots, unrelated branches, replacements,
         hard-link identity changes, and paths outside the approved root are
@@ -139,13 +139,17 @@ function Clear-WindowsTemp {
             }
             $null = Resolve-TheCleanersFileSystemPath -LiteralPath $Candidate.Path -RootPath $Result.RootPath
             $CurrentItem.Refresh()
-            if (-not $CurrentItem.Exists -or $CurrentItem.LastWriteTimeUtc -gt $Plan.CutoffUtc) {
+            if (-not $CurrentItem.Exists) {
                 $Result.FilesSkipped++
                 continue
             }
             $CurrentHandle = [TheCleaners.NativeFileInterop]::OpenForDeletion($Candidate.Path, $false)
             $CurrentIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($CurrentHandle)
             if ($CurrentIdentity.IsDirectory -or $CurrentIdentity.IsReparsePoint -or $null -eq $Candidate.Identity -or -not $CurrentIdentity.Equals($Candidate.Identity)) {
+                $Result.FilesSkipped++
+                continue
+            }
+            if ($CurrentIdentity.LastWriteTimeUtc -gt $Plan.CutoffUtc) {
                 $Result.FilesSkipped++
                 continue
             }

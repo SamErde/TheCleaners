@@ -149,3 +149,41 @@ Describe 'Temp candidate safety: <CommandName>' -ForEach $TempCases -Skip:(-not 
         [System.IO.File]::ReadAllText($FunctionPath) | Should -Match 'NativeFileInterop.*MarkForDeletion'
     }
 }
+
+Describe 'Native deletion handle safety' -Skip:(-not $WindowsHost) -Tag Unit {
+    It 'reads last-write metadata from the opened deletion handle' {
+        $Root = Join-Path -Path $TestDrive -ChildPath 'NativeMetadata'
+        $null = New-Item -Path $Root -ItemType Directory -Force
+        $Path = Join-Path -Path $Root -ChildPath 'old.tmp'
+        $null = New-Item -Path $Path -ItemType File -Force
+        $Expected = [DateTime]::UtcNow.AddDays(-31)
+        [System.IO.File]::SetLastWriteTimeUtc($Path, $Expected)
+        $Handle = [TheCleaners.NativeFileInterop]::OpenForDeletion($Path, $false)
+        try {
+            $Identity = [TheCleaners.NativeFileInterop]::ReadIdentity($Handle)
+            $Identity.LastWriteTimeUtc | Should -Be $Expected
+        } finally {
+            $Handle.Dispose()
+        }
+    }
+
+    It 'prevents a directory replacement while its deletion handle is open' {
+        $Root = Join-Path -Path $TestDrive -ChildPath 'NativeDirectoryLock'
+        $null = New-Item -Path $Root -ItemType Directory -Force
+        $DirectoryPath = Join-Path -Path $Root -ChildPath 'Planned'
+        $ReplacementPath = Join-Path -Path $Root -ChildPath 'Replacement'
+        $null = New-Item -Path $DirectoryPath -ItemType Directory -Force
+        $Handle = [TheCleaners.NativeFileInterop]::OpenForDeletion($DirectoryPath, $true)
+        try {
+            { [System.IO.Directory]::Move($DirectoryPath, $ReplacementPath) } | Should -Throw
+        } finally {
+            $Handle.Dispose()
+            if ([System.IO.Directory]::Exists($DirectoryPath)) {
+                [System.IO.Directory]::Delete($DirectoryPath, $true)
+            }
+            if ([System.IO.Directory]::Exists($ReplacementPath)) {
+                [System.IO.Directory]::Delete($ReplacementPath, $true)
+            }
+        }
+    }
+}

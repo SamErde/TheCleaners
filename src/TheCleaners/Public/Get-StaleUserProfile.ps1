@@ -73,7 +73,7 @@ function Get-StaleUserProfile {
         $LocalPath = [string]$ProfileRecord.LocalPath
         $Sid = [string]$ProfileRecord.SID
         $Leaf = if ([string]::IsNullOrWhiteSpace($LocalPath)) { '' } else { (Split-Path -Path $LocalPath.TrimEnd([char[]]@('\', '/')) -Leaf) }
-        $IsServiceSid = $Sid.ToUpperInvariant() -match '^S-1-5-(80|82)-\d+$'
+        $IsServiceSid = $Sid.ToUpperInvariant() -match '^S-1-5-(80|82)(-\d+)+$'
         $IsService = $ServiceSids -contains $Sid.ToUpperInvariant() -or $IsServiceSid -or $Leaf -in @('systemprofile', 'LocalService', 'NetworkService')
         $IsDefault = $ProtectedLeaves -contains $Leaf
         $IsSystem = $ServiceSids -contains $Sid.ToUpperInvariant()

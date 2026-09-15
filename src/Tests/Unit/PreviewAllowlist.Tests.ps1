@@ -79,6 +79,7 @@ Describe 'Exchange filename and protected-location allowlists' -Skip:(-not $Wind
         $TransactionPath = Join-Path -Path $TestDrive -ChildPath 'Transactions'
         $null = New-Item -Path (Split-Path -Path $DatabasePath -Parent) -ItemType Directory -Force
         $null = New-Item -Path $TransactionPath -ItemType Directory -Force
+        $ExistingGetMailboxDatabase = Get-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -ErrorAction SilentlyContinue
         function global:Get-MailboxDatabase { }
         Mock Get-Command { [pscustomobject]@{ Name = 'Get-MailboxDatabase' } } -ParameterFilter { $Name -eq 'Get-MailboxDatabase' }
         Mock Get-MailboxDatabase {
@@ -92,6 +93,9 @@ Describe 'Exchange filename and protected-location allowlists' -Skip:(-not $Wind
             $Protection = Get-TheCleanersExchangeProtectedPaths -InstallRoot $InstallRoot
         } finally {
             Remove-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -Force -ErrorAction SilentlyContinue
+            if ($null -ne $ExistingGetMailboxDatabase) {
+                Set-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -Value $ExistingGetMailboxDatabase.ScriptBlock -Force
+            }
         }
 
         $Protection.Status | Should -Be 'Validated'
@@ -103,6 +107,7 @@ Describe 'Exchange filename and protected-location allowlists' -Skip:(-not $Wind
     It 'reports unknown protection when a database omits path metadata' {
         $InstallRoot = New-Item -Path (Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)) -ItemType Directory
         $DatabasePath = Join-Path -Path $TestDrive -ChildPath 'Databases/Mailbox.edb'
+        $ExistingGetMailboxDatabase = Get-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -ErrorAction SilentlyContinue
         function global:Get-MailboxDatabase { }
         Mock Get-Command { [pscustomobject]@{ Name = 'Get-MailboxDatabase' } } -ParameterFilter { $Name -eq 'Get-MailboxDatabase' }
         Mock Get-MailboxDatabase {
@@ -116,6 +121,9 @@ Describe 'Exchange filename and protected-location allowlists' -Skip:(-not $Wind
             $Protection = Get-TheCleanersExchangeProtectedPaths -InstallRoot $InstallRoot
         } finally {
             Remove-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -Force -ErrorAction SilentlyContinue
+            if ($null -ne $ExistingGetMailboxDatabase) {
+                Set-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -Value $ExistingGetMailboxDatabase.ScriptBlock -Force
+            }
         }
 
         $Protection.Status | Should -Be 'Unknown'

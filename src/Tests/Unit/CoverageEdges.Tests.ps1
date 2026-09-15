@@ -33,6 +33,7 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
 
     It 'fails closed when Exchange returns a path object without a PathName' {
         $InstallRoot = New-Item -Path (Join-Path -Path $TestDrive -ChildPath 'ExchangeRoot') -ItemType Directory -Force
+        $ExistingGetMailboxDatabase = Get-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -ErrorAction SilentlyContinue
         function global:Get-MailboxDatabase { }
         Mock Get-Command { [pscustomobject]@{ Name = 'Get-MailboxDatabase' } } -ParameterFilter { $Name -eq 'Get-MailboxDatabase' }
         Mock Get-MailboxDatabase {
@@ -46,6 +47,9 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
             { Get-TheCleanersExchangeProtectedPaths -InstallRoot $InstallRoot } | Should -Throw '*non-qualified protected path*'
         } finally {
             Remove-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -Force -ErrorAction SilentlyContinue
+            if ($null -ne $ExistingGetMailboxDatabase) {
+                Set-Item -LiteralPath 'Function:\global:Get-MailboxDatabase' -Value $ExistingGetMailboxDatabase.ScriptBlock -Force
+            }
         }
     }
 

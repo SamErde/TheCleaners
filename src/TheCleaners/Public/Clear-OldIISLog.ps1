@@ -195,10 +195,21 @@ function Clear-OldIISLog {
             $null = $RootDiscoveryErrorIds.Add($RootErrorId)
         }
         if (Test-TheCleanersIisProtectedPath -Path $RootDefinition.Path) {
+            $FoundExistingRoot = $true
+            $DiscoveryErrorReported = $true
             $null = $RootDiscoveryErrorIds.Add('IISProtectedRoot')
             $Exception = [System.UnauthorizedAccessException]::new("The IIS path is protected and cannot be used as a log root: '$($RootDefinition.Path)'.")
             $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'IISProtectedRoot' -Category PermissionDenied -TargetObject $RootDefinition.Path
             $PSCmdlet.WriteError($ErrorRecord)
+            if ($PassThru) {
+                $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $RootDefinition.Path -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
+                $Result.FileCandidateCount = $null
+                $Result.DirectoryCandidateCount = $null
+                $Result.DiscoveryErrorCount = $RootDiscoveryErrorIds.Count
+                $Result.ErrorIds = @($RootDiscoveryErrorIds | Sort-Object -Unique)
+                $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
+                $Result
+            }
             continue
         }
         if (-not (Test-Path -LiteralPath $RootDefinition.Path -PathType Container)) {
