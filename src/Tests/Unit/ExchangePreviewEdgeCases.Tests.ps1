@@ -85,6 +85,22 @@ Describe 'Exchange preview result edge cases' -Skip:(-not $WindowsHost) -Tag Uni
         $Failed.ErrorIds | Should -Contain 'ExchangeDiscoveryFailed'
     }
 
+    It 'returns a failed result when an existing root cannot be probed' {
+        Mock Test-Path {
+            throw [System.UnauthorizedAccessException]::new('Fixture Exchange root probe denial.')
+        } -ParameterFilter { $LiteralPath -eq $LogRoot }
+
+        $Results = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable DiscoveryError)
+
+        $Results | Should -HaveCount 1
+        $Results[0].RootPath | Should -Be ([System.IO.Path]::GetFullPath($LogRoot))
+        $Results[0].DiscoveryStatus | Should -Be 'Failed'
+        $Results[0].Status | Should -Be 'DiscoveryFailed'
+        $Results[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Results[0].ErrorIds | Should -Contain 'ExchangeDiscoveryFailed'
+        $DiscoveryError | Should -Not -BeNullOrEmpty
+    }
+
     It 'fails closed when a protected path is nested below a proposed log root' {
         $NestedProtectedPath = Join-Path -Path $LogRoot -ChildPath 'Database'
         $null = New-Item -Path $NestedProtectedPath -ItemType Directory -Force

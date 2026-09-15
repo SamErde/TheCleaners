@@ -90,9 +90,27 @@ function Clear-OldExchangeLog {
         'TransportRoles/Logs/MessageTracking'
     )
     $FoundExistingRoot = $false
+    $DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
     foreach ($RelativeRoot in $RelativeRoots) {
         $RootPath = Join-Path -Path $InstallRoot.FullName -ChildPath $RelativeRoot
-        if (-not (Test-Path -LiteralPath $RootPath -PathType Container)) {
+        $RootExists = $false
+        try {
+            $RootExists = Test-Path -LiteralPath $RootPath -PathType Container -ErrorAction Stop
+        } catch {
+            $null = $DiscoveryErrorIds.Add('ExchangeDiscoveryFailed')
+            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'ExchangeDiscoveryFailed' -Category ReadError -TargetObject $RootPath
+            $PSCmdlet.WriteError($ErrorRecord)
+            if ($PassThru) {
+                $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldExchangeLog' -RootPath $RootPath -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus $Protected.Status -ProtectionPathCount @($Protected.Paths).Count -ProtectionPaths @($Protected.Paths) -ProductVersion 'Exchange Server v15' -DiscoverySource 'v15 setup registry and fixed product roots' -CandidatePaths @() -Status 'DiscoveryFailed'
+                $Result.FileCandidateCount = $null
+                $Result.DirectoryCandidateCount = $null
+                $Result.DiscoveryErrorCount = 1
+                $Result.ErrorIds = @('ExchangeDiscoveryFailed')
+                $Result
+            }
+            continue
+        }
+        if (-not $RootExists) {
             Write-Verbose -Message "Exchange log root not present as a directory: $RootPath"
             continue
         }
@@ -177,7 +195,7 @@ function Clear-OldExchangeLog {
         }
     }
 
-    if (-not $FoundExistingRoot) {
+    if (-not $FoundExistingRoot -and $DiscoveryErrorIds.Count -eq 0) {
         $Exception = [System.InvalidOperationException]::new('Exchange is installed but no configured product log root could be discovered.')
         $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'ExchangeDiscoveryUnavailable' -Category ObjectNotFound -TargetObject $InstallRoot.FullName
         $PSCmdlet.WriteError($ErrorRecord)

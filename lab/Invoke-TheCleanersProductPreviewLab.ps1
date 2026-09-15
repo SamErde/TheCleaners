@@ -41,6 +41,31 @@ function Get-ServiceEvidence {
     }
 }
 
+function Get-OptionalRegistryProperty {
+    param (
+        [Parameter(Mandatory)]
+        [string]
+        $LiteralPath
+    )
+
+    try {
+        Get-ItemProperty -LiteralPath $LiteralPath -ErrorAction Stop
+    } catch {
+        $RegistryKeyIsAbsent = (
+            $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
+            $_.FullyQualifiedErrorId -match 'PathNotFound|ItemNotFound|RegistryKeyNotFound'
+        )
+        if ($RegistryKeyIsAbsent) {
+            return $null
+        }
+        $Failure = [System.InvalidOperationException]::new(
+            "Unable to determine product state from registry path '$LiteralPath': $($_.Exception.Message)",
+            $_.Exception
+        )
+        throw $Failure
+    }
+}
+
 function Get-PreviewEvidence {
     param (
         [Parameter(Mandatory)]
@@ -89,8 +114,8 @@ function Get-PreviewEvidence {
     }
 }
 
-$IisRegistry = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\InetStp' -ErrorAction SilentlyContinue
-$ExchangeRegistry = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup' -ErrorAction SilentlyContinue
+$IisRegistry = Get-OptionalRegistryProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\InetStp'
+$ExchangeRegistry = Get-OptionalRegistryProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup'
 $IisModule = Get-Module -ListAvailable -Name WebAdministration | Sort-Object Version -Descending | Select-Object -First 1
 $ExchangeCommands = @(
     Get-Command -Name 'Get-ExchangeServer', 'Get-MailboxDatabase' -ErrorAction SilentlyContinue |

@@ -184,6 +184,13 @@ try {
     if ($StagedFileDifferences.Count -gt 0) {
         throw 'The staged publish directory does not contain the exact tested artifact file set.'
     }
+    foreach ($FileRecord in @($ArchiveManifest.Files)) {
+        $StagedFile = Join-Path -Path $PublishPath -ChildPath ($FileRecord.Path -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+        $StagedHash = (Get-FileHash -LiteralPath $StagedFile -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($StagedHash -ne [string]$FileRecord.SHA256) {
+            throw "Staged artifact digest mismatch: $($FileRecord.Path)"
+        }
+    }
 
     Publish-Module -Path $PublishPath -NuGetApiKey $PSGalleryApiKey -Repository PSGallery -ErrorAction Stop
 } finally {
