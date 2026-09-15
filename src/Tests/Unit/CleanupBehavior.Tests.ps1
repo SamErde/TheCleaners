@@ -91,7 +91,7 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
         $Result.DirectoriesRemoved | Should -Be 0
     }
 
-    It 'retains skipped child handles through ancestor pruning' {
+    It 'does not prune ancestors after a child becomes non-empty' {
         $ParentPath = Split-Path -Path $NestedPath -Parent
         $ParentFile = New-Item -Path (Join-Path -Path $ParentPath -ChildPath 'old-parent.tmp') -ItemType File
         [System.IO.File]::WriteAllBytes($ParentFile.FullName, [byte[]](7, 8, 9))
@@ -136,11 +136,46 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
         $Result = & $CommandName -Days 30 -RemoveEmptyDirectory -Confirm:$false -PassThru -ErrorAction SilentlyContinue
 
         $script:ChildWasMadeNonEmpty | Should -BeTrue
-        $script:MoveAttempted | Should -BeTrue
-        $script:MoveBlocked | Should -BeTrue
+        $script:MoveAttempted | Should -BeFalse
+        $script:MoveBlocked | Should -BeFalse
         $NestedPath | Should -Exist
         $ParentPath | Should -Exist
         $RecentChildPath | Should -Exist
+        $Result.DirectoriesRemoved | Should -Be 0
+    }
+
+    It 'does not prune a directory when another process removes a planned candidate' {
+        $FirstFilePath = Join-Path -Path $NestedPath -ChildPath 'a-concurrent.tmp'
+        $SecondFilePath = Join-Path -Path $NestedPath -ChildPath 'b-concurrent.tmp'
+        $FirstFile = New-Item -Path $FirstFilePath -ItemType File
+        $SecondFile = New-Item -Path $SecondFilePath -ItemType File
+        $FirstFile.LastWriteTimeUtc = $Now.AddDays(-31)
+        $SecondFile.LastWriteTimeUtc = $Now.AddDays(-31)
+        $script:ConcurrentCandidateRemoved = $false
+
+        Mock Get-Item {
+            if ($LiteralPath -eq $FirstFilePath -and -not $script:ConcurrentCandidateRemoved) {
+                [System.IO.File]::Delete($SecondFilePath)
+                $script:ConcurrentCandidateRemoved = $true
+            }
+            if ([System.IO.Directory]::Exists($LiteralPath)) {
+                return [System.IO.DirectoryInfo]::new($LiteralPath)
+            }
+            if ([System.IO.File]::Exists($LiteralPath)) {
+                return [System.IO.FileInfo]::new($LiteralPath)
+            }
+            throw [System.IO.FileNotFoundException]::new("Fixture path was not found: '$LiteralPath'.")
+        }
+
+        $Result = & $CommandName -Days 30 -RemoveEmptyDirectory -Confirm:$false -PassThru
+
+        $script:ConcurrentCandidateRemoved | Should -BeTrue
+        $FirstFilePath | Should -Not -Exist
+        $SecondFilePath | Should -Not -Exist
+        $NestedPath | Should -Exist
+        (Split-Path -Path $NestedPath -Parent) | Should -Exist
+        $Result.FilesRemoved | Should -Be 2
+        $Result.FilesSkipped | Should -Be 1
         $Result.DirectoriesRemoved | Should -Be 0
     }
 

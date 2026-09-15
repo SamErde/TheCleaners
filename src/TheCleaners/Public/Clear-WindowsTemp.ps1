@@ -132,6 +132,21 @@ function Clear-WindowsTemp {
         }
 
         $TouchedIdentities = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        $DisqualifiedIdentities = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        $DisqualifiedPaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        $MarkDirectoryDisqualified = {
+            param (
+                [string] $Path,
+                [psobject] $Identity
+            )
+
+            if (-not [string]::IsNullOrWhiteSpace($Path)) {
+                $null = $DisqualifiedPaths.Add($Path)
+            }
+            if ($null -ne $Identity) {
+                $null = $DisqualifiedIdentities.Add($Identity.Key)
+            }
+        }
         $ReparsePointAttributes = [System.IO.FileAttributes]::ReparsePoint
         foreach ($Candidate in $Files) {
             $CurrentHandle = $null
@@ -139,22 +154,26 @@ function Clear-WindowsTemp {
                 $CurrentItem = Get-Item -LiteralPath $Candidate.Path -Force -ErrorAction Stop
                 if ($CurrentItem.PSIsContainer -or ($CurrentItem.Attributes -band $ReparsePointAttributes)) {
                     $Result.FilesSkipped++
+                    & $MarkDirectoryDisqualified $Candidate.ParentPath $Candidate.ParentIdentity
                     continue
                 }
                 $null = Resolve-TheCleanersFileSystemPath -LiteralPath $Candidate.Path -RootPath $Result.RootPath
                 $CurrentItem.Refresh()
                 if (-not $CurrentItem.Exists) {
                     $Result.FilesSkipped++
+                    & $MarkDirectoryDisqualified $Candidate.ParentPath $Candidate.ParentIdentity
                     continue
                 }
                 $CurrentHandle = [TheCleaners.NativeFileInterop]::OpenForDeletion($Candidate.Path, $false)
                 $CurrentIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($CurrentHandle)
                 if ($CurrentIdentity.IsDirectory -or $CurrentIdentity.IsReparsePoint -or $null -eq $Candidate.Identity -or -not $CurrentIdentity.Equals($Candidate.Identity)) {
                     $Result.FilesSkipped++
+                    & $MarkDirectoryDisqualified $Candidate.ParentPath $Candidate.ParentIdentity
                     continue
                 }
                 if ($CurrentIdentity.LastWriteTimeUtc -gt $Plan.CutoffUtc) {
                     $Result.FilesSkipped++
+                    & $MarkDirectoryDisqualified $Candidate.ParentPath $Candidate.ParentIdentity
                     continue
                 }
                 $Length = $CurrentIdentity.Length
@@ -172,6 +191,7 @@ function Clear-WindowsTemp {
                     $ErrorRecord = Get-TheCleanersErrorRecord -Exception $BaseException -ErrorId 'TempFileRemovalFailed' -Category $Category -TargetObject $Candidate.Path
                     $PSCmdlet.WriteError($ErrorRecord)
                 }
+                & $MarkDirectoryDisqualified $Candidate.ParentPath $Candidate.ParentIdentity
                 continue
             } finally {
                 if ($null -ne $CurrentHandle) {
@@ -185,6 +205,7 @@ function Clear-WindowsTemp {
                 $Exception = [System.IO.IOException]::new("The candidate path still exists after its deletion handle closed: '$($Candidate.Path)'.")
                 $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'TempFileRemovalFailed' -Category WriteError -TargetObject $Candidate.Path
                 $PSCmdlet.WriteError($ErrorRecord)
+                & $MarkDirectoryDisqualified $Candidate.ParentPath $Candidate.ParentIdentity
                 continue
             }
 
@@ -196,8 +217,13 @@ function Clear-WindowsTemp {
         }
 
         foreach ($DirectoryPlan in $Directories) {
-            if ($null -eq $DirectoryPlan.Identity -or -not $TouchedIdentities.Contains($DirectoryPlan.Identity.Key)) {
+            $DirectoryDisqualified = (
+                ($null -ne $DirectoryPlan.Identity -and $DisqualifiedIdentities.Contains($DirectoryPlan.Identity.Key)) -or
+                (-not [string]::IsNullOrWhiteSpace($DirectoryPlan.Path) -and $DisqualifiedPaths.Contains($DirectoryPlan.Path))
+            )
+            if ($DirectoryDisqualified -or $null -eq $DirectoryPlan.Identity -or -not $TouchedIdentities.Contains($DirectoryPlan.Identity.Key)) {
                 $Result.DirectoriesSkipped++
+                & $MarkDirectoryDisqualified $DirectoryPlan.ParentPath $DirectoryPlan.ParentIdentity
                 continue
             }
 
@@ -208,6 +234,7 @@ function Clear-WindowsTemp {
                 $CurrentDirectory = Get-Item -LiteralPath $DirectoryPlan.Path -Force -ErrorAction Stop
                 if ($CurrentDirectory -isnot [System.IO.DirectoryInfo] -or ($CurrentDirectory.Attributes -band $ReparsePointAttributes)) {
                     $Result.DirectoriesSkipped++
+                    & $MarkDirectoryDisqualified $DirectoryPlan.ParentPath $DirectoryPlan.ParentIdentity
                     continue
                 }
                 $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPlan.Path -RootPath $Result.RootPath
@@ -220,10 +247,12 @@ function Clear-WindowsTemp {
                 $CurrentIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($CurrentHandle)
                 if (-not $CurrentIdentity.IsDirectory -or $CurrentIdentity.IsReparsePoint -or -not $CurrentIdentity.Equals($DirectoryPlan.Identity)) {
                     $Result.DirectoriesSkipped++
+                    & $MarkDirectoryDisqualified $DirectoryPlan.ParentPath $DirectoryPlan.ParentIdentity
                     continue
                 }
                 if (@(Get-ChildItem -LiteralPath $DirectoryPlan.Path -Force -ErrorAction Stop).Count -gt 0) {
                     $Result.DirectoriesSkipped++
+                    & $MarkDirectoryDisqualified $DirectoryPlan.ParentPath $DirectoryPlan.ParentIdentity
                     continue
                 }
                 [TheCleaners.NativeFileInterop]::MarkForDeletion($CurrentHandle)
@@ -241,6 +270,7 @@ function Clear-WindowsTemp {
                     $ErrorRecord = Get-TheCleanersErrorRecord -Exception $BaseException -ErrorId 'TempDirectoryRemovalFailed' -Category $Category -TargetObject $DirectoryPlan.Path
                     $PSCmdlet.WriteError($ErrorRecord)
                 }
+                & $MarkDirectoryDisqualified $DirectoryPlan.ParentPath $DirectoryPlan.ParentIdentity
                 continue
             } finally {
                 if ($null -ne $CurrentHandle -and (-not $PlanOwnsCurrentHandle -or $DeletionRequested)) {
@@ -254,6 +284,7 @@ function Clear-WindowsTemp {
                 $Exception = [System.IO.IOException]::new("The directory path still exists after its deletion handle closed: '$($DirectoryPlan.Path)'.")
                 $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'TempDirectoryRemovalFailed' -Category WriteError -TargetObject $DirectoryPlan.Path
                 $PSCmdlet.WriteError($ErrorRecord)
+                & $MarkDirectoryDisqualified $DirectoryPlan.ParentPath $DirectoryPlan.ParentIdentity
                 continue
             }
 
