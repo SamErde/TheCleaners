@@ -224,8 +224,7 @@ namespace TheCleaners
 
         public static SafeFileHandle OpenForDeletion(string path, bool directory)
         {
-            uint shareMode = directory ? FileShareRead : FileShareRead | FileShareDelete;
-            return Open(path, Delete | FileReadAttributes, shareMode, directory);
+            return Open(path, Delete | FileReadAttributes, FileShareRead, directory);
         }
 
         public static NativeFileIdentity ReadIdentity(SafeFileHandle handle)

@@ -64,5 +64,21 @@ Describe 'Exchange preview result edge cases' -Skip:(-not $WindowsHost) -Tag Uni
         $Failed.CandidatePaths | Should -BeNullOrEmpty
         $Failed.ErrorIds | Should -Contain 'ExchangeDiscoveryFailed'
     }
+
+    It 'reports an unavailable product when no configured log root exists' {
+        [System.IO.Directory]::Delete($LogRoot, $true)
+
+        $Results = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable DiscoveryError)
+
+        $Results | Should -HaveCount 1
+        $Results[0].RootPath | Should -Be ([System.IO.Path]::GetFullPath($ExchangeRoot))
+        $Results[0].DiscoveryStatus | Should -Be 'Failed'
+        $Results[0].Status | Should -Be 'DiscoveryFailed'
+        $Results[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Results[0].DirectoryCandidateCount | Should -BeNullOrEmpty
+        $Results[0].CandidatePaths | Should -BeNullOrEmpty
+        $Results[0].ErrorIds | Should -Contain 'ExchangeDiscoveryUnavailable'
+        $DiscoveryError | Should -Not -BeNullOrEmpty
+    }
 }
 

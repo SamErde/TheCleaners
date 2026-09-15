@@ -29,13 +29,17 @@ Describe 'Exchange preview root validation' -Skip:(-not $WindowsHost) -Tag Unit 
         Mock Get-ItemProperty { [pscustomobject]@{ MsiInstallPath = $ExchangeRoot } }
     }
 
-    It 'skips an expected log root occupied by a file' {
+    It 'reports an unavailable product when every expected log root is unusable' {
         [System.IO.Directory]::Delete($LogRoot)
         $RootFile = New-Item -Path $LogRoot -ItemType File
 
         $Result = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue)
 
-        $Result | Should -HaveCount 0
+        $Result | Should -HaveCount 1
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].ErrorIds | Should -Contain 'ExchangeDiscoveryUnavailable'
         $RootFile.FullName | Should -Exist
     }
 

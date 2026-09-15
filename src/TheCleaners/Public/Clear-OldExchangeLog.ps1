@@ -89,12 +89,14 @@ function Clear-OldExchangeLog {
         'Bin/Search/Ceres/Diagnostics/Logs'
         'TransportRoles/Logs/MessageTracking'
     )
+    $FoundExistingRoot = $false
     foreach ($RelativeRoot in $RelativeRoots) {
         $RootPath = Join-Path -Path $InstallRoot.FullName -ChildPath $RelativeRoot
         if (-not (Test-Path -LiteralPath $RootPath -PathType Container)) {
             Write-Verbose -Message "Exchange log root not present as a directory: $RootPath"
             continue
         }
+        $FoundExistingRoot = $true
         $OldFiles = @()
         $NormalizedRoot = $null
         try {
@@ -168,6 +170,20 @@ function Clear-OldExchangeLog {
         if ($PassThru) {
             $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldExchangeLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Experimental' -ProtectionStatus $Protected.Status -ProtectionPathCount @($Protected.Paths).Count -ProtectionPaths @($Protected.Paths) -ProductVersion 'Exchange Server v15' -DiscoverySource 'v15 setup registry and fixed product roots' -CandidatePaths @($OldFiles | ForEach-Object { $_.FullName }) -Status 'WhatIf'
             $Result.FileCandidateCount = $OldFiles.Count
+            $Result
+        }
+    }
+
+    if (-not $FoundExistingRoot) {
+        $Exception = [System.InvalidOperationException]::new('Exchange is installed but no configured product log root could be discovered.')
+        $ErrorRecord = Get-TheCleanersErrorRecord -Exception $Exception -ErrorId 'ExchangeDiscoveryUnavailable' -Category ObjectNotFound -TargetObject $InstallRoot.FullName
+        $PSCmdlet.WriteError($ErrorRecord)
+        if ($PassThru) {
+            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldExchangeLog' -RootPath $InstallRoot.FullName -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus $Protected.Status -ProtectionPathCount @($Protected.Paths).Count -ProtectionPaths @($Protected.Paths) -ProductVersion 'Exchange Server v15' -DiscoverySource 'v15 setup registry and fixed product roots' -CandidatePaths @() -Status 'DiscoveryFailed'
+            $Result.FileCandidateCount = $null
+            $Result.DirectoryCandidateCount = $null
+            $Result.DiscoveryErrorCount = 1
+            $Result.ErrorIds = @('ExchangeDiscoveryUnavailable')
             $Result
         }
     }

@@ -186,4 +186,24 @@ Describe 'Native deletion handle safety' -Skip:(-not $WindowsHost) -Tag Unit {
             }
         }
     }
+
+    It 'prevents a file replacement while its deletion handle is open' {
+        $Root = Join-Path -Path $TestDrive -ChildPath 'NativeFileLock'
+        $null = New-Item -Path $Root -ItemType Directory -Force
+        $FilePath = Join-Path -Path $Root -ChildPath 'Planned.tmp'
+        $ReplacementPath = Join-Path -Path $Root -ChildPath 'Replacement.tmp'
+        $null = New-Item -Path $FilePath -ItemType File -Force
+        $Handle = [TheCleaners.NativeFileInterop]::OpenForDeletion($FilePath, $false)
+        try {
+            { [System.IO.File]::Move($FilePath, $ReplacementPath) } | Should -Throw
+        } finally {
+            $Handle.Dispose()
+            if ([System.IO.File]::Exists($FilePath)) {
+                [System.IO.File]::Delete($FilePath)
+            }
+            if ([System.IO.File]::Exists($ReplacementPath)) {
+                [System.IO.File]::Delete($ReplacementPath)
+            }
+        }
+    }
 }
