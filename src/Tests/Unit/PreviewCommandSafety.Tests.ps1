@@ -111,7 +111,7 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
     It 'classifies fallback FTP directories without WebAdministration' {
         $FtpRoot = Join-Path -Path $IISRoot -ChildPath 'FTPSVC7'
         $null = New-Item -Path $FtpRoot -ItemType Directory -Force
-        $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'u_ft240101.log') -ItemType File
+        $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'u_ex240101.log') -ItemType File
         $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
 
         $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
@@ -121,6 +121,28 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result[0].CandidatePaths | Should -Contain $OldLog.FullName
         $Result[0].CandidatePaths | Should -Contain $FtpLog.FullName
         $FtpLog.FullName | Should -Exist
+    }
+
+    It 'reports an invalid configured root before probing existence' {
+        $PreviousSystemDrive = $env:SystemDrive
+        try {
+            $env:SystemDrive = ''
+            Mock Get-ItemProperty { [pscustomobject]@{ LogDir = '%MISSING%\logs' } }
+            Mock Test-Path { throw 'Test-Path should not be called for an invalid IIS root.' }
+
+            $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable DiscoveryError)
+
+            $Result | Should -HaveCount 1
+            $Result[0].RootPath | Should -Be '%MISSING%\logs'
+            $Result[0].DiscoveryStatus | Should -Be 'Failed'
+            $Result[0].Status | Should -Be 'DiscoveryFailed'
+            $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+            $Result[0].ErrorIds | Should -Contain 'IISDiscoveryFailed'
+            $DiscoveryError | Should -Not -BeNullOrEmpty
+            Should -Invoke Test-Path -Exactly 0
+        } finally {
+            $env:SystemDrive = $PreviousSystemDrive
+        }
     }
 
     It 'reports registry access failure instead of silently omitting a configured root' {

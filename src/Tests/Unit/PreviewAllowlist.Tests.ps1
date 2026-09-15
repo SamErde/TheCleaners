@@ -19,8 +19,9 @@ Describe 'IIS format and protected-path allowlists' -Skip:(-not $WindowsHost) -T
     }
 
     It 'separates FTP, IIS, NCSA, and custom formats' {
-        Test-TheCleanersIisLogFileName -Name 'u_ft240101.log' -Format 'W3C' -Service 'MSFTPSVC' | Should -BeTrue
-        Test-TheCleanersIisLogFileName -Name 'u_ft240101.log' -Format 'W3C' -Service 'FTPSVC' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format 'W3C' -Service 'MSFTPSVC' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format 'W3C' -Service 'FTPSVC' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'u_ft240101.log' -Format 'W3C' -Service 'FTPSVC' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'inetsv01.log' -Format 'IIS' | Should -BeTrue
         Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format 'NCSA' | Should -BeTrue
         Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format 'Custom' | Should -BeFalse

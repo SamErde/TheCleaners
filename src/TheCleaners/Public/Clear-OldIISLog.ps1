@@ -220,6 +220,9 @@ function Clear-OldIISLog {
         }
         $RootExists = $false
         try {
+            if (-not (Test-TheCleanersFullyQualifiedPath -Path $RootDefinition.Path)) {
+                throw [System.IO.InvalidDataException]::new("The IIS log root is not a fully qualified filesystem path: '$($RootDefinition.Path)'.")
+            }
             $RootExists = Test-Path -LiteralPath $RootDefinition.Path -PathType Container -ErrorAction Stop
         } catch {
             $DiscoveryErrorReported = $true
