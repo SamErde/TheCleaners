@@ -91,6 +91,21 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $OldLog.FullName | Should -Exist
     }
 
+    It 'classifies fallback FTP directories without WebAdministration' {
+        $FtpRoot = Join-Path -Path $IISRoot -ChildPath 'FTPSVC7'
+        $null = New-Item -Path $FtpRoot -ItemType Directory -Force
+        $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'u_ft240101.log') -ItemType File
+        $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
+
+        $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
+
+        $Result | Should -HaveCount 1
+        $Result[0].FileCandidateCount | Should -Be 2
+        $Result[0].CandidatePaths | Should -Contain $OldLog.FullName
+        $Result[0].CandidatePaths | Should -Contain $FtpLog.FullName
+        $FtpLog.FullName | Should -Exist
+    }
+
     It 'reports registry access failure instead of silently omitting a configured root' {
         Mock Get-ItemProperty { throw [System.UnauthorizedAccessException]::new('Fixture registry access denied.') }
 
@@ -121,6 +136,22 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result[0].DiscoveryErrorCount | Should -Be 1
         $Result[0].ErrorIds | Should -Contain 'IISRegistryDiscoveryFailed'
         $RegistryError | Should -Not -BeNullOrEmpty
+    }
+
+    It 'returns a failed result when IIS root normalization fails' {
+        Mock Resolve-TheCleanersFileSystemPath {
+            throw [System.UnauthorizedAccessException]::new('Fixture IIS root normalization denial.')
+        } -ParameterFilter { $LiteralPath -eq $IISRoot }
+
+        $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable DiscoveryError)
+
+        $Result | Should -HaveCount 1
+        $Result[0].RootPath | Should -Be ([System.IO.Path]::GetFullPath($IISRoot))
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].ErrorIds | Should -Contain 'IISDiscoveryFailed'
+        $DiscoveryError | Should -Not -BeNullOrEmpty
     }
 
     It 'reports an unavailable product when no IIS root can be discovered' {

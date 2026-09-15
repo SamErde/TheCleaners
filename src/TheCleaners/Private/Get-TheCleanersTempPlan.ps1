@@ -58,6 +58,9 @@ function Get-TheCleanersTempPlan {
 
     while ($Pending.Count -gt 0) {
         $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $Pending.Pop()
+        if ($Directory -isnot [System.IO.DirectoryInfo]) {
+            throw [System.IO.InvalidDataException]::new("The temp traversal path is not a directory: '$($Directory.FullName)'.")
+        }
         foreach ($Item in @(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop)) {
             if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
                 Write-Verbose -Message "Skipping reparse point: $($Item.FullName)"

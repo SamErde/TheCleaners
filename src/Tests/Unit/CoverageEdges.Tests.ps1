@@ -119,6 +119,28 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         $Plan.Files | Should -BeNullOrEmpty
     }
 
+    It 'fails closed when a queued directory is replaced by a file before traversal' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'QueuedDirectoryReplacementRoot'
+        $ChildPath = Join-Path -Path $RootPath -ChildPath 'Child'
+        $null = New-Item -Path $ChildPath -ItemType Directory -Force
+        $Root = Get-Item -LiteralPath $RootPath
+        $RootInfo = Get-Item -LiteralPath $RootPath
+
+        Mock Resolve-TheCleanersFileSystemPath {
+            if ([string]$LiteralPath -like '*QueuedDirectoryReplacementRoot') {
+                return $RootInfo
+            }
+            if ([string]$LiteralPath -like '*QueuedDirectoryReplacementRoot\Child') {
+                [System.IO.Directory]::Delete($ChildPath, $true)
+                $null = New-Item -Path $ChildPath -ItemType File
+                return Get-Item -LiteralPath $ChildPath
+            }
+            throw "Unexpected traversal path: $LiteralPath"
+        }
+
+        { Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity:$false } | Should -Throw '*not a directory*'
+    }
+
     It 'rejects a reparse-point cleanup root before planning' {
         $OutsidePath = Join-Path -Path $TestDrive -ChildPath 'OutsideRoot'
         $LinkPath = Join-Path -Path $TestDrive -ChildPath 'ReparseRoot'

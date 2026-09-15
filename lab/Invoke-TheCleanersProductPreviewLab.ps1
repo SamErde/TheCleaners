@@ -31,7 +31,20 @@ function Get-ServiceEvidence {
     )
 
     foreach ($Name in $Names) {
-        $Service = Get-Service -Name $Name -ErrorAction SilentlyContinue | Select-Object -First 1
+        try {
+            $Service = Get-Service -Name $Name -ErrorAction Stop | Select-Object -First 1
+        } catch {
+            $ServiceIsAbsent = $_.FullyQualifiedErrorId -match '^NoServiceFoundForGivenName,'
+            if ($ServiceIsAbsent) {
+                $Service = $null
+            } else {
+                $Failure = [System.InvalidOperationException]::new(
+                    "Unable to determine service state for '$Name': $($_.Exception.Message)",
+                    $_.Exception
+                )
+                throw $Failure
+            }
+        }
         [ordered]@{
             Name   = $Name
             Exists = $null -ne $Service

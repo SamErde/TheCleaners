@@ -282,11 +282,23 @@ function Clear-OldIISLog {
                 Write-Verbose -Message "Skipping duplicate IIS log root: $NormalizedRoot"
                 continue
             }
-            $Pending = [System.Collections.Generic.Stack[string]]::new()
-            $Pending.Push($NormalizedRoot)
+            $Pending = [System.Collections.Generic.Stack[object]]::new()
+            $InitialService = [string]$RootDefinition.Service
+            $InitialDirectoryName = [System.IO.Path]::GetFileName($NormalizedRoot.TrimEnd([char[]]@('\', '/')))
+            if ($InitialDirectoryName -match '^(FTPSVC|MSFTPSVC)\d+$') {
+                $InitialService = $Matches[1]
+            } elseif ($InitialDirectoryName -match '^W3SVC\d+$') {
+                $InitialService = 'W3SVC'
+            }
+            $Pending.Push([pscustomobject]@{
+                    Path    = $NormalizedRoot
+                    Service = $InitialService
+                })
             $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
             while ($Pending.Count -gt 0) {
-                $DirectoryPath = $Pending.Pop()
+                $DirectoryState = $Pending.Pop()
+                $DirectoryPath = [string]$DirectoryState.Path
+                $DirectoryService = [string]$DirectoryState.Service
                 if ($DirectoryPath -ne $NormalizedRoot) {
                     $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $NormalizedRoot
                     if ($Directory -isnot [System.IO.DirectoryInfo]) {
@@ -299,8 +311,18 @@ function Clear-OldIISLog {
                         continue
                     }
                     if ($Item.PSIsContainer) {
-                        $Pending.Push($Item.FullName)
-                    } elseif ((Test-TheCleanersIisLogFileName -Name $Item.Name -Format $RootDefinition.Format -Service $RootDefinition.Service) -and $Item.LastWriteTimeUtc -le $CutoffUtc) {
+                        $ChildService = $DirectoryService
+                        $ChildDirectoryName = [System.IO.Path]::GetFileName($Item.FullName.TrimEnd([char[]]@('\', '/')))
+                        if ($ChildDirectoryName -match '^(FTPSVC|MSFTPSVC)\d+$') {
+                            $ChildService = $Matches[1]
+                        } elseif ($ChildDirectoryName -match '^W3SVC\d+$') {
+                            $ChildService = 'W3SVC'
+                        }
+                        $Pending.Push([pscustomobject]@{
+                                Path    = $Item.FullName
+                                Service = $ChildService
+                            })
+                    } elseif ((Test-TheCleanersIisLogFileName -Name $Item.Name -Format $RootDefinition.Format -Service $DirectoryService) -and $Item.LastWriteTimeUtc -le $CutoffUtc) {
                         $Candidates.Add($Item)
                     }
                 }
@@ -310,8 +332,9 @@ function Clear-OldIISLog {
             $null = $RootDiscoveryErrorIds.Add('IISDiscoveryFailed')
             $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError -TargetObject $RootDefinition.Path
             $PSCmdlet.WriteError($ErrorRecord)
-            if ($PassThru -and $null -ne $NormalizedRoot) {
-                $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
+            if ($PassThru) {
+                $ResultRootPath = if ($null -ne $NormalizedRoot) { $NormalizedRoot } else { $RootDefinition.Path }
+                $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $ResultRootPath -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
                 $Result.FileCandidateCount = $null
                 $Result.DirectoryCandidateCount = $null
                 $Result.DiscoveryErrorCount = $RootDiscoveryErrorIds.Count

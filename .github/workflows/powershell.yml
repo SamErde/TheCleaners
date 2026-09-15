@@ -40,7 +40,7 @@ jobs:
           recurse: true
           settings: ./src/PSScriptAnalyzerSettings.psd1
           # Pester fixtures intentionally share setup variables through the test scope.
-          excludeRule: '"PSUseDeclaredVarsMoreThanAssignments"'
+          excludeRule: PSUseDeclaredVarsMoreThanAssignments
           # Include your own basic security rules. Removing this option will run all the rules
           includeRule: '"PSAvoidGlobalAliases", "PSAvoidUsingConvertToSecureStringWithPlainText"'
           output: results.sarif
