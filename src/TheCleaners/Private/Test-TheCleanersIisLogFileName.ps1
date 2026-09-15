@@ -46,7 +46,7 @@ function Test-TheCleanersIisLogFileName {
     $ServiceName = $Service.ToUpperInvariant()
     switch ($NormalizedFormat) {
         'W3C' {
-            if ($ServiceName -eq 'MSFTPSVC') {
+            if ($ServiceName -in @('FTPSVC', 'MSFTPSVC')) {
                 return $Name -match '^u_ft(?:\d{2}|\d{4}|\d{6}|\d{8})\.log$'
             }
             if ($ServiceName -eq 'W3SVC') {

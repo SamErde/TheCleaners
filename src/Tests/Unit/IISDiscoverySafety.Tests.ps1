@@ -5,6 +5,7 @@ BeforeDiscovery {
         @{ Scenario = 'NewFailure' }
         @{ Scenario = 'ExistingSuccess' }
         @{ Scenario = 'ExistingFailure' }
+        @{ Scenario = 'FtpSuccess' }
     )
 }
 
@@ -98,11 +99,22 @@ if ($Scenario.EndsWith('Failure')) {
         throw $ObservedError
     }
     $ExpectedRoot = [System.IO.Path]::GetFullPath($LogRoot).TrimEnd([char[]]@('\', '/'))
-    if ($Results.Count -ne 1 -or $Results[0].RootPath -ne $ExpectedRoot) {
+    $WebResult = @($Results | Where-Object { $_.RootPath -eq $ExpectedRoot })
+    if ($WebResult.Count -ne 1) {
         throw 'Equivalent site roots were not normalized into one preview.'
     }
-    if ($Results[0].FileCandidateCount -ne 1 -or $Results[0].CandidatePaths.Count -ne 1 -or $Results[0].FilesRemoved -ne 0) {
+    if ($WebResult[0].FileCandidateCount -ne 1 -or $WebResult[0].CandidatePaths.Count -ne 1 -or $WebResult[0].FilesRemoved -ne 0) {
         throw 'The preview duplicated candidates or claimed file removal.'
+    }
+    if ($Scenario -eq 'FtpSuccess') {
+        $ExpectedFtpRoot = [System.IO.Path]::GetFullPath((Join-Path -Path (Split-Path -Path $ExpectedRoot -Parent) -ChildPath 'FTPSVC2')).TrimEnd([char[]]@('\', '/'))
+        $FtpResult = @($Results | Where-Object { $_.RootPath -eq $ExpectedFtpRoot })
+        if ($Results.Count -ne 2 -or $FtpResult.Count -ne 1 -or $FtpResult[0].FileCandidateCount -ne 1 -or $FtpResult[0].CandidatePaths.Count -ne 1 -or $FtpResult[0].FilesRemoved -ne 0) {
+            throw 'FTP site logging was not discovered as a separate preview root.'
+        }
+        if (-not [System.IO.File]::Exists((Join-Path -Path $ExpectedFtpRoot -ChildPath 'u_ft240101.log'))) {
+            throw 'The preview removed a fixture FTP log.'
+        }
     }
 }
 if (-not [System.IO.File]::Exists((Join-Path -Path $LogRoot -ChildPath 'u_ex240101.log'))) {
@@ -128,6 +140,13 @@ Describe 'IIS dependency state and site-root deduplication: <Scenario>' -ForEach
             @{ Name = 'Dot segment spelling'; Id = 1; LogFile = @{ Directory = $LogBase + '\..\LogFiles\' } }
             @{ Name = 'Alternate separators'; Id = 1; LogFile = @{ Directory = $LogBase.Replace('\', '/') + '/' } }
         )
+        if ($Scenario -eq 'FtpSuccess') {
+            $FtpRoot = Join-Path -Path $LogBase -ChildPath 'FTPSVC2'
+            $null = New-Item -Path $FtpRoot -ItemType Directory -Force
+            $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'u_ft240101.log') -ItemType File
+            $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
+            $Sites += @{ Name = 'FTP site'; Id = 2; LogFile = @{ Directory = $LogBase }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase } } }
+        }
         $Fixture = @{ FailDiscovery = $Scenario.EndsWith('Failure'); Sites = $Sites }
         $Fixture | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
         Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'WebAdministration.psm1') -Value $FixtureModuleContent -Encoding UTF8
@@ -188,6 +207,41 @@ Describe 'IIS registry-root deduplication' -Skip:(-not $WindowsHost) -Tag Unit {
         $Results.RootPath | Should -Contain ([System.IO.Path]::GetFullPath($IISRoot))
         $Results.RootPath | Should -Contain ([System.IO.Path]::GetFullPath($CustomRoot))
         $OldLog.FullName | Should -Exist
+    }
+}
+
+Describe 'IIS FTP root discovery' -Skip:(-not $WindowsHost) -Tag Unit {
+    It 'discovers an FTP site log root from its separate configuration' {
+        $FixtureRoot = Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)
+        $ModuleSearchRoot = Join-Path -Path $FixtureRoot -ChildPath 'Modules'
+        $DependencyRoot = Join-Path -Path $ModuleSearchRoot -ChildPath 'WebAdministration'
+        $LogBase = Join-Path -Path $FixtureRoot -ChildPath 'LogFiles'
+        $FtpRoot = Join-Path -Path $LogBase -ChildPath 'FTPSVC7'
+        $FtpLogPath = Join-Path -Path $FtpRoot -ChildPath 'u_ft240101.log'
+        $null = New-Item -Path $DependencyRoot -ItemType Directory -Force
+        $null = New-Item -Path $FtpRoot -ItemType Directory -Force
+        $FtpLog = New-Item -Path $FtpLogPath -ItemType File
+        $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
+        $Sites = @(
+            @{ Name = 'FTP fixture'; Id = 7; LogFile = @{ Directory = $LogBase }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase } } }
+        )
+        @{ FailDiscovery = $false; Sites = $Sites } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
+        Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'WebAdministration.psm1') -Value $FixtureModuleContent -Encoding UTF8
+        $PreviousPSModulePath = $env:PSModulePath
+        $env:PSModulePath = $ModuleSearchRoot + [System.IO.Path]::PathSeparator + $PreviousPSModulePath
+
+        try {
+            $Results = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
+        } finally {
+            Remove-Module -Name 'WebAdministration' -Force -ErrorAction SilentlyContinue
+            $env:PSModulePath = $PreviousPSModulePath
+        }
+
+        $Results | Should -HaveCount 1
+        $Results[0].RootPath | Should -Be ([System.IO.Path]::GetFullPath($FtpRoot))
+        $Results[0].CandidatePaths | Should -Contain ([System.IO.Path]::GetFullPath($FtpLogPath))
+        $Results[0].FileCandidateCount | Should -Be 1
+        $FtpLogPath | Should -Exist
     }
 }
 

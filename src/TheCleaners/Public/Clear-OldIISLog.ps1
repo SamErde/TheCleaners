@@ -5,13 +5,14 @@ function Clear-OldIISLog {
     .DESCRIPTION
         This command is structurally preview-only while IIS server acceptance is
         incomplete. Explicit -WhatIf is required. Discovery expands and validates
-        configured roots, rejects protected IIS configuration paths, skips reparse
-        points, deduplicates normalized roots, and applies a per-format filename
-        allowlist before the inclusive UTC cutoff. A WebAdministration dependency
-        imported for discovery is removed afterward, while an already loaded
-        dependency is preserved. No deletion command or generic mutation helper is
-        called. The allowlist is a discovery safety boundary, not stable-removal
-        evidence; a disposable IIS lab is still required before any future removal.
+        configured web and FTP roots, rejects protected IIS configuration paths,
+        skips reparse points, deduplicates normalized roots, and applies a
+        per-format filename allowlist before the inclusive UTC cutoff. A
+        WebAdministration dependency imported for discovery is removed afterward,
+        while an already loaded dependency is preserved. No deletion command or
+        generic mutation helper is called. The allowlist is a discovery safety
+        boundary, not stable-removal evidence; a disposable IIS lab is still
+        required before any future removal.
     .PARAMETER Days
         Preview allowlisted log files whose LastWriteTimeUtc is at or before one UTC
         cutoff, Days days ago. The default is 60 days.
@@ -67,18 +68,44 @@ function Clear-OldIISLog {
             }
             foreach ($Site in @(WebAdministration\Get-Website -ErrorAction Stop)) {
                 $ConfiguredRoot = [Environment]::ExpandEnvironmentVariables([string]$Site.LogFile.Directory)
+                $SiteName = [string]$Site.Name
                 if ([string]::IsNullOrWhiteSpace($ConfiguredRoot)) {
                     Write-Verbose -Message "IIS site '$($Site.Name)' has no log directory."
+                } else {
+                    $Format = if ($null -eq $Site.LogFile.LogFormat) { 'W3C' } else { [string]$Site.LogFile.LogFormat }
+                    $Roots.Add([pscustomobject]@{
+                            Path        = Join-Path -Path $ConfiguredRoot -ChildPath ('W3SVC{0}' -f $Site.Id)
+                            DisplayName = $SiteName
+                            Source      = 'WebAdministration'
+                            Format      = $Format
+                            Service     = 'W3SVC'
+                        })
+                }
+
+                $FtpBindings = @($Site.Bindings | Where-Object { [string]$_.Protocol -ieq 'ftp' })
+                if ($FtpBindings.Count -eq 0) {
                     continue
                 }
-                $Format = if ($null -eq $Site.LogFile.LogFormat) { 'W3C' } else { [string]$Site.LogFile.LogFormat }
-                $Roots.Add([pscustomobject]@{
-                        Path        = Join-Path -Path $ConfiguredRoot -ChildPath ('W3SVC{0}' -f $Site.Id)
-                        DisplayName = [string]$Site.Name
-                        Source      = 'WebAdministration'
-                        Format      = $Format
-                        Service     = 'W3SVC'
-                    })
+                try {
+                    $FtpConfiguredRoot = [Environment]::ExpandEnvironmentVariables([string]$Site.FtpServer.LogFile.Directory)
+                    if ([string]::IsNullOrWhiteSpace($FtpConfiguredRoot)) {
+                        if ([string]::IsNullOrWhiteSpace($env:SystemDrive)) {
+                            throw [System.InvalidOperationException]::new("Cannot determine the default IIS FTP log directory for site '$SiteName'.")
+                        }
+                        $FtpConfiguredRoot = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
+                    }
+                    $Roots.Add([pscustomobject]@{
+                            Path        = Join-Path -Path $FtpConfiguredRoot -ChildPath ('FTPSVC{0}' -f $Site.Id)
+                            DisplayName = "$SiteName FTP"
+                            Source      = 'WebAdministration'
+                            Format      = 'W3C'
+                            Service     = 'FTPSVC'
+                        })
+                } catch {
+                    $null = $GlobalDiscoveryErrorIds.Add('IISFtpDiscoveryFailed')
+                    $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISFtpDiscoveryFailed' -Category ReadError -TargetObject $SiteName
+                    $PSCmdlet.WriteError($ErrorRecord)
+                }
             }
         } catch {
             $null = $GlobalDiscoveryErrorIds.Add('IISDiscoveryFailed')
