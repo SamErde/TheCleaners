@@ -24,23 +24,22 @@ function Test-TheCleanersFullyQualifiedPath {
     }
 
     $Comparison = [System.StringComparison]::OrdinalIgnoreCase
-    if ($Path.StartsWith('\\.\', $Comparison) -or $Path.StartsWith('//./', $Comparison)) {
+    $NormalizedPath = $Path.Replace('/', '\')
+    if ($NormalizedPath.StartsWith('\\.\', $Comparison)) {
         return $false
     }
 
-    if ($Path.StartsWith('\\?\', $Comparison) -or $Path.StartsWith('//?/', $Comparison)) {
-        $NormalizedExtendedPath = $Path.Replace('/', '\')
-        if ($NormalizedExtendedPath -match '^\\\\\?\\[A-Za-z]:[\\/]') {
+    if ($NormalizedPath.StartsWith('\\?\', $Comparison)) {
+        if ($NormalizedPath -match '^\\\\\?\\[A-Za-z]:[\\/]') {
             return $true
         }
-        if ($NormalizedExtendedPath -match '^\\\\\?\\UNC\\[^\\/]+\\[^\\/]') {
+        if ($NormalizedPath -match '^\\\\\?\\UNC\\[^\\/]+\\[^\\/]') {
             return $true
         }
         return $false
     }
 
-    if ($Path.StartsWith('\\') -or $Path.StartsWith('//')) {
-        $NormalizedPath = $Path.Replace('/', '\')
+    if ($NormalizedPath.StartsWith('\\')) {
         $Segments = $NormalizedPath -split '\\'
         if ($Segments.Count -lt 4 -or
             [string]::IsNullOrWhiteSpace($Segments[2]) -or
@@ -50,7 +49,7 @@ function Test-TheCleanersFullyQualifiedPath {
         return $true
     }
 
-    if ($Path -match '^[A-Za-z]:[\\/]') {
+    if ($NormalizedPath -match '^[A-Za-z]:[\\/]') {
         return $true
     }
 

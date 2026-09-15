@@ -91,6 +91,59 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
         $Result.DirectoriesRemoved | Should -Be 0
     }
 
+    It 'retains skipped child handles through ancestor pruning' {
+        $ParentPath = Split-Path -Path $NestedPath -Parent
+        $ParentFile = New-Item -Path (Join-Path -Path $ParentPath -ChildPath 'old-parent.tmp') -ItemType File
+        [System.IO.File]::WriteAllBytes($ParentFile.FullName, [byte[]](7, 8, 9))
+        $ParentFile.LastWriteTimeUtc = $Now.AddDays(-31)
+        $RecentChildPath = Join-Path -Path $NestedPath -ChildPath 'recent-after-discovery.tmp'
+        $ReplacementPath = Join-Path -Path $TestDrive -ChildPath 'MovedSkippedChild'
+        $script:ChildWasMadeNonEmpty = $false
+        $script:MoveAttempted = $false
+        $script:MoveBlocked = $false
+
+        Mock Get-ChildItem {
+            if ($LiteralPath -eq $NestedPath -and
+                -not [System.IO.File]::Exists($OldFile.FullName) -and
+                -not [System.IO.File]::Exists($RecentChildPath)) {
+                $RecentChild = Microsoft.PowerShell.Management\New-Item -Path $RecentChildPath -ItemType File -Force
+                $RecentChild.LastWriteTimeUtc = $Now
+                $script:ChildWasMadeNonEmpty = $true
+            }
+            foreach ($Item in [System.IO.DirectoryInfo]::new($LiteralPath).GetFileSystemInfos()) {
+                $Item | Add-Member -MemberType NoteProperty -Name PSIsContainer -Value ($Item -is [System.IO.DirectoryInfo]) -Force
+                $Item
+            }
+        }
+        Mock Get-Item {
+            if ($LiteralPath -eq $ParentPath -and $script:ChildWasMadeNonEmpty -and -not $script:MoveAttempted) {
+                $script:MoveAttempted = $true
+                try {
+                    [System.IO.Directory]::Move($NestedPath, $ReplacementPath)
+                } catch {
+                    $script:MoveBlocked = $true
+                }
+            }
+            if ([System.IO.Directory]::Exists($LiteralPath)) {
+                [System.IO.DirectoryInfo]::new($LiteralPath)
+            } elseif ([System.IO.File]::Exists($LiteralPath)) {
+                [System.IO.FileInfo]::new($LiteralPath)
+            } else {
+                throw [System.IO.FileNotFoundException]::new("Fixture path was not found: '$LiteralPath'.")
+            }
+        }
+
+        $Result = & $CommandName -Days 30 -RemoveEmptyDirectory -Confirm:$false -PassThru -ErrorAction SilentlyContinue
+
+        $script:ChildWasMadeNonEmpty | Should -BeTrue
+        $script:MoveAttempted | Should -BeTrue
+        $script:MoveBlocked | Should -BeTrue
+        $NestedPath | Should -Exist
+        $ParentPath | Should -Exist
+        $RecentChildPath | Should -Exist
+        $Result.DirectoriesRemoved | Should -Be 0
+    }
+
     It 'does not absorb an unrelated pre-existing empty sibling into its directory plan' {
         $EmptySibling = Join-Path -Path (Split-Path -Path $NestedPath -Parent) -ChildPath 'LeaveMe'
         $null = New-Item -Path $EmptySibling -ItemType Directory

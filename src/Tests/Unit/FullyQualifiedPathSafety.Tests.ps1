@@ -77,6 +77,8 @@ Describe 'Fully qualified filesystem path safety' -Skip:([Environment]::OSVersio
 
     It 'rejects unsupported device namespace syntax' {
         Test-TheCleanersFullyQualifiedPath -Path '\\.\C:\Temp' | Should -BeFalse
+        Test-TheCleanersFullyQualifiedPath -Path '\\./C:\Temp' | Should -BeFalse
         Test-TheCleanersFullyQualifiedPath -Path '\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1' | Should -BeFalse
+        Test-TheCleanersFullyQualifiedPath -Path '\\?/GLOBALROOT\Device\HarddiskVolumeShadowCopy1' | Should -BeFalse
     }
 }

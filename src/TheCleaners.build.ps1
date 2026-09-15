@@ -33,6 +33,29 @@ function Get-BuildCommitId {
     'unavailable'
 }
 
+function Write-BuildTextFile {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [string]
+        $Path,
+
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string]
+        $Content,
+
+        [Parameter()]
+        [System.Text.Encoding]
+        $Encoding
+    )
+
+    if ($null -eq $Encoding) {
+        $Encoding = [System.Text.UTF8Encoding]::new($false)
+    }
+    [System.IO.File]::WriteAllText($Path, $Content, $Encoding)
+}
+
 function Get-RelativeArtifactPath {
     param (
         [Parameter(Mandatory)]
@@ -108,7 +131,8 @@ function Write-TestSummary {
         CoveragePercent = $CoveragePercent
         GeneratedUtc    = [DateTime]::UtcNow.ToString('o')
     }
-    $Summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $Path -Encoding UTF8
+    $SummaryJson = $Summary | ConvertTo-Json -Depth 8
+    Write-BuildTextFile -Path $Path -Content $SummaryJson
 }
 
 function New-DeterministicZipArchive {
@@ -390,7 +414,7 @@ Add-BuildTask CreateMarkdownHelp -After CreateHelpStart {
         }
         $ModulePage = $ModulePage.Substring(0, $MarkerIndex) + [string]$Synopsis + $ModulePage.Substring($MarkerIndex + $DescriptionMarker.Length)
     }
-    Set-Content -LiteralPath $ModulePagePath -Value $ModulePage -Encoding UTF8
+    Write-BuildTextFile -Path $ModulePagePath -Content $ModulePage
     $Missing = @(Select-String -Path $GeneratedFiles.FullName -Pattern '({{.*}})' -ErrorAction SilentlyContinue)
     if ($Missing.Count -gt 0) {
         throw "Generated help contains unresolved template markers: $($Missing -join '; ')"
@@ -435,7 +459,7 @@ Add-BuildTask Build -After CreateExternalHelp {
     foreach ($PublicFile in @(Get-ChildItem -LiteralPath (Join-Path -Path $script:ArtifactsPath -ChildPath 'Public') -Filter '*.ps1' -File)) {
         $Content = Get-Content -LiteralPath $PublicFile.FullName -Raw
         $Updated = $Content -replace '(?ms)\<\#.*?\.SYNOPSIS.*?#\>', $ExternalHelp
-        Set-Content -LiteralPath $PublicFile.FullName -Value $Updated -Encoding UTF8
+        Write-BuildTextFile -Path $PublicFile.FullName -Content $Updated
     }
 }
 
@@ -479,7 +503,7 @@ Add-BuildTask Archive {
         }
     }
     $ManifestPath = Join-Path -Path $script:ArchivePath -ChildPath ('{0}_{1}.manifest.json' -f $script:ModuleName, $script:ModuleVersion)
-    [ordered]@{
+    $ManifestJson = [ordered]@{
         ModuleName    = $script:ModuleName
         ModuleVersion = $script:ModuleVersion
         Commit        = Get-BuildCommitId
@@ -490,8 +514,9 @@ Add-BuildTask Archive {
         Archive       = $ZipName
         ArchiveSHA256 = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash.ToLowerInvariant()
         Files         = $FileRecords
-    } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ManifestPath -Encoding UTF8
+    } | ConvertTo-Json -Depth 8
+    Write-BuildTextFile -Path $ManifestPath -Content $ManifestJson
     $HashPath = "$ZipPath.sha256"
     $ArchiveHash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash.ToLowerInvariant()
-    "$ArchiveHash *$ZipName" | Set-Content -LiteralPath $HashPath -Encoding ASCII
+    Write-BuildTextFile -Path $HashPath -Content ("$ArchiveHash *$ZipName") -Encoding ([System.Text.ASCIIEncoding]::new())
 }

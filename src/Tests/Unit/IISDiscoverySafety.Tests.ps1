@@ -116,7 +116,7 @@ if ($Scenario.EndsWith('Failure')) {
         if ($Results.Count -ne 2 -or $FtpResult.Count -ne 1 -or $FtpResult[0].FileCandidateCount -ne 1 -or $FtpResult[0].CandidatePaths.Count -ne 1 -or $FtpResult[0].FilesRemoved -ne 0) {
             throw 'FTP site logging was not discovered as a separate preview root.'
         }
-        if (-not [System.IO.File]::Exists((Join-Path -Path $ExpectedFtpRoot -ChildPath 'u_ex240101.log'))) {
+        if (-not [System.IO.File]::Exists((Join-Path -Path $ExpectedFtpRoot -ChildPath 'inetsv01.log'))) {
             throw 'The preview removed a fixture FTP log.'
         }
     }
@@ -154,9 +154,9 @@ Describe 'IIS dependency state and site-root deduplication: <Scenario>' -ForEach
         if ($Scenario -eq 'FtpSuccess') {
             $FtpRoot = Join-Path -Path $LogBase -ChildPath 'FTPSVC2'
             $null = New-Item -Path $FtpRoot -ItemType Directory -Force
-        $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'u_ex240101.log') -ItemType File
+        $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'inetsv01.log') -ItemType File
             $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
-            $Sites += @{ Name = 'FTP site'; Id = 2; LogFile = @{ Directory = $LogBase }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase } } }
+            $Sites += @{ Name = 'FTP site'; Id = 2; LogFile = @{ Directory = $LogBase }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'IIS' } } }
         }
         $Fixture = @{ FailDiscovery = $Scenario.EndsWith('Failure'); Sites = $Sites }
         $Fixture | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8

@@ -120,11 +120,12 @@ function Clear-OldIISLog {
                         }
                         $FtpConfiguredRoot = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
                     }
+                    $FtpFormat = if ($null -eq $Site.FtpServer.LogFile.LogFormat) { 'W3C' } else { [string]$Site.FtpServer.LogFile.LogFormat }
                     $Roots.Add([pscustomobject]@{
                             Path              = Join-Path -Path $FtpConfiguredRoot -ChildPath ('FTPSVC{0}' -f $Site.Id)
                             DisplayName       = "$SiteName FTP"
                             Source            = 'WebAdministration'
-                            Format            = 'W3C'
+                            Format            = $FtpFormat
                             Service           = 'FTPSVC'
                             DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
                         })

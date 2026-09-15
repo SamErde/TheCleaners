@@ -202,6 +202,8 @@ function Clear-WindowsTemp {
             }
 
             $CurrentHandle = $null
+            $PlanOwnsCurrentHandle = $false
+            $DeletionRequested = $false
             try {
                 $CurrentDirectory = Get-Item -LiteralPath $DirectoryPlan.Path -Force -ErrorAction Stop
                 if ($CurrentDirectory -isnot [System.IO.DirectoryInfo] -or ($CurrentDirectory.Attributes -band $ReparsePointAttributes)) {
@@ -210,6 +212,7 @@ function Clear-WindowsTemp {
                 }
                 $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPlan.Path -RootPath $Result.RootPath
                 $CurrentHandle = if ($null -ne $DirectoryPlan.Handle) {
+                    $PlanOwnsCurrentHandle = $true
                     $DirectoryPlan.Handle
                 } else {
                     [TheCleaners.NativeFileInterop]::OpenForDeletion($DirectoryPlan.Path, $true)
@@ -224,6 +227,7 @@ function Clear-WindowsTemp {
                     continue
                 }
                 [TheCleaners.NativeFileInterop]::MarkForDeletion($CurrentHandle)
+                $DeletionRequested = $true
             } catch {
                 $BaseException = $_.Exception.GetBaseException()
                 $NativeErrorCode = if ($BaseException -is [System.ComponentModel.Win32Exception]) { $BaseException.NativeErrorCode } else { -1 }
@@ -239,12 +243,12 @@ function Clear-WindowsTemp {
                 }
                 continue
             } finally {
-                if ($null -ne $CurrentHandle) {
+                if ($null -ne $CurrentHandle -and (-not $PlanOwnsCurrentHandle -or $DeletionRequested)) {
                     $CurrentHandle.Dispose()
                 }
             }
 
-            if ([System.IO.Directory]::Exists($DirectoryPlan.Path)) {
+            if ((-not $PlanOwnsCurrentHandle -or $DeletionRequested) -and [System.IO.Directory]::Exists($DirectoryPlan.Path)) {
                 $Result.DirectoryFailureCount++
                 $Result.ErrorIds = @($Result.ErrorIds + 'TempDirectoryRemovalFailed')
                 $Exception = [System.IO.IOException]::new("The directory path still exists after its deletion handle closed: '$($DirectoryPlan.Path)'.")
