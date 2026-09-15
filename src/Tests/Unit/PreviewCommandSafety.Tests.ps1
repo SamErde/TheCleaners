@@ -50,6 +50,41 @@ Describe 'Exchange preview root validation' -Skip:(-not $WindowsHost) -Tag Unit 
         { Clear-OldExchangeLog -WhatIf -WarningAction SilentlyContinue } | Should -Throw '*not a directory*'
     }
 
+    It 'returns a failed result when installation-root validation fails' {
+        $InstallFile = New-Item -Path (Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)) -ItemType File
+        Mock Get-ItemProperty { [pscustomobject]@{ MsiInstallPath = $InstallFile.FullName } }
+
+        $Result = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Continue -ErrorVariable RootError)
+
+        $Result | Should -HaveCount 1
+        $Result[0].RootPath | Should -Be $InstallFile.FullName
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DiscoveryErrorCount | Should -Be 1
+        $Result[0].ErrorIds | Should -Contain 'ExchangeInstallRootValidationFailed'
+        $RootError | Should -Not -BeNullOrEmpty
+        { Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop } | Should -Throw '*not a directory*'
+    }
+
+    It 'returns a failed result when Exchange protection discovery fails' {
+        Mock Get-TheCleanersExchangeProtectedPaths { throw [System.UnauthorizedAccessException]::new('Fixture Exchange protection access denied.') }
+
+        $Result = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Continue -ErrorVariable ProtectionError)
+
+        $Result | Should -HaveCount 1
+        $Result[0].RootPath | Should -Be $ExchangeRoot
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DiscoveryErrorCount | Should -Be 1
+        $Result[0].ErrorIds | Should -Contain 'ExchangeProtectedPathDiscoveryFailed'
+        $ProtectionError | Should -Not -BeNullOrEmpty
+        { Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop } | Should -Throw '*protection access denied*'
+    }
+
     It 'returns a failed result when Exchange registry discovery fails' {
         $RegistryPath = 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup'
         Mock Get-ItemProperty { throw [System.UnauthorizedAccessException]::new('Fixture Exchange registry access denied.') }

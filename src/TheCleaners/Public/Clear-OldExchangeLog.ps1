@@ -84,7 +84,18 @@ function Clear-OldExchangeLog {
         }
     } catch {
         $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'ExchangeInstallRootValidationFailed' -Category InvalidData -TargetObject $Setup.MsiInstallPath
-        $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+        if ($PassThru) {
+            $PSCmdlet.WriteError($ErrorRecord)
+            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldExchangeLog' -RootPath $Setup.MsiInstallPath -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Unknown' -ProductVersion 'Exchange Server v15' -DiscoverySource 'v15 setup registry' -CandidatePaths @() -Status 'DiscoveryFailed'
+            $Result.FileCandidateCount = $null
+            $Result.DirectoryCandidateCount = $null
+            $Result.DiscoveryErrorCount = 1
+            $Result.ErrorIds = @('ExchangeInstallRootValidationFailed')
+            $Result
+        } else {
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+        }
+        return
     }
 
     $Protected = $null
@@ -92,7 +103,18 @@ function Clear-OldExchangeLog {
         $Protected = Get-TheCleanersExchangeProtectedPaths -InstallRoot $InstallRoot
     } catch {
         $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'ExchangeProtectedPathDiscoveryFailed' -Category ReadError -TargetObject $InstallRoot.FullName
-        $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+        if ($PassThru) {
+            $PSCmdlet.WriteError($ErrorRecord)
+            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldExchangeLog' -RootPath $InstallRoot.FullName -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Unknown' -ProductVersion 'Exchange Server v15' -DiscoverySource 'v15 setup registry' -CandidatePaths @() -Status 'DiscoveryFailed'
+            $Result.FileCandidateCount = $null
+            $Result.DirectoryCandidateCount = $null
+            $Result.DiscoveryErrorCount = 1
+            $Result.ErrorIds = @('ExchangeProtectedPathDiscoveryFailed')
+            $Result
+        } else {
+            $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+        }
+        return
     }
 
     $RelativeRoots = @(

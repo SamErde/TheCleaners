@@ -173,9 +173,34 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         } -ParameterFilter { $LiteralPath -eq $ChildPath }
 
         $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity
+        try {
+            $script:MoveBlocked | Should -BeTrue
+            $Plan.Files | Should -BeNullOrEmpty
+        } finally {
+            Close-TheCleanersTempPlanHandles -Plan $Plan
+        }
+    }
 
-        $script:MoveBlocked | Should -BeTrue
-        $Plan.Files | Should -BeNullOrEmpty
+    It 'retains ancestor handles after discovery until mutation completes' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'HeldAncestorRoot'
+        $ChildPath = Join-Path -Path $RootPath -ChildPath 'Child'
+        $FilePath = Join-Path -Path $ChildPath -ChildPath 'old.tmp'
+        $ReplacementPath = Join-Path -Path $TestDrive -ChildPath 'HeldAncestorReplacement'
+        $null = New-Item -Path $ChildPath -ItemType Directory -Force
+        $null = New-Item -Path $FilePath -ItemType File -Force
+        [System.IO.File]::SetLastWriteTimeUtc($FilePath, [DateTime]::UtcNow.AddDays(-31))
+        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
+        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity
+
+        try {
+            $Plan.HeldDirectoryHandles.Count | Should -Be 2
+            { [System.IO.Directory]::Move($ChildPath, $ReplacementPath) } | Should -Throw
+        } finally {
+            Close-TheCleanersTempPlanHandles -Plan $Plan
+        }
+
+        [System.IO.Directory]::Move($ChildPath, $ReplacementPath)
+        $ReplacementPath | Should -Exist
     }
 
     It 'rejects a reparse-point cleanup root before planning' {
