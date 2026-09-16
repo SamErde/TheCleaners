@@ -47,8 +47,12 @@ function Get-WebConfiguration {
     )
 
     $Fixture = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath 'Sites.json') -Raw -ErrorAction Stop | ConvertFrom-Json
-    $SiteName = [regex]::Match($Filter, "site\[@name='(?<Name>[^']+)'\]").Groups['Name'].Value
-    $Site = @($Fixture.Sites | Where-Object { [string]$_.Name -eq $SiteName }) | Select-Object -First 1
+    $SiteId = [regex]::Match($Filter, "site\[@id='(?<Id>\d+)'\]").Groups['Id'].Value
+    if (-not [string]::IsNullOrWhiteSpace($SiteId)) {
+        $Site = @($Fixture.Sites | Where-Object { [string]$_.Id -eq $SiteId }) | Select-Object -First 1
+    } else {
+        $Site = $null
+    }
     if ($null -eq $Site -or $null -eq $Site.FtpServer) {
         return
     }
@@ -218,7 +222,7 @@ Describe 'IIS dependency state and site-root deduplication: <Scenario>' -ForEach
             $null = New-Item -Path $FtpRoot -ItemType Directory -Force
             $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'inetsv01.log') -ItemType File
             $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
-            $Sites += @{ Name = 'FTP site'; Id = 2; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'IIS'; LocalTimeRollover = $false } } }
+            $Sites += @{ Name = "FTP O'Brien site"; Id = 2; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'IIS'; LocalTimeRollover = $false } } }
         }
         $Fixture = @{ FailDiscovery = $Scenario.EndsWith('Failure'); Sites = $Sites }
         $Fixture | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
@@ -356,7 +360,7 @@ Describe 'IIS FTP root discovery' -Skip:(-not $WindowsHost) -Tag Unit {
         $FtpLog = New-Item -Path $FtpLogPath -ItemType File
         $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $Sites = @(
-            @{ Name = 'FTP fixture'; Id = 7; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false } } }
+            @{ Name = "FTP O'Brien fixture"; Id = 7; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false } } }
         )
         @{ FailDiscovery = $false; Sites = $Sites } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
         Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'WebAdministration.psm1') -Value $FixtureModuleContent -Encoding UTF8

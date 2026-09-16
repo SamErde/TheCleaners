@@ -82,8 +82,12 @@ function Clear-OldIISLog {
                             $FtpBindings = @($Site.Bindings | Where-Object { [string]$_.Protocol -ieq 'ftp' })
                             if ($FtpBindings.Count -gt 0) {
                                 try {
-                                    $SiteNameForFilter = ([string]$Site.Name).Replace("'", "''")
-                                    $FtpFilter = "system.applicationHost/sites/site[@name='$SiteNameForFilter']/ftpServer/logFile"
+                                    $SiteIdProperty = $Site.PSObject.Properties['Id']
+                                    if ($null -eq $SiteIdProperty -or [string]::IsNullOrWhiteSpace([string]$SiteIdProperty.Value)) {
+                                        throw [System.InvalidOperationException]::new("The IIS FTP site '$($Site.Name)' has no numeric site identifier.")
+                                    }
+                                    $SiteId = [int64]::Parse([string]$SiteIdProperty.Value, [System.Globalization.CultureInfo]::InvariantCulture)
+                                    $FtpFilter = "system.applicationHost/sites/site[@id='$SiteId']/ftpServer/logFile"
                                     $FtpLogConfiguration = @(WebAdministration\Get-WebConfiguration -Filter $FtpFilter -PSPath 'MACHINE/WEBROOT/APPHOST' -ErrorAction Stop | Select-Object -First 1)
                                     if ($FtpLogConfiguration.Count -eq 0) {
                                         throw [System.InvalidOperationException]::new("The IIS FTP log configuration was not returned for site '$($Site.Name)'.")

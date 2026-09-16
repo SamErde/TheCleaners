@@ -125,14 +125,9 @@ function Get-StaleUserProfile {
             $HeldDirectoryHandleByPath = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::OrdinalIgnoreCase)
             $ValidateHeldDirectoryHandles = {
                 foreach ($HeldDirectoryEntry in $HeldDirectoryHandles) {
-                    $CurrentHeldHandle = [TheCleaners.NativeFileInterop]::OpenForIdentityInspection($HeldDirectoryEntry.Path)
-                    try {
-                        $CurrentHeldIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($CurrentHeldHandle)
-                        if (-not $CurrentHeldIdentity.IsDirectory -or $CurrentHeldIdentity.IsReparsePoint -or -not $HeldDirectoryEntry.Identity.Equals($CurrentHeldIdentity)) {
-                            throw [System.IO.InvalidDataException]::new("The profile traversal path or an ancestor changed while it was being sized: '$($HeldDirectoryEntry.Path)'.")
-                        }
-                    } finally {
-                        $CurrentHeldHandle.Dispose()
+                    $CurrentHeldIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($HeldDirectoryEntry.Handle)
+                    if (-not $CurrentHeldIdentity.IsDirectory -or $CurrentHeldIdentity.IsReparsePoint -or -not $HeldDirectoryEntry.Identity.Equals($CurrentHeldIdentity)) {
+                        throw [System.IO.InvalidDataException]::new("The profile traversal path or an ancestor changed while it was being sized: '$($HeldDirectoryEntry.Path)'.")
                     }
                 }
             }
