@@ -62,4 +62,3 @@ Describe 'Archive reproducibility' -Tag Unit {
         [System.IO.File]::ReadAllText($Zip) | Should -Be 'preserve me'
     }
 }
-

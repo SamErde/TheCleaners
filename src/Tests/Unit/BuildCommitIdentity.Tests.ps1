@@ -46,4 +46,3 @@ Describe 'Build commit identity' -Tag Unit {
         Get-BuildCommitId | Should -Be $env:TC_BUILD_COMMIT
     }
 }
-

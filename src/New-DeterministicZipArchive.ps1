@@ -71,4 +71,3 @@ function New-DeterministicZipArchive {
         $ArchiveStream.Dispose()
     }
 }
-
