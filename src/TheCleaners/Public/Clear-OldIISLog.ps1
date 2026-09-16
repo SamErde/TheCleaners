@@ -59,6 +59,7 @@ function Clear-OldIISLog {
     $SeenRoots = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $IisProtectedPaths = @(Get-TheCleanersIisProtectedPaths)
     $WebAdministrationModule = Get-Module -Name 'WebAdministration' -ListAvailable | Select-Object -First 1
+    $FtpDiscoveryErrorRecords = [System.Collections.Generic.List[object]]::new()
     $DiscoveryErrorReported = $false
     $DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
     $DiscoveryFailureResultReported = $false
@@ -203,7 +204,7 @@ function Clear-OldIISLog {
                         $Result
                     }
                     $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISFtpDiscoveryFailed' -Category ReadError -TargetObject $SiteName
-                    $PSCmdlet.WriteError($ErrorRecord)
+                    $null = $FtpDiscoveryErrorRecords.Add($ErrorRecord)
                 }
             }
         } catch {
@@ -302,6 +303,10 @@ function Clear-OldIISLog {
                 $PSCmdlet.WriteError($ErrorRecord)
             }
         }
+    }
+
+    foreach ($FtpDiscoveryErrorRecord in $FtpDiscoveryErrorRecords) {
+        $PSCmdlet.WriteError($FtpDiscoveryErrorRecord)
     }
 
     $RootDefinitionsByPath = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::OrdinalIgnoreCase)
@@ -436,30 +441,51 @@ function Clear-OldIISLog {
                 Write-Verbose -Message "Skipping duplicate IIS log root: $NormalizedRoot"
                 continue
             }
-            if ($RootDiscoveryErrorIds.Count -gt 0) {
-                $DiscoveryErrorReported = $true
-                $DiscoveryFailureResultReported = $true
-                foreach ($RootErrorId in @($RootDiscoveryErrorIds | Sort-Object -Unique)) {
-                    $MetadataErrorMessage = switch ($RootErrorId) {
-                        'IISLogFormatUnavailable' { "The IIS logging format was unavailable for root '$($RootDefinition.Path)'."; break }
-                        'IISLocalTimeRolloverUnavailable' { "The IIS local-time rollover setting was unavailable for root '$($RootDefinition.Path)'."; break }
-                        default { "IIS discovery metadata was unavailable for root '$($RootDefinition.Path)'." }
-                    }
-                    $MetadataException = [System.InvalidOperationException]::new($MetadataErrorMessage)
-                    $MetadataErrorRecord = Get-TheCleanersErrorRecord -Exception $MetadataException -ErrorId $RootErrorId -Category ReadError -TargetObject $RootDefinition.Path
-                    $PSCmdlet.WriteError($MetadataErrorRecord)
-                }
-                if ($PassThru) {
-                    $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
-                    $Result.FileCandidateCount = $null
-                    $Result.DirectoryCandidateCount = $null
-                    $Result.DiscoveryErrorCount = $RootDiscoveryErrorIds.Count
-                    $Result.ErrorIds = @($RootDiscoveryErrorIds | Sort-Object -Unique)
-                    $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
-                    $Result
-                }
-                continue
+        } catch {
+            $DiscoveryErrorReported = $true
+            $DiscoveryFailureResultReported = $true
+            $null = $RootDiscoveryErrorIds.Add('IISDiscoveryFailed')
+            $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError -TargetObject $RootDefinition.Path
+            $PSCmdlet.WriteError($ErrorRecord)
+            if ($PassThru) {
+                $ResultRootPath = if ($null -ne $NormalizedRoot) { $NormalizedRoot } else { $RootDefinition.Path }
+                $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $ResultRootPath -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
+                $Result.FileCandidateCount = $null
+                $Result.DirectoryCandidateCount = $null
+                $Result.DiscoveryErrorCount = $RootDiscoveryErrorIds.Count
+                $Result.ErrorIds = @($RootDiscoveryErrorIds | Sort-Object -Unique)
+                $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
+                $Result
             }
+            continue
+        }
+
+        if ($RootDiscoveryErrorIds.Count -gt 0) {
+            $DiscoveryErrorReported = $true
+            $DiscoveryFailureResultReported = $true
+            foreach ($RootErrorId in @($RootDiscoveryErrorIds | Sort-Object -Unique)) {
+                $MetadataErrorMessage = switch ($RootErrorId) {
+                    'IISLogFormatUnavailable' { "The IIS logging format was unavailable for root '$($RootDefinition.Path)'."; break }
+                    'IISLocalTimeRolloverUnavailable' { "The IIS local-time rollover setting was unavailable for root '$($RootDefinition.Path)'."; break }
+                    default { "IIS discovery metadata was unavailable for root '$($RootDefinition.Path)'." }
+                }
+                $MetadataException = [System.InvalidOperationException]::new($MetadataErrorMessage)
+                $MetadataErrorRecord = Get-TheCleanersErrorRecord -Exception $MetadataException -ErrorId $RootErrorId -Category ReadError -TargetObject $RootDefinition.Path
+                $PSCmdlet.WriteError($MetadataErrorRecord)
+            }
+            if ($PassThru) {
+                $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
+                $Result.FileCandidateCount = $null
+                $Result.DirectoryCandidateCount = $null
+                $Result.DiscoveryErrorCount = $RootDiscoveryErrorIds.Count
+                $Result.ErrorIds = @($RootDiscoveryErrorIds | Sort-Object -Unique)
+                $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
+                $Result
+            }
+            continue
+        }
+
+        try {
             $Pending = [System.Collections.Generic.Stack[object]]::new()
             $InitialService = [string]$RootDefinition.Service
             $InitialDirectoryName = [System.IO.Path]::GetFileName($TraversalRoot.TrimEnd([char[]]@('\', '/')))

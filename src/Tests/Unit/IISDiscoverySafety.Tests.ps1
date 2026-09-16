@@ -84,7 +84,7 @@ trap {
 }
 $ErrorActionPreference = 'Stop'
 $env:PSModulePath = $ModuleSearchRoot + [System.IO.Path]::PathSeparator + (Join-Path -Path $PSHOME -ChildPath 'Modules')
-if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot', 'FtpRootFailureWithValidWeb')) {
+if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot', 'FtpRootFailureWithValidWeb', 'FtpRootFailureWithStop')) {
     $env:SystemDrive = ''
 }
 Import-Module -Name $ManifestPath -ErrorAction Stop
@@ -96,12 +96,14 @@ $Before = @(Get-Module -Name 'WebAdministration' -All)
 $PreviousWhatIfPreference = $WhatIfPreference
 $PreviousConfirmPreference = $ConfirmPreference
 $ObservedError = $null
+$ObservedErrorId = $null
 $Results = @()
 $DiscoveryErrorAction = if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot', 'FtpRootFailureWithValidWeb', 'WebFormatUnknown', 'WebRolloverUnknown')) { 'SilentlyContinue' } else { 'Stop' }
 try {
     $Results = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction $DiscoveryErrorAction)
 } catch {
     $ObservedError = $_.Exception.Message
+    $ObservedErrorId = $_.FullyQualifiedErrorId
 }
 $After = @(Get-Module -Name 'WebAdministration' -All)
 # Inspect the fixture's exported function directly. Exact-name Get-Command lookup
@@ -143,6 +145,10 @@ if ($Scenario.EndsWith('Failure')) {
     $UnknownRolloverResult = @($Results | Where-Object { $_.RootPath -eq $ExpectedRoot })
     if ($UnknownRolloverResult.Count -ne 1 -or $UnknownRolloverResult[0].Status -ne 'DiscoveryFailed' -or $UnknownRolloverResult[0].ErrorIds -notcontains 'IISLocalTimeRolloverUnavailable' -or $null -ne $UnknownRolloverResult[0].FileCandidateCount) {
         throw 'A WebAdministration root without a rollover mode was not rejected as an unknown-rollover discovery failure.'
+    }
+} elseif ($Scenario -eq 'FtpRootFailureWithStop') {
+    if ($ObservedErrorId -notlike 'IISFtpDiscoveryFailed,*' -or $Results.Count -ne 0) {
+        throw "FTP discovery did not preserve its stable error ID under ErrorAction Stop: '$ObservedErrorId'."
     }
 } else {
     if ($null -ne $ObservedError) {
@@ -451,6 +457,37 @@ Describe 'IIS FTP root discovery' -Skip:(-not $WindowsHost) -Tag Unit {
         $ProbeExitCode | Should -Be 0 -Because $Diagnostic
         $ProbeOutput | Should -Contain 'IIS_DISCOVERY_OK'
         $ExistingWebLogPath | Should -Exist
+    }
+
+    It 'preserves the FTP discovery error ID with ErrorAction Stop' {
+        $FixtureRoot = Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)
+        $ModuleSearchRoot = Join-Path -Path $FixtureRoot -ChildPath 'Modules'
+        $DependencyRoot = Join-Path -Path $ModuleSearchRoot -ChildPath 'WebAdministration'
+        $LogBase = Join-Path -Path $FixtureRoot -ChildPath 'LogFiles'
+        $null = New-Item -Path $DependencyRoot -ItemType Directory -Force
+        $null = New-Item -Path $LogBase -ItemType Directory -Force
+        $null = New-Item -Path (Join-Path -Path $LogBase -ChildPath 'u_ex240101.log') -ItemType File
+        $Sites = @(
+            @{ Name = 'FTP stop failure'; Id = 8; LogFile = @{ Directory = $null; LogFormat = 'W3C' }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $null } } }
+        )
+        @{ FailDiscovery = $false; Sites = $Sites } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
+        Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'WebAdministration.psm1') -Value $FixtureModuleContent -Encoding UTF8
+        $ProbePath = Join-Path -Path $FixtureRoot -ChildPath 'Probe.ps1'
+        Set-Content -LiteralPath $ProbePath -Value $ProbeContent -Encoding UTF8
+        $PreviousPSModulePath = $env:PSModulePath
+
+        try {
+            $env:PSModulePath = $ModuleSearchRoot + [System.IO.Path]::PathSeparator + $PreviousPSModulePath
+            $ProbeOutput = & $PowerShellExecutable -NoLogo -NoProfile -NonInteractive -File $ProbePath -ManifestPath $ManifestPath -ModuleSearchRoot $ModuleSearchRoot -LogRoot $LogBase -Scenario 'FtpRootFailureWithStop' 2>&1
+            $ProbeExitCode = $LASTEXITCODE
+            $Diagnostic = [regex]::Replace(($ProbeOutput -join [Environment]::NewLine), '\x1B\[[0-?]*[ -/]*[@-~]', '')
+        } finally {
+            Remove-Module -Name 'WebAdministration' -Force -ErrorAction SilentlyContinue
+            $env:PSModulePath = $PreviousPSModulePath
+        }
+
+        $ProbeExitCode | Should -Be 0 -Because $Diagnostic
+        $ProbeOutput | Should -Contain 'IIS_DISCOVERY_OK'
     }
 
     It 'keeps a valid web-root preview separate from an FTP discovery failure' {

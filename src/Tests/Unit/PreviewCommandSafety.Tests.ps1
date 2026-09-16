@@ -147,6 +147,18 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         { Clear-OldIISLog -Days 60 -WhatIf -WarningAction SilentlyContinue -ErrorAction Stop } | Should -Throw '*unavailable*'
     }
 
+    It 'preserves a stable metadata error ID with ErrorAction Stop' {
+        $ObservedError = $null
+        try {
+            Clear-OldIISLog -Days 60 -WhatIf -WarningAction SilentlyContinue -ErrorAction Stop | Out-Null
+        } catch {
+            $ObservedError = $_
+        }
+
+        $ObservedError | Should -Not -BeNullOrEmpty
+        $ObservedError.FullyQualifiedErrorId | Should -Match '^IIS(LogFormatUnavailable|LocalTimeRolloverUnavailable),'
+    }
+
     It 'does not guess a fallback FTP format without WebAdministration' {
         $FtpRoot = Join-Path -Path $IISRoot -ChildPath 'FTPSVC7'
         $null = New-Item -Path $FtpRoot -ItemType Directory -Force
