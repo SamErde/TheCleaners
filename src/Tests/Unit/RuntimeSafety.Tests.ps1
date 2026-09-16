@@ -18,6 +18,98 @@ BeforeAll {
         . (Join-Path -Path $ModuleRoot -ChildPath $RelativePath)
     }
 
+    if ($null -eq ('TheCleanersPromptHost' -as [type])) {
+        $PromptHostSource = @'
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Management.Automation;
+using System.Management.Automation.Host;
+using System.Security;
+
+public sealed class TheCleanersPromptHost : PSHost
+{
+    private readonly TheCleanersPromptUserInterface _ui;
+    private readonly Guid _instanceId = Guid.NewGuid();
+
+    public TheCleanersPromptHost(int response)
+    {
+        _ui = new TheCleanersPromptUserInterface(response);
+    }
+
+    public override string Name { get { return "TheCleanersPromptHost"; } }
+    public override Version Version { get { return new Version(1, 0); } }
+    public override Guid InstanceId { get { return _instanceId; } }
+    public override PSHostUserInterface UI { get { return _ui; } }
+    public override CultureInfo CurrentCulture { get { return CultureInfo.InvariantCulture; } }
+    public override CultureInfo CurrentUICulture { get { return CultureInfo.InvariantCulture; } }
+    public override void SetShouldExit(int exitCode) { }
+    public override void EnterNestedPrompt() { }
+    public override void ExitNestedPrompt() { }
+    public override void NotifyBeginApplication() { }
+    public override void NotifyEndApplication() { }
+}
+
+public sealed class TheCleanersPromptUserInterface : PSHostUserInterface
+{
+    private readonly int _response;
+    private int _promptCount;
+
+    public TheCleanersPromptUserInterface(int response)
+    {
+        _response = response;
+    }
+
+    public int PromptCount { get { return _promptCount; } }
+    public override PSHostRawUserInterface RawUI { get { return null; } }
+    public override string ReadLine() { return string.Empty; }
+    public override SecureString ReadLineAsSecureString() { return new SecureString(); }
+    public override void Write(ConsoleColor foregroundColor, ConsoleColor backgroundColor, string value) { }
+    public override void Write(string value) { }
+    public override void WriteLine(ConsoleColor foregroundColor, ConsoleColor backgroundColor, string value) { }
+    public override void WriteLine(string value) { }
+    public override void WriteErrorLine(string value) { }
+    public override void WriteDebugLine(string message) { }
+    public override void WriteVerboseLine(string message) { }
+    public override void WriteWarningLine(string message) { }
+    public override void WriteProgress(long sourceId, ProgressRecord record) { }
+
+    public override Dictionary<string, PSObject> Prompt(string caption, string message, Collection<FieldDescription> descriptions)
+    {
+        return new Dictionary<string, PSObject>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    public override PSCredential PromptForCredential(string caption, string message, string userName, string targetName)
+    {
+        return null;
+    }
+
+    public override PSCredential PromptForCredential(string caption, string message, string userName, string targetName, PSCredentialTypes allowedCredentialTypes, PSCredentialUIOptions options)
+    {
+        return null;
+    }
+
+    public override int PromptForChoice(string caption, string message, Collection<ChoiceDescription> choices, int defaultChoice)
+    {
+        _promptCount++;
+        string expectedInitial = _response == 0 ? "Y" : "N";
+        for (int index = 0; index < choices.Count; index++)
+        {
+            string label = choices[index].Label.TrimStart('&');
+            if (label.StartsWith(expectedInitial, StringComparison.OrdinalIgnoreCase))
+            {
+                return index;
+            }
+        }
+
+        return _response == 0 ? 0 : 2;
+    }
+}
+'@
+        Add-Type -TypeDefinition $PromptHostSource -ErrorAction Stop
+    }
+
     function Invoke-TheCleanersInteractiveConfirmProbe {
         [CmdletBinding()]
         param (
@@ -46,70 +138,92 @@ BeforeAll {
         )
 
         $ProbeScript = @'
+param (
+    [Parameter(Mandatory)]
+    [string]
+    $ManifestPath,
+
+    [Parameter(Mandatory)]
+    [string]
+    $FixtureRoot,
+
+    [Parameter(Mandatory)]
+    [ValidateSet('Clear-CurrentUserTemp', 'Clear-WindowsTemp')]
+    [string]
+    $CommandName,
+
+    [Parameter(Mandatory)]
+    [ValidateSet('Approved', 'Declined')]
+    [string]
+    $ExpectedOutcome
+)
+
 $ErrorActionPreference = 'Stop'
-$FixtureRoot = $env:THECLEANERS_CONFIRM_FIXTURE
-$env:TEMP = $FixtureRoot
-$env:TMP = $FixtureRoot
-$OldFile = New-Item -Path (Join-Path -Path $FixtureRoot -ChildPath 'old.tmp') -ItemType File
-[System.IO.File]::SetLastWriteTimeUtc($OldFile.FullName, [DateTime]::UtcNow.AddDays(-31))
-if ($env:THECLEANERS_CONFIRM_COMMAND -eq 'Clear-WindowsTemp') {
-    $ModuleRoot = Split-Path -Path $env:THECLEANERS_CONFIRM_MANIFEST -Parent
-    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/ResultContracts.ps1')
-    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Initialize-TheCleanersNativeFileInterop.ps1')
-    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Resolve-TheCleanersFileSystemPath.ps1')
-    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Get-TheCleanersTempPlan.ps1')
-    function Get-TheCleanersWindowsTempRoot {
-        Get-Item -Path $FixtureRoot -Force -ErrorAction Stop
+$PreviousTemp = $env:TEMP
+$PreviousTmp = $env:TMP
+try {
+    $env:TEMP = $FixtureRoot
+    $env:TMP = $FixtureRoot
+    $OldFile = New-Item -Path (Join-Path -Path $FixtureRoot -ChildPath 'old.tmp') -ItemType File
+    [System.IO.File]::SetLastWriteTimeUtc($OldFile.FullName, [DateTime]::UtcNow.AddDays(-31))
+    if ($CommandName -eq 'Clear-WindowsTemp') {
+        $ModuleRoot = Split-Path -Path $ManifestPath -Parent
+        . (Join-Path -Path $ModuleRoot -ChildPath 'Private/ResultContracts.ps1')
+        . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Initialize-TheCleanersNativeFileInterop.ps1')
+        . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Resolve-TheCleanersFileSystemPath.ps1')
+        . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Get-TheCleanersTempPlan.ps1')
+        function Get-TheCleanersWindowsTempRoot {
+            Get-Item -Path $FixtureRoot -Force -ErrorAction Stop
+        }
+        . (Join-Path -Path $ModuleRoot -ChildPath 'Public/Clear-WindowsTemp.ps1')
+    } else {
+        Import-Module -Name $ManifestPath -Force
     }
-    . (Join-Path -Path $ModuleRoot -ChildPath 'Public/Clear-WindowsTemp.ps1')
-} else {
-    Import-Module -Name $env:THECLEANERS_CONFIRM_MANIFEST -Force
-}
-$Result = & $env:THECLEANERS_CONFIRM_COMMAND -Days 30 -Confirm -PassThru -ErrorAction Stop
-if ($env:THECLEANERS_CONFIRM_EXPECTED -eq 'Approved') {
-    if ($Result.Status -ne 'Completed' -or $Result.FilesRemoved -ne 1 -or [System.IO.File]::Exists($OldFile.FullName)) {
-        throw 'The approval response did not complete the expected fixture removal.'
+
+    $Result = & $CommandName -Days 30 -Confirm -PassThru -ErrorAction Stop
+    if ($ExpectedOutcome -eq 'Approved') {
+        if ($Result.Status -ne 'Completed' -or $Result.FilesRemoved -ne 1 -or [System.IO.File]::Exists($OldFile.FullName)) {
+            throw 'The approval response did not complete the expected fixture removal.'
+        }
+    } elseif ($Result.Status -ne 'Declined' -or $Result.FilesRemoved -ne 0 -or -not [System.IO.File]::Exists($OldFile.FullName)) {
+        throw 'The decline response did not preserve the fixture.'
     }
-} elseif ($Result.Status -ne 'Declined' -or $Result.FilesRemoved -ne 0 -or -not [System.IO.File]::Exists($OldFile.FullName)) {
-    throw 'The decline response did not preserve the fixture.'
+} finally {
+    $env:TEMP = $PreviousTemp
+    $env:TMP = $PreviousTmp
 }
 'CONFIRM_INTERACTIVE_OK'
 '@
-        $ProbePath = Join-Path -Path $FixtureRoot -ChildPath 'InteractiveConfirmProbe.ps1'
-        Set-Content -LiteralPath $ProbePath -Value $ProbeScript -Encoding UTF8
-        $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
-        $StartInfo.FileName = $PowerShellExecutable
-        $StartInfo.Arguments = '-NoLogo -NoProfile -File "{0}"' -f $ProbePath
-        $StartInfo.UseShellExecute = $false
-        $StartInfo.CreateNoWindow = $true
-        $StartInfo.RedirectStandardInput = $true
-        $StartInfo.RedirectStandardOutput = $true
-        $StartInfo.RedirectStandardError = $true
-        $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_MANIFEST'] = $ManifestPath
-        $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_FIXTURE'] = $FixtureRoot
-        $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_EXPECTED'] = $ExpectedOutcome
-        $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_COMMAND'] = $CommandName
-
-        $Process = New-Object System.Diagnostics.Process
-        $Process.StartInfo = $StartInfo
+        $ResponseIndex = if ($Response -eq 'Y') { 0 } else { 1 }
+        $PromptHost = New-Object -TypeName TheCleanersPromptHost -ArgumentList $ResponseIndex
+        $Runspace = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace($PromptHost)
+        $Runspace.Open()
+        $PowerShell = [System.Management.Automation.PowerShell]::Create()
+        $PowerShell.Runspace = $Runspace
         try {
-            $null = $Process.Start()
-            $OutputTask = $Process.StandardOutput.ReadToEndAsync()
-            $ErrorTask = $Process.StandardError.ReadToEndAsync()
-            $Process.StandardInput.WriteLine($Response)
-            $Process.StandardInput.Close()
-            if (-not $Process.WaitForExit(30000)) {
-                $Process.Kill()
-                $Process.WaitForExit()
-                throw "The interactive confirmation probe did not finish for '$ExpectedOutcome'."
-            }
+            $null = $PowerShell.AddScript($ProbeScript)
+            $null = $PowerShell.AddParameter('ManifestPath', $ManifestPath)
+            $null = $PowerShell.AddParameter('FixtureRoot', $FixtureRoot)
+            $null = $PowerShell.AddParameter('CommandName', $CommandName)
+            $null = $PowerShell.AddParameter('ExpectedOutcome', $ExpectedOutcome)
+            $Output = @($PowerShell.Invoke())
+            $ErrorOutput = @($PowerShell.Streams.Error | ForEach-Object { $_ | Out-String })
             [pscustomobject]@{
-                ExitCode = $Process.ExitCode
-                Output   = $OutputTask.Result
-                Error    = $ErrorTask.Result
+                ExitCode    = if ($PowerShell.HadErrors) { 1 } else { 0 }
+                Output      = $Output -join [Environment]::NewLine
+                Error       = $ErrorOutput -join [Environment]::NewLine
+                PromptCount = $PromptHost.UI.PromptCount
+            }
+        } catch {
+            [pscustomobject]@{
+                ExitCode    = 1
+                Output      = ''
+                Error       = ($_ | Out-String)
+                PromptCount = $PromptHost.UI.PromptCount
             }
         } finally {
-            $Process.Dispose()
+            $PowerShell.Dispose()
+            $Runspace.Dispose()
         }
     }
 }
@@ -332,6 +446,7 @@ if ($WhatIfPreference -ne $BeforeWhatIf -or $ConfirmPreference -ne $BeforeConfir
 
                 $Probe.ExitCode | Should -Be 0 -Because $CombinedOutput
                 $CombinedOutput | Should -Match 'CONFIRM_INTERACTIVE_OK'
+                $Probe.PromptCount | Should -Be 1
             }
         }
     }
