@@ -6,7 +6,7 @@ The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-
 
 | Runtime | Contract | Evidence required before 1.0 RC |
 | --- | --- | --- |
-| Windows PowerShell 5.1 | Minimum supported runtime for all read-only and temp commands. | Hosted `5.1.26100.33296` passed 219 tests (215 unit plus 4 integration) with 0 failures, skips, or not-run tests against the exact downloaded 7.6.6 package artifact. |
+| Windows PowerShell 5.1 | Minimum supported runtime for all read-only and temp commands. | Hosted `5.1.26100.33296` passed 215 source unit tests plus 4 package integration tests with 0 failures, skips, or not-run tests. The four integration tests exercised the exact downloaded 7.6.6 package artifact. |
 | PowerShell 7.6 LTS | Supported current LTS line. | Hosted `7.6.6` passed 215 unit and 4 integration tests with 0 failures, skips, or not-run tests and 83.48% coverage. |
 | PowerShell 7.5 stable | Supported stable line through November 10, 2026; Microsoft supports only the latest servicing update. | Hosted `7.5.9` passed 215 unit and 4 integration tests with 0 failures, skips, or not-run tests and 83.48% coverage. Microsoft now lists `7.5.11` as current, so the hosted lane must be refreshed before RC. |
 | PowerShell 7.4 LTS | Still Microsoft-supported through November 2026. | No exact-commit hosted lane. Add the latest supported 7.4 patch or obtain explicit maintainer approval to narrow the stated policy before RC. |

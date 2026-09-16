@@ -11,7 +11,7 @@ The workflow performs the build-time strict checks. Redirect, DNS, and deployed-
 
 ## Current verified state
 
-For merged commit `037c27a81234361620a633f68a33bfb370f0a03e`, [GitHub Actions run 35129434855](https://github.com/SamErde/TheCleaners/actions/runs/35129434855) completed `mkdocs build --strict --site-dir site`, checked `site/index.html` and `site/sitemap.xml`, and pushed the generated site to `gh-pages`. A successful deployment job does not prove the custom-domain path is canonical.
+For merged commit `037c27a81234361620a633f68a33bfb370f0a03e`, [GitHub Actions run 35129434855](https://github.com/SamErde/TheCleaners/actions/runs/35129434855) completed `mkdocs build --strict --site-dir site` and checked `site/index.html` and `site/sitemap.xml`. Its later `mkdocs gh-deploy --strict --force` command performed a second strict build and pushed `gh-pages` commit `2ea8bf4`; the workflow does not establish byte identity between the separately checked `site` directory and the deployed output. A successful deployment job also does not prove the custom-domain path is canonical.
 
 The live check on September 16, 2026 found:
 
