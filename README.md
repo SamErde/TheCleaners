@@ -57,6 +57,6 @@ IIS and Exchange require explicit `-WhatIf` and cannot remove anything. Their di
 
 ## Development status
 
-The first implementation packet is [PR #27](https://github.com/SamErde/TheCleaners/pull/27). IIS path/format hardening and server acceptance, Exchange product-specific validation, profile output improvements, complete product/runtime acceptance, source-layout packaging, and tested-artifact publication remain open. See `AGENTS.md` and the implementation ledger before contributing. [Zensical migration](https://github.com/SamErde/TheCleaners/issues/26) is a separate follow-up.
+The first implementation packet is [PR #27](https://github.com/SamErde/TheCleaners/pull/27). The source-layout packaging and draft IIS/Exchange/profile safety work are now present, but Windows client/server acceptance, supported-runtime evidence, product-specific lab validation, strict documentation/deployment checks, and release authorization remain open. See `AGENTS.md`, the [command contracts](docs/command-contracts.md), and the implementation ledger before contributing. [Zensical migration](https://github.com/SamErde/TheCleaners/issues/26) is a separate follow-up.
 
 Canonical documentation: [day3bits.com/thecleaners](https://day3bits.com/thecleaners/).

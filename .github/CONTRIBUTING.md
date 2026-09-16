@@ -6,11 +6,17 @@ Whether it's a bug report, new feature, correction, or additional documentation,
 
 Please read through this document before submitting any issues or pull requests to ensure all the necessary information is provided to effectively respond to your bug report or contribution.
 
+Before changing behavior, read `AGENTS.md` and `docs/release-plan-1.0.md`. The release plan is the implementation ledger; a generated command or workflow is not release evidence by itself.
+
 Please note there is a code of conduct, please follow it in all your interactions with the project.
 
 ## Contributing via Pull Requests
 
 Please contribute pull requests against the `main` branch of this repository. If you're not sure how, feel free to reach out and ask!
+
+Keep changes narrowly scoped to one release-plan packet when possible. Include the packet ID, exact tested commit, runtime and OS versions, test totals/failures/skips, and links to machine-readable reports. Use isolated fixtures or mocks for cleanup development; never run a cleaner against real user, Windows, IIS, or Exchange data. IIS and Exchange remain preview-only until their product-specific gates pass.
+
+For filesystem mutation changes, demonstrate `-WhatIf`/`-Confirm`, root containment, reparse-point handling, identity/race behavior, and `-ErrorAction Stop`. Do not add provider deletion for temp candidates, a generic deletion wrapper, a force or preference override, or a persistent activation switch.
 
 ## Code of Conduct
 

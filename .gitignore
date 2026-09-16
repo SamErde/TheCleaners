@@ -3,6 +3,10 @@ Archive
 Artifacts
 src/Archive/
 src/Artifacts/
+src/GeneratedHelp/
+src/Reports/
+site/
+TestResults/
 cov.xml
 coverage.xml
 Ignore

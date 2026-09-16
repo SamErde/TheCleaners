@@ -14,9 +14,9 @@ Clear-OldExchangeLog [-Days <Int16>] -WhatIf [-PassThru] [<CommonParameters>]
 
 ## Experimental discovery scope
 
-Read `MsiInstallPath` from the Exchange v15 setup registry key. Scan existing `Logging`, `Bin\Search\Ceres\Diagnostics\ETLTraces`, `Bin\Search\Ceres\Diagnostics\Logs`, and `TransportRoles\Logs\MessageTracking` roots for `.log` files at or before the inclusive UTC cutoff. Skip reparse points and validate paths. Do not invoke IIS cleanup.
+Read `MsiInstallPath` from the Exchange v15 setup registry key. Scan existing `Logging`, `Bin\Search\Ceres\Diagnostics\ETLTraces`, `Bin\Search\Ceres\Diagnostics\Logs`, and `TransportRoles\Logs\MessageTracking` roots with product-specific filename allowlists at or before the inclusive UTC cutoff. Skip reparse points, validate paths, and exclude mailbox database and transaction-log paths returned by Exchange management discovery. If all fixed roots are absent, discovery reports `ExchangeDiscoveryUnavailable` and `-PassThru` returns a failed result; an individual missing root is verbose-only when another approved root is available. Do not invoke IIS cleanup.
 
-This limited preview is not a validated deletion allowlist. ETL file extensions, product-specific filename rules, protected-location verification, and the supported Exchange version matrix remain open. Do not use its output to implement an external deletion bypass.
+This limited preview is not a validated deletion allowlist. The supported Exchange version/build matrix and disposable-lab service-health evidence remain open. Do not use its output to implement an external deletion bypass.
 
 ## Examples
 
@@ -27,6 +27,6 @@ Clear-OldExchangeLog -Days 30 -WhatIf -PassThru
 
 ## Output and failures
 
-`-PassThru` returns a `TheCleaners.CleanupResult` preview for each successfully enumerated existing root. `CandidatePaths` contains discovered paths; `DiscoveryStatus` is `Experimental`; `Status` is `WhatIf`; all removal and reclaimed-byte counts are zero. Missing roots are reported through verbose output. Registry failures stop discovery; enumeration failures use the error stream and do not emit a successful empty summary. The alias `Clean-ExchangeLog` has the same safety boundary.
+`-PassThru` returns a `TheCleaners.CleanupResult` preview for each successfully enumerated existing root. `CandidatePaths` contains discovered paths; `DiscoveryStatus` is `Experimental`; `Status` is `WhatIf`; all removal and reclaimed-byte counts are zero. Missing roots are reported through verbose output when another approved root is available. If all fixed roots are absent, discovery reports `ExchangeDiscoveryUnavailable` and returns a failed result with null candidate counts. Registry failures stop discovery; enumeration failures use the error stream and do not emit a successful empty summary. The alias `Clean-ExchangeLog` has the same safety boundary.
 
 Any later removal capability belongs in a minor release after lab validation and a confirmed per-invocation authorization design. See [the 1.0 plan](release-plan-1.0.md).
