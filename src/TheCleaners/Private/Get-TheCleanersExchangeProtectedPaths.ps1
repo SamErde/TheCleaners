@@ -20,7 +20,22 @@ function Get-TheCleanersExchangeProtectedPaths {
         $InstallRoot
     )
 
-    $DatabaseCommand = Get-Command -Name 'Get-MailboxDatabase' -CommandType Cmdlet, Function -ErrorAction SilentlyContinue | Select-Object -First 1
+    try {
+        $DatabaseCommand = Get-Command -Name 'Get-MailboxDatabase' -CommandType Cmdlet, Function -ErrorAction Stop | Select-Object -First 1
+    } catch {
+        $CommandIsAbsent = (
+            $_.Exception -is [System.Management.Automation.CommandNotFoundException] -or
+            $_.FullyQualifiedErrorId -match 'CommandNotFound'
+        )
+        if ($CommandIsAbsent) {
+            $DatabaseCommand = $null
+        } else {
+            throw [System.InvalidOperationException]::new(
+                "Unable to determine Exchange management command 'Get-MailboxDatabase': $($_.Exception.Message)",
+                $_.Exception
+            )
+        }
+    }
     if ($null -eq $DatabaseCommand) {
         return [pscustomobject]@{
             Paths  = @()

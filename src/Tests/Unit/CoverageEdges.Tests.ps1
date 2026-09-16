@@ -176,6 +176,61 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         Close-TheCleanersTempPlanHandles -Plan $Plan
     }
 
+    It 'retains a recent-file directory as a pruning blocker when the file vanishes before rescan' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'RecentFilePruningBlockerRoot'
+        $ChildPath = Join-Path -Path $RootPath -ChildPath 'Child'
+        $OldPath = Join-Path -Path $ChildPath -ChildPath 'old.tmp'
+        $RecentPath = Join-Path -Path $ChildPath -ChildPath 'recent.tmp'
+        $null = New-Item -Path $ChildPath -ItemType Directory -Force
+        $OldFile = New-Item -Path $OldPath -ItemType File -Force
+        $RecentFile = New-Item -Path $RecentPath -ItemType File -Force
+        [System.IO.File]::SetLastWriteTimeUtc($OldPath, [DateTime]::UtcNow.AddDays(-31))
+        [System.IO.File]::SetLastWriteTimeUtc($RecentPath, [DateTime]::UtcNow)
+        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
+        $RootItems = @(Get-ChildItem -LiteralPath $RootPath -Force)
+        $ChildItems = @(Get-ChildItem -LiteralPath $ChildPath -Force)
+        $ExpectedRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+        $ExpectedChildIdentity = Get-TheCleanersFileIdentity -LiteralPath $ChildPath -Directory
+        $ExpectedOldIdentity = Get-TheCleanersFileIdentity -LiteralPath $OldPath
+        $script:RecentFileChildEnumerationCount = 0
+
+        Mock Get-ChildItem {
+            if ($LiteralPath -eq $RootPath) {
+                return $RootItems
+            }
+            if ($LiteralPath -eq $ChildPath) {
+                $script:RecentFileChildEnumerationCount++
+                if ($script:RecentFileChildEnumerationCount -eq 1) {
+                    return $ChildItems
+                }
+                [System.IO.File]::Delete($RecentPath)
+                return @($OldFile)
+            }
+            throw "Unexpected enumeration path: $LiteralPath"
+        }
+        Mock Get-TheCleanersFileIdentity {
+            if ($LiteralPath -eq $RootPath) {
+                return $ExpectedRootIdentity
+            }
+            if ($LiteralPath -eq $ChildPath) {
+                return $ExpectedChildIdentity
+            }
+            if ($LiteralPath -eq $OldPath) {
+                return $ExpectedOldIdentity
+            }
+            throw "Unexpected identity path: $LiteralPath"
+        }
+
+        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -RemoveEmptyDirectory -CaptureIdentity -Verbose 4> $null
+        try {
+            $Plan.Files.Path | Should -Contain $OldPath
+            $Plan.DisqualifiedDirectoryPaths | Should -Contain $ChildPath
+            $Plan.DisqualifiedDirectoryPaths | Should -Contain $RootPath
+        } finally {
+            Close-TheCleanersTempPlanHandles -Plan $Plan
+        }
+    }
+
     It 'rejects a root replaced after validation before plan capture' {
         $RootPath = Join-Path -Path $TestDrive -ChildPath 'ValidatedRootReplacement'
         $ReplacementPath = Join-Path -Path $TestDrive -ChildPath 'ValidatedRootReplacement-Original'

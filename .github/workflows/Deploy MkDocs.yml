@@ -44,4 +44,4 @@ jobs:
           mkdocs build --strict --site-dir site
           test -f site/index.html
           test -f site/sitemap.xml
-          mkdocs gh-deploy --force
+          mkdocs gh-deploy --no-build --force

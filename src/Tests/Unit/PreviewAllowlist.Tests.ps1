@@ -80,6 +80,13 @@ Describe 'Exchange filename and protected-location allowlists' -Skip:(-not $Wind
         $Protection.Paths | Should -BeNullOrEmpty
     }
 
+    It 'fails closed when Exchange management command probing fails' {
+        Mock Get-Command { throw [System.UnauthorizedAccessException]::new('Fixture Exchange command probe failed.') } -ParameterFilter { $Name -eq 'Get-MailboxDatabase' }
+        $InstallRoot = New-Item -Path (Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)) -ItemType Directory
+
+        { Get-TheCleanersExchangeProtectedPaths -InstallRoot $InstallRoot } | Should -Throw '*Unable to determine Exchange management command*'
+    }
+
     It 'normalizes database and transaction-log paths returned by Exchange' {
         $InstallRoot = New-Item -Path (Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)) -ItemType Directory
         $DatabasePath = Join-Path -Path $TestDrive -ChildPath 'Databases/Mailbox.edb'

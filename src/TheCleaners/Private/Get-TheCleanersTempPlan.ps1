@@ -130,6 +130,9 @@ function Get-TheCleanersTempPlan {
 
                 foreach ($Item in @(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop)) {
                     if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                        if ($RemoveEmptyDirectory) {
+                            & $AddPruningBlocker -Path $DirectoryPath
+                        }
                         Write-Verbose -Message "Skipping reparse point: $($Item.FullName)"
                         continue
                     }
@@ -150,6 +153,9 @@ function Get-TheCleanersTempPlan {
                         continue
                     }
                     if ($Item.LastWriteTimeUtc -gt $CutoffUtc) {
+                        if ($RemoveEmptyDirectory) {
+                            & $AddPruningBlocker -Path $DirectoryPath
+                        }
                         continue
                     }
 

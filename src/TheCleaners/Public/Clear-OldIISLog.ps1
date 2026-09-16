@@ -122,15 +122,19 @@ function Clear-OldIISLog {
                 if ([string]::IsNullOrWhiteSpace($ConfiguredRoot)) {
                     Write-Verbose -Message "IIS site '$($Site.Name)' has no log directory."
                 } else {
-                    $Format = if ($null -eq $Site.LogFile.LogFormat) { 'W3C' } else { [string]$Site.LogFile.LogFormat }
+                    $Format = [string]$Site.LogFile.LogFormat
+                    $WebDiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
+                    if ([string]::IsNullOrWhiteSpace($Format)) {
+                        $null = $WebDiscoveryErrorIds.Add('IISLogFormatUnavailable')
+                    }
                     $WebRootDefinition = [pscustomobject]@{
                         Path              = Join-Path -Path $ConfiguredRoot -ChildPath ('W3SVC{0}' -f $Site.Id)
                         DisplayName       = $SiteName
                         Source            = 'WebAdministration'
-                        Format            = $Format
+                        Format            = if ([string]::IsNullOrWhiteSpace($Format)) { $null } else { $Format }
                         Service           = 'W3SVC'
                         LocalTimeRollover = [bool]$Site.LogFile.LocalTimeRollover
-                        DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
+                        DiscoveryErrorIds = $WebDiscoveryErrorIds
                     }
                     $Roots.Add($WebRootDefinition)
                 }
@@ -213,9 +217,22 @@ function Clear-OldIISLog {
             $RegistrySettings = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction Stop
             $RegistryRoot = $RegistrySettings.LogDir
             $RegistryRoot = [Environment]::ExpandEnvironmentVariables([string]$RegistryRoot)
+            $RegistryFormat = $null
+            try {
+                $RegistryFormatSettings = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogFormat' -ErrorAction Stop
+                $RegistryFormat = [string]$RegistryFormatSettings.LogFormat
+            } catch {
+                $OptionalRegistryFormatIsAbsent = (
+                    $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
+                    ($_.Exception -is [System.Management.Automation.PSArgumentException] -and $_.Exception.Message -match '^Property .+ does not exist') -or
+                    $_.FullyQualifiedErrorId -match 'PathNotFound|PropertyNotFound|ItemNotFound'
+                )
+                if (-not $OptionalRegistryFormatIsAbsent) {
+                    throw
+                }
+            }
             if (-not [string]::IsNullOrWhiteSpace($RegistryRoot)) {
                 $RegistryDiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
-                $RegistryFormat = [string]$RegistrySettings.LogFormat
                 if ([string]::IsNullOrWhiteSpace($RegistryFormat)) {
                     $null = $RegistryDiscoveryErrorIds.Add('IISLogFormatUnavailable')
                 }
@@ -248,6 +265,48 @@ function Clear-OldIISLog {
             }
         }
     }
+
+    $RootDefinitionsByPath = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $MergedRoots = [System.Collections.Generic.List[object]]::new()
+    foreach ($RootDefinition in @($Roots.ToArray())) {
+        try {
+            $RootDefinitionPath = Convert-TheCleanersPathForComparison -Path ([string]$RootDefinition.Path)
+        } catch {
+            $MergedRoots.Add($RootDefinition)
+            continue
+        }
+        if (-not $RootDefinitionsByPath.ContainsKey($RootDefinitionPath)) {
+            $RootDefinitionsByPath.Add($RootDefinitionPath, $RootDefinition)
+            $MergedRoots.Add($RootDefinition)
+            continue
+        }
+
+        $ExistingRootDefinition = $RootDefinitionsByPath[$RootDefinitionPath]
+        $ExistingFormat = [string]$ExistingRootDefinition.Format
+        $CurrentFormat = [string]$RootDefinition.Format
+        if ([string]::IsNullOrWhiteSpace($ExistingFormat) -and -not [string]::IsNullOrWhiteSpace($CurrentFormat)) {
+            $ExistingRootDefinition.Format = $CurrentFormat
+            $ExistingRootDefinition.LocalTimeRollover = $RootDefinition.LocalTimeRollover
+            $FilteredErrorIds = [System.Collections.Generic.List[string]]::new()
+            foreach ($ExistingErrorId in @($ExistingRootDefinition.DiscoveryErrorIds)) {
+                if ($ExistingErrorId -ne 'IISLogFormatUnavailable') {
+                    $null = $FilteredErrorIds.Add($ExistingErrorId)
+                }
+            }
+            $ExistingRootDefinition.DiscoveryErrorIds = $FilteredErrorIds
+        }
+
+        $MergedRootFormat = [string]$ExistingRootDefinition.Format
+        foreach ($RootErrorId in @($RootDefinition.DiscoveryErrorIds)) {
+            if ($RootErrorId -eq 'IISLogFormatUnavailable' -and -not [string]::IsNullOrWhiteSpace($MergedRootFormat)) {
+                continue
+            }
+            if (-not $ExistingRootDefinition.DiscoveryErrorIds.Contains($RootErrorId)) {
+                $null = $ExistingRootDefinition.DiscoveryErrorIds.Add($RootErrorId)
+            }
+        }
+    }
+    $Roots = $MergedRoots
 
     $FoundExistingRoot = $false
     foreach ($RootDefinition in $Roots) {
