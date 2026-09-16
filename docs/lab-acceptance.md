@@ -20,6 +20,14 @@ These checks are a protocol for a disposable Windows client/server lab. They are
 
 Run `-WhatIf` first and verify that files, directories, preferences, registry, processes, and module state are unchanged. Then run a fixture-only removal with `-Confirm:$false` after reviewing the candidate list. Do not substitute the real system temp root for a fixture.
 
+Use the repository ACL harness only with an already-created disposable parent:
+
+```powershell
+.\lab\Invoke-TheCleanersAclFixture.ps1 -FixtureParent C:\Disposable\TheCleanersLab -Confirm:$false
+```
+
+The exact PR #31 hosted PS5.1 run used its isolated runner temp child and recorded two candidates (`old-readable.tmp` and `old-delete-without-read.tmp`), `2 -> 0`, `FilesRemoved = 2`, `BytesReclaimed = 6`, no failures/skips/error IDs, NTFS, elevation, and `Acceptance = true`. That fixture is not client, non-elevated, ReFS, or real system-root acceptance.
+
 ## IIS and Exchange preview gates
 
 Until the release-plan gates pass, these commands remain structurally preview-only. Lab work may validate discovery and service health, but must not add a deletion call or treat a preview candidate list as authorization.
@@ -30,3 +38,11 @@ Until the release-plan gates pass, these commands remain structurally preview-on
 | Exchange | Exact v15 product/build and supported path matrix; MessageTracking/ETL/diagnostic patterns; mailbox database and transaction-log exclusions including custom paths; before/after candidate inventory; Exchange service health. |
 
 No 1.0 release gate is satisfied by mocked fixtures alone. Attach the lab evidence to the packet/PR and keep the preview lock until a maintainer approves the product-specific transition.
+
+Run the read-only product probe only in a disposable product lab after recording the exact commit and product build:
+
+```powershell
+.\lab\Invoke-TheCleanersProductPreviewLab.ps1 -Confirm:$false
+```
+
+The exact merged commit has no IIS or Exchange product/build lab record. Do not copy the earlier workstation absence probe forward as acceptance or exact-commit evidence.
