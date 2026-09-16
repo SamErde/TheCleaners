@@ -330,6 +330,8 @@ Describe 'IIS extended-length traversal' -Skip:(-not $WindowsHost) -Tag Unit {
         $IISRoot = Join-Path -Path $FixtureRoot -ChildPath 'inetpub/logs/LogFiles'
         $ExtendedRoot = '\\?\' + $IISRoot
         $NormalizedRoot = Convert-TheCleanersPathForComparison -Path $ExtendedRoot
+        $ExtendedCandidatePath = $ExtendedRoot.TrimEnd([char[]]@('\', '/')) + '\u_ex240101.log'
+        $NormalizedCandidatePath = $NormalizedRoot + '\u_ex240101.log'
         $ObservedPaths = [System.Collections.Generic.List[string]]::new()
 
         try {
@@ -339,12 +341,22 @@ Describe 'IIS extended-length traversal' -Skip:(-not $WindowsHost) -Tag Unit {
             Mock Test-TheCleanersIisProtectedPath { $false }
             Mock Test-Path { $true }
             Mock Resolve-TheCleanersFileSystemPath { [System.IO.DirectoryInfo]::new($LiteralPath) }
-            Mock Get-ChildItem { $null = $ObservedPaths.Add([string]$LiteralPath) }
+            Mock Get-ChildItem {
+                $null = $ObservedPaths.Add([string]$LiteralPath)
+                [pscustomobject]@{
+                    Name             = 'u_ex240101.log'
+                    FullName         = $NormalizedCandidatePath
+                    Attributes       = [System.IO.FileAttributes]::Normal
+                    PSIsContainer    = $false
+                    LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
+                }
+            }
 
             $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
 
             $Result | Should -HaveCount 1
             $Result[0].RootPath | Should -Be $NormalizedRoot
+            $Result[0].CandidatePaths | Should -Contain $ExtendedCandidatePath
             $ObservedPaths | Should -Contain $ExtendedRoot
             $ObservedPaths | Should -Not -Contain $NormalizedRoot
         } finally {

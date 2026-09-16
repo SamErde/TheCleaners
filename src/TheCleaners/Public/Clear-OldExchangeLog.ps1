@@ -97,6 +97,7 @@ function Clear-OldExchangeLog {
         }
         return
     }
+    $InstallRootPath = Convert-TheCleanersPathForTraversal -Path $Setup.MsiInstallPath
 
     $Protected = $null
     try {
@@ -126,7 +127,7 @@ function Clear-OldExchangeLog {
     $FoundExistingRoot = $false
     $DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
     foreach ($RelativeRoot in $RelativeRoots) {
-        $RootPath = $InstallRoot.FullName.TrimEnd([char[]]@('\', '/')) + '\' + $RelativeRoot
+        $RootPath = Convert-TheCleanersPathForTraversal -Path ($InstallRootPath + '\' + $RelativeRoot)
         $RootExists = $false
         try {
             $RootExists = Test-Path -LiteralPath $RootPath -PathType Container -ErrorAction Stop
@@ -152,11 +153,11 @@ function Clear-OldExchangeLog {
         $OldFiles = @()
         $NormalizedRoot = $null
         try {
-            $LogRoot = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath -RootPath $InstallRoot.FullName
+            $LogRoot = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath -RootPath $InstallRootPath
             if ($LogRoot -isnot [System.IO.DirectoryInfo]) {
                 throw [System.IO.InvalidDataException]::new("Exchange log root is not a directory: '$RootPath'.")
             }
-            $TraversalRoot = $LogRoot.FullName
+            $TraversalRoot = Convert-TheCleanersPathForTraversal -Path $RootPath
             $NormalizedRoot = Convert-TheCleanersPathForComparison -Path $LogRoot.FullName
             $RootIsProtected = $false
             foreach ($ProtectedPath in @($Protected.Paths)) {
@@ -173,7 +174,7 @@ function Clear-OldExchangeLog {
 
             $Pending = [System.Collections.Generic.Stack[string]]::new()
             $Pending.Push($TraversalRoot)
-            $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+            $Candidates = [System.Collections.Generic.List[object]]::new()
             while ($Pending.Count -gt 0) {
                 $DirectoryPath = $Pending.Pop()
                 if ($DirectoryPath -ne $TraversalRoot) {
@@ -183,15 +184,16 @@ function Clear-OldExchangeLog {
                     }
                 }
                 foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
+                    $ItemPath = Convert-TheCleanersPathForTraversal -Path ($DirectoryPath.TrimEnd([char[]]@('\', '/')) + '\' + [string]$Item.Name)
                     if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-                        Write-Verbose -Message "Skipping reparse point: $($Item.FullName)"
+                        Write-Verbose -Message "Skipping reparse point: $ItemPath"
                         continue
                     }
                     if ($Item.PSIsContainer) {
-                        $Pending.Push($Item.FullName)
+                        $Pending.Push($ItemPath)
                         continue
                     }
-                    $ComparableItemPath = Convert-TheCleanersPathForComparison -Path $Item.FullName
+                    $ComparableItemPath = Convert-TheCleanersPathForComparison -Path $ItemPath
                     $IsProtected = $false
                     foreach ($ProtectedPath in @($Protected.Paths)) {
                         if ($ComparableItemPath -eq $ProtectedPath -or $ComparableItemPath.StartsWith($ProtectedPath + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -200,7 +202,11 @@ function Clear-OldExchangeLog {
                         }
                     }
                     if (-not $IsProtected -and (Test-TheCleanersExchangeLogFileName -Name $Item.Name -RelativeRoot $RelativeRoot) -and $Item.LastWriteTimeUtc -le $CutoffUtc) {
-                        $Candidates.Add($Item)
+                        $Candidates.Add([pscustomobject]@{
+                                FullName         = $ItemPath
+                                Name             = $Item.Name
+                                LastWriteTimeUtc = $Item.LastWriteTimeUtc
+                            })
                     }
                 }
             }

@@ -478,7 +478,7 @@ function Clear-OldIISLog {
             if ($LogRoot -isnot [System.IO.DirectoryInfo]) {
                 throw [System.IO.InvalidDataException]::new("IIS log root is not a directory: '$($RootDefinition.Path)'.")
             }
-            $TraversalRoot = $LogRoot.FullName
+            $TraversalRoot = Convert-TheCleanersPathForTraversal -Path $RootDefinition.Path
             $NormalizedRoot = Convert-TheCleanersPathForComparison -Path $LogRoot.FullName
             if (-not $SeenRoots.Add($NormalizedRoot)) {
                 Write-Verbose -Message "Skipping duplicate IIS log root: $NormalizedRoot"
@@ -541,7 +541,7 @@ function Clear-OldIISLog {
                     Path    = $TraversalRoot
                     Service = $InitialService
                 })
-            $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+            $Candidates = [System.Collections.Generic.List[object]]::new()
             while ($Pending.Count -gt 0) {
                 $DirectoryState = $Pending.Pop()
                 $DirectoryPath = [string]$DirectoryState.Path
@@ -557,24 +557,29 @@ function Clear-OldIISLog {
                     }
                 }
                 foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
+                    $ItemPath = Convert-TheCleanersPathForTraversal -Path ($DirectoryPath.TrimEnd([char[]]@('\', '/')) + '\' + [string]$Item.Name)
                     if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-                        Write-Verbose -Message "Skipping reparse point: $($Item.FullName)"
+                        Write-Verbose -Message "Skipping reparse point: $ItemPath"
                         continue
                     }
                     if ($Item.PSIsContainer) {
                         $ChildService = $DirectoryService
-                        $ChildDirectoryName = [System.IO.Path]::GetFileName($Item.FullName.TrimEnd([char[]]@('\', '/')))
+                        $ChildDirectoryName = [string]$Item.Name
                         if ($ChildDirectoryName -match '^(FTPSVC|MSFTPSVC)\d+$') {
                             $ChildService = $Matches[1]
                         } elseif ($ChildDirectoryName -match '^W3SVC\d+$') {
                             $ChildService = 'W3SVC'
                         }
                         $Pending.Push([pscustomobject]@{
-                                Path    = $Item.FullName
+                                Path    = $ItemPath
                                 Service = $ChildService
                             })
                     } elseif ((Test-TheCleanersIisLogFileName -Name $Item.Name -Format $RootDefinition.Format -Service $DirectoryService -LocalTimeRollover:$RootDefinition.LocalTimeRollover) -and $Item.LastWriteTimeUtc -le $CutoffUtc) {
-                        $Candidates.Add($Item)
+                        $Candidates.Add([pscustomobject]@{
+                                FullName         = $ItemPath
+                                Name             = $Item.Name
+                                LastWriteTimeUtc = $Item.LastWriteTimeUtc
+                            })
                     }
                 }
             }

@@ -61,12 +61,14 @@ function Clear-WindowsTemp {
     $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
     $Root = $null
     $ValidatedRootIdentity = $null
+    $TraversalRootPath = $null
     try {
         $Root = Get-TheCleanersWindowsTempRoot
+        $TraversalRootPath = Convert-TheCleanersPathForTraversal -Path $Root.FullName
         if (-not $WhatIfPreference) {
-            $ValidatedRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $Root.FullName -Directory
+            $ValidatedRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $TraversalRootPath -Directory
             if ($ValidatedRootIdentity.IsReparsePoint) {
-                throw [System.IO.InvalidDataException]::new("The Windows temporary root is a reparse point: '$($Root.FullName)'.")
+                throw [System.IO.InvalidDataException]::new("The Windows temporary root is a reparse point: '$TraversalRootPath'.")
             }
         }
     } catch {
@@ -88,9 +90,9 @@ function Clear-WindowsTemp {
         return
     }
 
-    $Result = Get-TheCleanersCleanupResult -Command 'Clear-WindowsTemp' -RootPath $Root.FullName.TrimEnd([char[]]@('\', '/')) -CutoffUtc $CutoffUtc -PrivilegeStatus (Get-TheCleanersPrivilegeStatus)
+    $Result = Get-TheCleanersCleanupResult -Command 'Clear-WindowsTemp' -RootPath $TraversalRootPath -CutoffUtc $CutoffUtc -PrivilegeStatus (Get-TheCleanersPrivilegeStatus)
     try {
-        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc $CutoffUtc -RemoveEmptyDirectory:$RemoveEmptyDirectory -CaptureIdentity:(-not $WhatIfPreference) -ValidatedRootIdentity $ValidatedRootIdentity
+        $Plan = Get-TheCleanersTempPlan -Root $Root -TraversalRootPath $TraversalRootPath -CutoffUtc $CutoffUtc -RemoveEmptyDirectory:$RemoveEmptyDirectory -CaptureIdentity:(-not $WhatIfPreference) -ValidatedRootIdentity $ValidatedRootIdentity
     } catch {
         $Result.DiscoveryStatus = 'Failed'
         $Result.Status = 'DiscoveryFailed'
@@ -135,7 +137,7 @@ function Clear-WindowsTemp {
         }
 
         try {
-            $CurrentRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $Result.RootPath -Directory
+            $CurrentRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $TraversalRootPath -Directory
             if ($CurrentRootIdentity.IsReparsePoint -or -not $CurrentRootIdentity.Equals($Plan.RootIdentity)) {
                 throw [System.IO.InvalidDataException]::new("The cleanup root changed after discovery: '$($Result.RootPath)'.")
             }
@@ -183,7 +185,7 @@ function Clear-WindowsTemp {
                     & $MarkDirectoryDisqualified $Candidate.ParentPath $Candidate.ParentIdentity
                     continue
                 }
-                $null = Resolve-TheCleanersFileSystemPath -LiteralPath $Candidate.Path -RootPath $Result.RootPath
+                $null = Resolve-TheCleanersFileSystemPath -LiteralPath $Candidate.Path -RootPath $TraversalRootPath
                 $CurrentItem.Refresh()
                 if (-not $CurrentItem.Exists) {
                     $Result.FilesSkipped++
@@ -263,7 +265,7 @@ function Clear-WindowsTemp {
                     & $MarkDirectoryDisqualified $DirectoryPlan.ParentPath $DirectoryPlan.ParentIdentity
                     continue
                 }
-                $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPlan.Path -RootPath $Result.RootPath
+                $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPlan.Path -RootPath $TraversalRootPath
                 $CurrentHandle = if ($null -ne $DirectoryPlan.Handle) {
                     $PlanOwnsCurrentHandle = $true
                     $DirectoryPlan.Handle

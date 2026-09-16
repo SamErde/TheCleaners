@@ -105,17 +105,29 @@ Describe 'Exchange preview result edge cases' -Skip:(-not $WindowsHost) -Tag Uni
         $ExtendedInstallRoot = '\\?\' + $ExchangeRoot
         $ExtendedLogRoot = $ExtendedInstallRoot.TrimEnd('\') + '\Logging'
         $NormalizedLogRoot = Convert-TheCleanersPathForComparison -Path $ExtendedLogRoot
+        $ExtendedCandidatePath = $ExtendedLogRoot + '\old.log'
+        $NormalizedCandidatePath = $NormalizedLogRoot + '\old.log'
         $ObservedPaths = [System.Collections.Generic.List[string]]::new()
         Mock Get-ItemProperty { [pscustomobject]@{ MsiInstallPath = $ExtendedInstallRoot } }
         Mock Get-TheCleanersExchangeProtectedPaths { [pscustomobject]@{ Status = 'Validated'; Paths = @() } }
         Mock Test-Path { [string]$LiteralPath -eq $ExtendedLogRoot }
         Mock Resolve-TheCleanersFileSystemPath { [System.IO.DirectoryInfo]::new($LiteralPath) }
-        Mock Get-ChildItem { $null = $ObservedPaths.Add([string]$LiteralPath) }
+        Mock Get-ChildItem {
+            $null = $ObservedPaths.Add([string]$LiteralPath)
+            [pscustomobject]@{
+                Name             = 'old.log'
+                FullName         = $NormalizedCandidatePath
+                Attributes       = [System.IO.FileAttributes]::Normal
+                PSIsContainer    = $false
+                LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
+            }
+        }
 
         $Result = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
 
         $Result | Should -HaveCount 1
         $Result[0].RootPath | Should -Be $NormalizedLogRoot
+        $Result[0].CandidatePaths | Should -Contain $ExtendedCandidatePath
         $ObservedPaths | Should -Contain $ExtendedLogRoot
         $ObservedPaths | Should -Not -Contain $NormalizedLogRoot
     }

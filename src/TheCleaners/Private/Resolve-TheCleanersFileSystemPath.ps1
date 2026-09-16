@@ -114,6 +114,42 @@ function Convert-TheCleanersPathForComparison {
     [System.IO.Path]::GetFullPath($ComparablePath).TrimEnd([char[]]@('\', '/'))
 }
 
+function Convert-TheCleanersPathForTraversal {
+    <#
+    .SYNOPSIS
+        Normalize a filesystem traversal path without dropping its namespace.
+    .DESCRIPTION
+        Canonicalize separators and dot segments using the comparison helper,
+        then restore a supported extended-length prefix when the input carried
+        one. This remains a string-only operation so Windows PowerShell does
+        not route a long path through a legacy MAX_PATH API.
+    .PARAMETER Path
+        Fully qualified filesystem path to normalize for traversal.
+    .OUTPUTS
+        System.String
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Path
+    )
+
+    $PathWithWindowsSeparators = $Path.Replace('/', '\')
+    $IsExtendedLength = $PathWithWindowsSeparators.StartsWith('\\?\', [System.StringComparison]::OrdinalIgnoreCase)
+    $IsExtendedUnc = $PathWithWindowsSeparators.StartsWith('\\?\UNC\', [System.StringComparison]::OrdinalIgnoreCase)
+    $ComparablePath = Convert-TheCleanersPathForComparison -Path $PathWithWindowsSeparators
+    if (-not $IsExtendedLength) {
+        return $ComparablePath
+    }
+    if ($IsExtendedUnc) {
+        return '\\?\UNC\' + $ComparablePath.Substring(2)
+    }
+    '\\?\' + $ComparablePath
+}
+
 function Resolve-TheCleanersFileSystemPath {
     <#
     .SYNOPSIS

@@ -435,6 +435,39 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         Convert-TheCleanersPathForComparison -Path '\\?\C:\segment00abcdefgh\segment01abcdefgh\..\segment02abcdefgh' | Should -Be 'C:\segment00abcdefgh\segment02abcdefgh'
     }
 
+    It 'retains the extended-length namespace for temp traversal and candidate paths' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'ExtendedTempTraversalRoot'
+        $null = New-Item -Path $RootPath -ItemType Directory -Force
+        $Root = Get-Item -LiteralPath $RootPath -Force
+        $ExtendedRoot = '\\?\' + $RootPath
+        $NormalizedRoot = Convert-TheCleanersPathForComparison -Path $ExtendedRoot
+        $ExtendedCandidatePath = $ExtendedRoot.TrimEnd([char[]]@('\', '/')) + '\old.tmp'
+        $NormalizedCandidatePath = $NormalizedRoot + '\old.tmp'
+        $ObservedPaths = [System.Collections.Generic.List[string]]::new()
+
+        Mock Resolve-TheCleanersFileSystemPath { $Root }
+        Mock Get-ChildItem {
+            $null = $ObservedPaths.Add([string]$LiteralPath)
+            [pscustomobject]@{
+                Name             = 'old.tmp'
+                FullName         = $NormalizedCandidatePath
+                Attributes       = [System.IO.FileAttributes]::Normal
+                PSIsContainer    = $false
+                LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-31)
+            }
+        }
+
+        $Plan = Get-TheCleanersTempPlan -Root $Root -TraversalRootPath $ExtendedRoot -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity:$false
+        try {
+            $Plan.RootPath | Should -Be $NormalizedRoot
+            $Plan.Files.Path | Should -Contain $ExtendedCandidatePath
+            $ObservedPaths | Should -Contain $ExtendedRoot
+            $ObservedPaths | Should -Not -Contain $NormalizedRoot
+        } finally {
+            Close-TheCleanersTempPlanHandles -Plan $Plan
+        }
+    }
+
     It 'preserves whitespace-only extended-length path components' {
         Convert-TheCleanersPathForComparison -Path '\\?\C:\safe\ \child' | Should -Be 'C:\safe\ \child'
     }

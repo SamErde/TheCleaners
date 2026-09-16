@@ -18,6 +18,10 @@ function Get-TheCleanersTempPlan {
         reparse point before a file is opened for deletion.
     .PARAMETER Root
         Previously validated temporary directory.
+    .PARAMETER TraversalRootPath
+        Original fully qualified root path to retain for provider traversal and
+        identity operations when the FileSystemInfo representation may normalize
+        an extended-length namespace.
     .PARAMETER CutoffUtc
         Inclusive UTC retention cutoff.
     .PARAMETER RemoveEmptyDirectory
@@ -36,6 +40,11 @@ function Get-TheCleanersTempPlan {
         [Parameter(Mandatory)]
         [System.IO.DirectoryInfo]
         $Root,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $TraversalRootPath,
 
         [Parameter(Mandatory)]
         [DateTime]
@@ -57,7 +66,11 @@ function Get-TheCleanersTempPlan {
     $HeldDirectoryHandles = [System.Collections.Generic.List[object]]::new()
     $HeldDirectoryHandleByPath = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::OrdinalIgnoreCase)
     try {
-        $RootPath = $Root.FullName.TrimEnd([char[]]@('\', '/'))
+        $RootPath = if ($PSBoundParameters.ContainsKey('TraversalRootPath')) {
+            Convert-TheCleanersPathForTraversal -Path $TraversalRootPath
+        } else {
+            Convert-TheCleanersPathForTraversal -Path $Root.FullName
+        }
         $RootIdentity = $null
         $DisqualifiedDirectoryPaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         $AddPruningBlocker = {
@@ -133,26 +146,27 @@ function Get-TheCleanersTempPlan {
                     }
                 }
 
-                foreach ($Item in @(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop)) {
+                foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
+                    $ItemPath = Convert-TheCleanersPathForTraversal -Path ($DirectoryPath.TrimEnd([char[]]@('\', '/')) + '\' + [string]$Item.Name)
                     if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
                         if ($RemoveEmptyDirectory) {
                             & $AddPruningBlocker -Path $DirectoryPath
                         }
-                        Write-Verbose -Message "Skipping reparse point: $($Item.FullName)"
+                        Write-Verbose -Message "Skipping reparse point: $ItemPath"
                         continue
                     }
                     if ($Item.PSIsContainer) {
                         $ChildIdentity = $null
                         if ($CaptureIdentity) {
                             try {
-                                $ChildIdentity = Get-TheCleanersFileIdentity -LiteralPath $Item.FullName -Directory
+                                $ChildIdentity = Get-TheCleanersFileIdentity -LiteralPath $ItemPath -Directory
                             } catch {
                                 $BaseException = $_.Exception.GetBaseException()
-                                throw [System.InvalidOperationException]::new("Could not capture the queued directory identity required for safe mutation: '$($Item.FullName)'.", $BaseException)
+                                throw [System.InvalidOperationException]::new("Could not capture the queued directory identity required for safe mutation: '$ItemPath'.", $BaseException)
                             }
                         }
                         $Pending.Push([pscustomobject]@{
-                                Path     = $Item.FullName
+                                Path     = $ItemPath
                                 Identity = $ChildIdentity
                             })
                         continue
@@ -167,7 +181,7 @@ function Get-TheCleanersTempPlan {
                     $CandidateIdentity = $null
                     if ($CaptureIdentity) {
                         try {
-                            $CandidateIdentity = Get-TheCleanersFileIdentity -LiteralPath $Item.FullName
+                            $CandidateIdentity = Get-TheCleanersFileIdentity -LiteralPath $ItemPath
                         } catch {
                             $BaseException = $_.Exception.GetBaseException()
                             $CandidateMissing = (
@@ -177,40 +191,40 @@ function Get-TheCleanersTempPlan {
                                 ($BaseException -is [System.ComponentModel.Win32Exception] -and $BaseException.NativeErrorCode -in @(2, 3, 53, 123))
                             )
                             if ($CandidateMissing) {
-                                Write-Verbose -Message "The candidate disappeared during identity capture and will be skipped: '$($Item.FullName)'"
+                                Write-Verbose -Message "The candidate disappeared during identity capture and will be skipped: '$ItemPath'"
                                 if ($RemoveEmptyDirectory) {
-                                    & $AddPruningBlocker -Path $Item.Directory.FullName
+                                    & $AddPruningBlocker -Path $DirectoryPath
                                 }
                                 continue
                             }
-                            throw [System.InvalidOperationException]::new("Could not capture the candidate identity required for safe mutation: '$($Item.FullName)'.", $BaseException)
+                            throw [System.InvalidOperationException]::new("Could not capture the candidate identity required for safe mutation: '$ItemPath'.", $BaseException)
                         }
                     }
 
                     $ParentIdentity = $null
                     if ($RemoveEmptyDirectory -and $CaptureIdentity) {
                         try {
-                            $ParentIdentity = Get-TheCleanersFileIdentity -LiteralPath $Item.Directory.FullName -Directory
+                            $ParentIdentity = Get-TheCleanersFileIdentity -LiteralPath $DirectoryPath -Directory
                         } catch {
                             $BaseException = $_.Exception.GetBaseException()
-                            throw [System.InvalidOperationException]::new("Could not capture the parent identity required for safe directory pruning: '$($Item.Directory.FullName)'.", $BaseException)
+                            throw [System.InvalidOperationException]::new("Could not capture the parent identity required for safe directory pruning: '$DirectoryPath'.", $BaseException)
                         }
                     }
 
                     $Candidates.Add([pscustomobject]@{
-                            Path             = $Item.FullName
+                            Path             = $ItemPath
                             Identity         = $CandidateIdentity
                             LastWriteTimeUtc = $Item.LastWriteTimeUtc
-                            ParentPath       = $Item.Directory.FullName
+                            ParentPath       = $DirectoryPath
                             ParentIdentity   = $ParentIdentity
                         })
-                    $null = $FilePaths.Add($Item.FullName)
+                    $null = $FilePaths.Add($ItemPath)
 
                     if ($RemoveEmptyDirectory) {
-                        $Parent = $Item.Directory
-                        while ($null -ne $Parent -and $Parent.FullName -ne $RootPath) {
-                            $null = $DirectoryPaths.Add($Parent.FullName)
-                            $Parent = $Parent.Parent
+                        $ParentPath = $DirectoryPath
+                        while (-not [string]::IsNullOrWhiteSpace($ParentPath) -and $ParentPath -ne $RootPath) {
+                            $null = $DirectoryPaths.Add($ParentPath)
+                            $ParentPath = Split-Path -Path $ParentPath -Parent
                         }
                     }
                 }
@@ -236,9 +250,14 @@ function Get-TheCleanersTempPlan {
                 continue
             }
             $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $RootPath
-            $Remaining = @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop | Where-Object {
-                    -not $FilePaths.Contains($_.FullName) -and -not $PlannedDirectoryPaths.Contains($_.FullName)
-                })
+            $Remaining = @(
+                foreach ($RemainingItem in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
+                    $RemainingItemPath = Convert-TheCleanersPathForTraversal -Path ($DirectoryPath.TrimEnd([char[]]@('\', '/')) + '\' + [string]$RemainingItem.Name)
+                    if (-not $FilePaths.Contains($RemainingItemPath) -and -not $PlannedDirectoryPaths.Contains($RemainingItemPath)) {
+                        $RemainingItem
+                    }
+                }
+            )
             if ($Remaining.Count -ne 0) {
                 continue
             }
@@ -328,7 +347,7 @@ function Get-TheCleanersTempPlan {
         }
 
         [pscustomobject]@{
-            RootPath                   = $RootPath
+            RootPath                   = Convert-TheCleanersPathForComparison -Path $RootPath
             RootIdentity               = $RootIdentity
             CutoffUtc                  = $CutoffUtc.ToUniversalTime()
             Files                      = @($Candidates.ToArray() | Sort-Object -Property Path)

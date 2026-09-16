@@ -60,8 +60,11 @@ function Clear-CurrentUserTemp {
     $Root = $null
     $ValidatedRootIdentity = $null
     $RequestedTempPath = $null
+    $TraversalRootPath = $null
+    $RequestedTempComparison = $null
     try {
         $RequestedTempPath = [System.IO.Path]::GetTempPath()
+        $TraversalRootPath = Convert-TheCleanersPathForTraversal -Path $RequestedTempPath
         $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RequestedTempPath
         $LocalApplicationData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
         if ([string]::IsNullOrWhiteSpace($LocalApplicationData)) {
@@ -69,15 +72,15 @@ function Clear-CurrentUserTemp {
         }
         $CanonicalUserTemp = Resolve-TheCleanersFileSystemPath -LiteralPath (Join-Path -Path $LocalApplicationData -ChildPath 'Temp')
         $CanonicalUserTempPath = Convert-TheCleanersPathForComparison -Path $CanonicalUserTemp.FullName
-        $RequestedTempComparison = Convert-TheCleanersPathForComparison -Path $Root.FullName
+        $RequestedTempComparison = Convert-TheCleanersPathForComparison -Path $TraversalRootPath
         $AllowedDescendantPrefix = $CanonicalUserTempPath + [System.IO.Path]::DirectorySeparatorChar
         if ($RequestedTempComparison -ne $CanonicalUserTempPath -and -not $RequestedTempComparison.StartsWith($AllowedDescendantPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
             throw [System.UnauthorizedAccessException]::new("The current-user temporary path is outside the canonical user temp root: '$($Root.FullName)'.")
         }
         if (-not $WhatIfPreference) {
-            $ValidatedRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $Root.FullName -Directory
+            $ValidatedRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $TraversalRootPath -Directory
             if ($ValidatedRootIdentity.IsReparsePoint) {
-                throw [System.IO.InvalidDataException]::new("The current-user temporary root is a reparse point: '$($Root.FullName)'.")
+                throw [System.IO.InvalidDataException]::new("The current-user temporary root is a reparse point: '$TraversalRootPath'.")
             }
         }
     } catch {
@@ -101,9 +104,9 @@ function Clear-CurrentUserTemp {
         return
     }
 
-    $Result = Get-TheCleanersCleanupResult -Command 'Clear-CurrentUserTemp' -RootPath $Root.FullName.TrimEnd([char[]]@('\', '/')) -CutoffUtc $CutoffUtc -PrivilegeStatus (Get-TheCleanersPrivilegeStatus)
+    $Result = Get-TheCleanersCleanupResult -Command 'Clear-CurrentUserTemp' -RootPath $RequestedTempComparison -CutoffUtc $CutoffUtc -PrivilegeStatus (Get-TheCleanersPrivilegeStatus)
     try {
-        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc $CutoffUtc -RemoveEmptyDirectory:$RemoveEmptyDirectory -CaptureIdentity:(-not $WhatIfPreference) -ValidatedRootIdentity $ValidatedRootIdentity
+        $Plan = Get-TheCleanersTempPlan -Root $Root -TraversalRootPath $TraversalRootPath -CutoffUtc $CutoffUtc -RemoveEmptyDirectory:$RemoveEmptyDirectory -CaptureIdentity:(-not $WhatIfPreference) -ValidatedRootIdentity $ValidatedRootIdentity
     } catch {
         $Result.DiscoveryStatus = 'Failed'
         $Result.Status = 'DiscoveryFailed'
@@ -148,7 +151,7 @@ function Clear-CurrentUserTemp {
         }
 
         try {
-            $CurrentRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $Result.RootPath -Directory
+            $CurrentRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $TraversalRootPath -Directory
             if ($CurrentRootIdentity.IsReparsePoint -or -not $CurrentRootIdentity.Equals($Plan.RootIdentity)) {
                 throw [System.IO.InvalidDataException]::new("The cleanup root changed after discovery: '$($Result.RootPath)'.")
             }
@@ -196,7 +199,7 @@ function Clear-CurrentUserTemp {
                     & $MarkDirectoryDisqualified $Candidate.ParentPath $Candidate.ParentIdentity
                     continue
                 }
-                $null = Resolve-TheCleanersFileSystemPath -LiteralPath $Candidate.Path -RootPath $Result.RootPath
+                $null = Resolve-TheCleanersFileSystemPath -LiteralPath $Candidate.Path -RootPath $TraversalRootPath
                 $CurrentItem.Refresh()
                 if (-not $CurrentItem.Exists) {
                     $Result.FilesSkipped++
@@ -276,7 +279,7 @@ function Clear-CurrentUserTemp {
                     & $MarkDirectoryDisqualified $DirectoryPlan.ParentPath $DirectoryPlan.ParentIdentity
                     continue
                 }
-                $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPlan.Path -RootPath $Result.RootPath
+                $null = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPlan.Path -RootPath $TraversalRootPath
                 $CurrentHandle = if ($null -ne $DirectoryPlan.Handle) {
                     $PlanOwnsCurrentHandle = $true
                     $DirectoryPlan.Handle
