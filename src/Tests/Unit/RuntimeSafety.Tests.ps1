@@ -17,6 +17,82 @@ BeforeAll {
     )) {
         . (Join-Path -Path $ModuleRoot -ChildPath $RelativePath)
     }
+
+    function Invoke-TheCleanersInteractiveConfirmProbe {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)]
+            [string]
+            $ManifestPath,
+
+            [Parameter(Mandatory)]
+            [string]
+            $FixtureRoot,
+
+            [Parameter(Mandatory)]
+            [ValidateSet('Approved', 'Declined')]
+            [string]
+            $ExpectedOutcome,
+
+            [Parameter(Mandatory)]
+            [ValidateSet('Y', 'N')]
+            [string]
+            $Response
+        )
+
+        $ProbeScript = @'
+$ErrorActionPreference = 'Stop'
+$FixtureRoot = $env:THECLEANERS_CONFIRM_FIXTURE
+$env:TEMP = $FixtureRoot
+$env:TMP = $FixtureRoot
+$OldFile = New-Item -Path (Join-Path -Path $FixtureRoot -ChildPath 'old.tmp') -ItemType File
+[System.IO.File]::SetLastWriteTimeUtc($OldFile.FullName, [DateTime]::UtcNow.AddDays(-31))
+Import-Module -Name $env:THECLEANERS_CONFIRM_MANIFEST -Force
+$Result = Clear-CurrentUserTemp -Days 30 -Confirm -PassThru -ErrorAction Stop
+if ($env:THECLEANERS_CONFIRM_EXPECTED -eq 'Approved') {
+    if ($Result.Status -ne 'Completed' -or $Result.FilesRemoved -ne 1 -or [System.IO.File]::Exists($OldFile.FullName)) {
+        throw 'The approval response did not complete the expected fixture removal.'
+    }
+} elseif ($Result.Status -ne 'Declined' -or $Result.FilesRemoved -ne 0 -or -not [System.IO.File]::Exists($OldFile.FullName)) {
+    throw 'The decline response did not preserve the fixture.'
+}
+'CONFIRM_INTERACTIVE_OK'
+'@
+        $EncodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($ProbeScript))
+        $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+        $StartInfo.FileName = $PowerShellExecutable
+        $StartInfo.Arguments = "-NoLogo -NoProfile -EncodedCommand $EncodedCommand"
+        $StartInfo.UseShellExecute = $false
+        $StartInfo.CreateNoWindow = $true
+        $StartInfo.RedirectStandardInput = $true
+        $StartInfo.RedirectStandardOutput = $true
+        $StartInfo.RedirectStandardError = $true
+        $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_MANIFEST'] = $ManifestPath
+        $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_FIXTURE'] = $FixtureRoot
+        $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_EXPECTED'] = $ExpectedOutcome
+
+        $Process = New-Object System.Diagnostics.Process
+        $Process.StartInfo = $StartInfo
+        try {
+            $null = $Process.Start()
+            $OutputTask = $Process.StandardOutput.ReadToEndAsync()
+            $ErrorTask = $Process.StandardError.ReadToEndAsync()
+            $Process.StandardInput.WriteLine($Response)
+            $Process.StandardInput.Close()
+            if (-not $Process.WaitForExit(30000)) {
+                $Process.Kill()
+                $Process.WaitForExit()
+                throw "The interactive confirmation probe did not finish for '$ExpectedOutcome'."
+            }
+            [pscustomobject]@{
+                ExitCode = $Process.ExitCode
+                Output   = $OutputTask.Result
+                Error    = $ErrorTask.Result
+            }
+        } finally {
+            $Process.Dispose()
+        }
+    }
 }
 
 Describe 'Windows runtime and preflight safety' -Skip:(-not $WindowsHost) -Tag Unit {
@@ -182,6 +258,21 @@ if ($WhatIfPreference -ne $BeforeWhatIf -or $ConfirmPreference -ne $BeforeConfir
         $ProbeExitCode | Should -Be 0 -Because ($ProbeOutput -join [Environment]::NewLine)
         $ProbeOutput | Should -Contain 'CONFIRM_STATE_OK'
         (Test-Path -LiteralPath (Join-Path -Path $FixtureRoot -ChildPath 'old.tmp')) | Should -BeFalse
+    }
+
+    It 'accepts and declines one explicit confirmation without nested prompts' {
+        foreach ($Case in @(
+                @{ Name = 'Approved'; Response = 'Y' }
+                @{ Name = 'Declined'; Response = 'N' }
+            )) {
+            $FixtureRoot = Join-Path -Path $TestDrive -ChildPath ('InteractiveConfirm-{0}' -f $Case.Name)
+            $null = New-Item -Path $FixtureRoot -ItemType Directory -Force
+            $Probe = Invoke-TheCleanersInteractiveConfirmProbe -ManifestPath $ManifestPath -FixtureRoot $FixtureRoot -ExpectedOutcome $Case.Name -Response $Case.Response
+            $CombinedOutput = '{0}{1}' -f $Probe.Output, $Probe.Error
+
+            $Probe.ExitCode | Should -Be 0 -Because $CombinedOutput
+            $CombinedOutput | Should -Match 'CONFIRM_INTERACTIVE_OK'
+        }
     }
 }
 

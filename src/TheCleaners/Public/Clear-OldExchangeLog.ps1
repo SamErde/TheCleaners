@@ -126,7 +126,7 @@ function Clear-OldExchangeLog {
     $FoundExistingRoot = $false
     $DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
     foreach ($RelativeRoot in $RelativeRoots) {
-        $RootPath = Join-Path -Path $InstallRoot.FullName -ChildPath $RelativeRoot
+        $RootPath = $InstallRoot.FullName.TrimEnd([char[]]@('\', '/')) + '\' + $RelativeRoot
         $RootExists = $false
         try {
             $RootExists = Test-Path -LiteralPath $RootPath -PathType Container -ErrorAction Stop
@@ -156,6 +156,7 @@ function Clear-OldExchangeLog {
             if ($LogRoot -isnot [System.IO.DirectoryInfo]) {
                 throw [System.IO.InvalidDataException]::new("Exchange log root is not a directory: '$RootPath'.")
             }
+            $TraversalRoot = $LogRoot.FullName
             $NormalizedRoot = Convert-TheCleanersPathForComparison -Path $LogRoot.FullName
             $RootIsProtected = $false
             foreach ($ProtectedPath in @($Protected.Paths)) {
@@ -171,12 +172,12 @@ function Clear-OldExchangeLog {
             }
 
             $Pending = [System.Collections.Generic.Stack[string]]::new()
-            $Pending.Push($NormalizedRoot)
+            $Pending.Push($TraversalRoot)
             $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
             while ($Pending.Count -gt 0) {
                 $DirectoryPath = $Pending.Pop()
-                if ($DirectoryPath -ne $NormalizedRoot) {
-                    $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $NormalizedRoot
+                if ($DirectoryPath -ne $TraversalRoot) {
+                    $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $TraversalRoot
                     if ($Directory -isnot [System.IO.DirectoryInfo]) {
                         throw [System.IO.InvalidDataException]::new("Exchange traversal path is not a directory: '$DirectoryPath'.")
                     }

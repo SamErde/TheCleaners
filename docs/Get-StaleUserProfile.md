@@ -24,9 +24,13 @@ The command never deletes profiles or writes presentation output to the host.
 Unknown or invalid `LastUseTime` values are not classified as stale unless
 `-IncludeUnknownLastUseTime` is specified. SID translation is best effort. Optional
 size enumeration rejects reparse points anywhere in the profile path ancestry
-and holds a native directory handle with delete and read-attribute access without
-delete sharing while each directory is enumerated, so replacement or rename during
-that enumeration fails closed.
+and retains identity-checked handles for profile ancestors through the size operation.
+Each queued child directory carries its discovery-time identity and is opened and
+revalidated when traversed; where the current token permits it, the active
+directory uses a native handle with delete and read-attribute access without
+delete sharing while it is enumerated. Ancestors fall back to identity-only
+handles when DELETE access is unavailable, so replacement or rename is detected
+and sizing fails closed.
 
 ## EXAMPLES
 

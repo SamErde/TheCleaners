@@ -101,6 +101,25 @@ Describe 'Exchange preview result edge cases' -Skip:(-not $WindowsHost) -Tag Uni
         $DiscoveryError | Should -Not -BeNullOrEmpty
     }
 
+    It 'keeps the extended-length namespace on provider traversal paths' {
+        $ExtendedInstallRoot = '\\?\' + $ExchangeRoot
+        $ExtendedLogRoot = $ExtendedInstallRoot.TrimEnd('\') + '\Logging'
+        $NormalizedLogRoot = Convert-TheCleanersPathForComparison -Path $ExtendedLogRoot
+        $ObservedPaths = [System.Collections.Generic.List[string]]::new()
+        Mock Get-ItemProperty { [pscustomobject]@{ MsiInstallPath = $ExtendedInstallRoot } }
+        Mock Get-TheCleanersExchangeProtectedPaths { [pscustomobject]@{ Status = 'Validated'; Paths = @() } }
+        Mock Test-Path { [string]$LiteralPath -eq $ExtendedLogRoot }
+        Mock Resolve-TheCleanersFileSystemPath { [System.IO.DirectoryInfo]::new($LiteralPath) }
+        Mock Get-ChildItem { $null = $ObservedPaths.Add([string]$LiteralPath) }
+
+        $Result = @(Clear-OldExchangeLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
+
+        $Result | Should -HaveCount 1
+        $Result[0].RootPath | Should -Be $NormalizedLogRoot
+        $ObservedPaths | Should -Contain $ExtendedLogRoot
+        $ObservedPaths | Should -Not -Contain $NormalizedLogRoot
+    }
+
     It 'fails closed when a protected path is nested below a proposed log root' {
         $NestedProtectedPath = Join-Path -Path $LogRoot -ChildPath 'Database'
         $null = New-Item -Path $NestedProtectedPath -ItemType Directory -Force

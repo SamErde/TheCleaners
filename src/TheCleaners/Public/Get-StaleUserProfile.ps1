@@ -11,11 +11,12 @@ function Get-StaleUserProfile {
         excluded. SID translation is best effort; an unresolved SID is retained in
         the object with an explicit resolution status. Optional size enumeration
         skips reparse points throughout the profile path ancestry and reports
-        unavailable sizes without changing profile state. Identity-checked native
-        handles are held from the filesystem root through the profile and for
-        every queued directory until traversal completes. Stable no-delete-sharing
-        handles are used where the current token permits them; protected ancestors
-        retain an identity handle and are revalidated before a size is reported.
+        unavailable sizes without changing profile state. Profile ancestors retain
+        identity-checked handles through the size operation. Each queued directory
+        carries its discovery-time identity and is opened and revalidated when it is
+        traversed; a stable no-delete-sharing handle is used where the current token
+        permits it. Ancestors fall back to identity-only handles when DELETE access
+        is unavailable and are revalidated before a size is reported.
     .PARAMETER Days
         A profile is stale when its known last-use time is at or before this many
         days ago. The default is 90 days.

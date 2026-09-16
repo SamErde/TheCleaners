@@ -134,6 +134,16 @@ function Clear-OldIISLog {
                     $null = $DiscoveryErrorIds.Add('IISFtpDiscoveryFailed')
                     if ($null -ne $WebRootDefinition) {
                         $null = $WebRootDefinition.DiscoveryErrorIds.Add('IISFtpDiscoveryFailed')
+                    } elseif ($PassThru) {
+                        $DiscoveryFailureResultReported = $true
+                        $FtpFailureRootPath = "IIS FTP log root unavailable for '$SiteName'"
+                        $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $FtpFailureRootPath -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource 'WebAdministration' -DisplayName "$SiteName FTP" -CandidatePaths @() -Status 'DiscoveryFailed'
+                        $Result.FileCandidateCount = $null
+                        $Result.DirectoryCandidateCount = $null
+                        $Result.DiscoveryErrorCount = 1
+                        $Result.ErrorIds = @('IISFtpDiscoveryFailed')
+                        $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
+                        $Result
                     }
                     $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISFtpDiscoveryFailed' -Category ReadError -TargetObject $SiteName
                     $PSCmdlet.WriteError($ErrorRecord)
@@ -270,8 +280,8 @@ function Clear-OldIISLog {
             if ($LogRoot -isnot [System.IO.DirectoryInfo]) {
                 throw [System.IO.InvalidDataException]::new("IIS log root is not a directory: '$($RootDefinition.Path)'.")
             }
+            $TraversalRoot = $LogRoot.FullName
             $NormalizedRoot = Convert-TheCleanersPathForComparison -Path $LogRoot.FullName
-            $RootDefinition.Path = $NormalizedRoot
             if ($RootDiscoveryErrorIds.Count -gt 0) {
                 if ($PassThru) {
                     $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
@@ -290,14 +300,14 @@ function Clear-OldIISLog {
             }
             $Pending = [System.Collections.Generic.Stack[object]]::new()
             $InitialService = [string]$RootDefinition.Service
-            $InitialDirectoryName = [System.IO.Path]::GetFileName($NormalizedRoot.TrimEnd([char[]]@('\', '/')))
+            $InitialDirectoryName = [System.IO.Path]::GetFileName($TraversalRoot.TrimEnd([char[]]@('\', '/')))
             if ($InitialDirectoryName -match '^(FTPSVC|MSFTPSVC)\d+$') {
                 $InitialService = $Matches[1]
             } elseif ($InitialDirectoryName -match '^W3SVC\d+$') {
                 $InitialService = 'W3SVC'
             }
             $Pending.Push([pscustomobject]@{
-                    Path    = $NormalizedRoot
+                    Path    = $TraversalRoot
                     Service = $InitialService
                 })
             $Candidates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
@@ -305,8 +315,8 @@ function Clear-OldIISLog {
                 $DirectoryState = $Pending.Pop()
                 $DirectoryPath = [string]$DirectoryState.Path
                 $DirectoryService = [string]$DirectoryState.Service
-                if ($DirectoryPath -ne $NormalizedRoot) {
-                    $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $NormalizedRoot
+                if ($DirectoryPath -ne $TraversalRoot) {
+                    $Directory = Resolve-TheCleanersFileSystemPath -LiteralPath $DirectoryPath -RootPath $TraversalRoot
                     if ($Directory -isnot [System.IO.DirectoryInfo]) {
                         throw [System.IO.InvalidDataException]::new("IIS traversal path is not a directory: '$DirectoryPath'.")
                     }

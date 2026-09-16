@@ -298,6 +298,12 @@ Add-BuildTask Analyze {
 
 Add-BuildTask AnalyzeTests -After Analyze {
     if (Test-Path -LiteralPath $script:TestsPath) {
+        $LoadedPester = Get-Module -Name Pester
+        if ($null -eq $LoadedPester) {
+            Import-Module -Name Pester -MinimumVersion $script:MinPesterVersion -MaximumVersion $script:MaxPesterVersion -ErrorAction Stop
+        } elseif ($LoadedPester.Version -lt $script:MinPesterVersion -or $LoadedPester.Version -gt $script:MaxPesterVersion) {
+            throw "Loaded Pester version '$($LoadedPester.Version)' is outside the supported build range."
+        }
         $Params = @{
             Path        = $script:TestsPath
             Setting     = (Join-Path -Path $BuildRoot -ChildPath 'PSScriptAnalyzerSettings.psd1')
@@ -343,6 +349,7 @@ Add-BuildTask Test {
     $Configuration.Run.PassThru = $true
     $Configuration.Run.Exit = $false
     $Configuration.CodeCoverage.Enabled = $true
+    $Configuration.CodeCoverage.UseBreakpoints = $false
     $Configuration.CodeCoverage.Path = @(
         (Join-Path -Path $script:ModuleSourcePath -ChildPath '*.ps1')
         (Join-Path -Path $script:ModuleSourcePath -ChildPath '*\*.ps1')
