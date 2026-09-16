@@ -54,11 +54,3 @@ Clear-OldExchangeLog -Days 60 -WhatIf -PassThru
 The temp cleaners leave directories untouched unless `-RemoveEmptyDirectory` is explicit. Even then, they only prune directories emptied by that invocation and their now-empty ancestors. They preserve roots, unrelated empty branches, recent files, and reparse points. Removal-enabled temp runs use standard `-Confirm` behavior; read the [safety contract](docs/safety-and-confirmation.md) before executing them.
 
 IIS and Exchange require explicit `-WhatIf` and cannot remove anything. Their discovered candidates are experimental, not proven deletion allowlists. `-AllowRemoval` is only a provisional later-release design for Exchange, not an available parameter.
-
-## Development status
-
-[PR #31](https://github.com/SamErde/TheCleaners/pull/31) merged the 1.0 safety and packaging implementation into `main` at commit `037c27a81234361620a633f68a33bfb370f0a03e`. The source manifest remains the unreleased `0.0.15-beta`; the Gallery still serves `0.0.13-alpha`, so installing from the Gallery does not install the merged behavior described here.
-
-The exact merged commit passed the hosted PowerShell 7.6.6, PowerShell 7.5.9, and Windows PowerShell 5.1 lanes, package-import checks, strict MkDocs deployment workflow, and PSScriptAnalyzer. That is merged implementation and CI evidence, not release acceptance. PowerShell 7.4 remains Microsoft-supported but is not in the hosted matrix, the 7.5 lane must be refreshed to Microsoft's latest supported servicing update, Windows client/server, broader elevated/non-elevated, real-system-root, and ReFS acceptance is incomplete, IIS and Exchange product labs remain open, the canonical lowercase documentation path still returns 404, and no release tag or Gallery publication was created. See `AGENTS.md`, the [command contracts](docs/command-contracts.md), and the [implementation ledger](docs/release-plan-1.0.md) before contributing. [Zensical migration](https://github.com/SamErde/TheCleaners/issues/26) is a separate follow-up.
-
-Canonical documentation: [day3bits.com/thecleaners](https://day3bits.com/thecleaners/).
