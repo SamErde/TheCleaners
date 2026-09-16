@@ -136,9 +136,16 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
             throw [System.Management.Automation.ItemNotFoundException]::new('Candidate disappeared.')
         }
 
-        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity -Verbose 4> $null
+        $Plan = $null
+        try {
+            $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity -Verbose 4> $null
 
-        $Plan.Files | Should -BeNullOrEmpty
+            $Plan.Files | Should -BeNullOrEmpty
+        } finally {
+            if ($null -ne $Plan) {
+                Close-TheCleanersTempPlanHandles -Plan $Plan
+            }
+        }
     }
 
     It 'retains a vanished candidate as a pruning blocker' {
