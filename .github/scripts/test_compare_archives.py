@@ -23,15 +23,20 @@ class ArchiveEvidenceTests(unittest.TestCase):
         for version in self.versions:
             self.write_lane(version)
 
-    def write_lane(self, version, content=b"fixture"):
+    def write_lane(self, version, content=b"fixture", scalar_order=False):
         directory = self.root / f"zip-archive-pwsh-{version}"
         directory.mkdir(exist_ok=True)
         stream = io.BytesIO()
-        entry = zipfile.ZipInfo("\u00e9.txt", (1980, 1, 1, 0, 0, 0))
-        entry.create_system = 0
+        # Literal .NET ordinal order: supplementary UTF-16 surrogates precede U+E000.
+        names = ["\u00e9.txt", "\U0001f600.txt", "\ue000.txt"]
+        if scalar_order:
+            names = sorted(names)
         with zipfile.ZipFile(stream, "w") as archive:
-            archive.writestr(entry, content)
-            entry.external_attr = 0
+            for name in names:
+                entry = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
+                entry.create_system = 0
+                archive.writestr(entry, content)
+                entry.external_attr = 0
         data = stream.getvalue()
         digest = hashlib.sha256(data).hexdigest()
         name = "TheCleaners_0.0.15.zip"
@@ -41,8 +46,8 @@ class ArchiveEvidenceTests(unittest.TestCase):
         manifest = {"ModuleName": "TheCleaners", "ModuleVersion": "0.0.15", "Commit": "a" * 40,
                     "Runtime": {"PowerShellVersion": version, "PSEdition": "Core"},
                     "Archive": name, "ArchiveSHA256": digest,
-                    "Files": [{"Path": entry.filename, "Length": len(content),
-                               "SHA256": hashlib.sha256(content).hexdigest()}]}
+                    "Files": [{"Path": name, "Length": len(content),
+                               "SHA256": hashlib.sha256(content).hexdigest()} for name in names]}
         (directory / "package.manifest.json").write_text(json.dumps(manifest))
 
     def verify(self):
@@ -56,6 +61,11 @@ class ArchiveEvidenceTests(unittest.TestCase):
 
     def test_matching_archives(self):
         self.assertEqual(len(self.verify()), 3)
+
+    def test_rejects_unicode_scalar_order(self):
+        self.write_lane("7.4.20", scalar_order=True)
+        with self.assertRaisesRegex(ValueError, "Entry set/order mismatch"):
+            self.verify()
 
     def test_wrong_commit(self):
         self.alter_manifest(lambda m: m.update(Commit="b" * 40))

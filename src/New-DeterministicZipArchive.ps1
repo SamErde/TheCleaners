@@ -32,17 +32,19 @@ function New-DeterministicZipArchive {
         Add-Type -AssemblyName 'System.IO.Compression.FileSystem'
     }
 
-    $SourcePath = (Resolve-Path -LiteralPath $SourcePath -ErrorAction Stop).ProviderPath.TrimEnd([char[]]@('\', '/'))
+    $SourcePath = (Resolve-Path -LiteralPath $SourcePath -ErrorAction Stop).ProviderPath
     $Paths = [System.Collections.Generic.List[string]]::new()
     foreach ($File in @(Get-ChildItem -LiteralPath $SourcePath -File -Recurse -Force -ErrorAction Stop)) {
-        $Paths.Add($File.FullName.Substring($SourcePath.Length + 1).Replace('\', '/'))
+        $Paths.Add($File.FullName.Substring($SourcePath.Length).TrimStart([char[]]@('\', '/')).Replace('\', '/'))
     }
     $Paths.Sort([System.StringComparer]::Ordinal)
 
     $ArchiveStream = [System.IO.File]::Open($DestinationPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
     $Archive = $null
     try {
-        $Encoding = [System.Text.UTF8Encoding]::new($false)
+        # .NET Framework recognizes the shared UTF8 instance when setting bit 11.
+        # Entry names use GetBytes (no preamble), so this does not add a BOM.
+        $Encoding = [System.Text.Encoding]::UTF8
         $Archive = [System.IO.Compression.ZipArchive]::new($ArchiveStream, [System.IO.Compression.ZipArchiveMode]::Create, $false, $Encoding)
         $Epoch = [DateTimeOffset]::new(1980, 1, 1, 0, 0, 0, [TimeSpan]::Zero)
         foreach ($RelativePath in $Paths) {

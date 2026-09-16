@@ -6,6 +6,8 @@ The TC-008 candidate requires identical ZIP bytes for identical staged file path
 
 `src/New-DeterministicZipArchive.ps1` writes files in ordinal relative-path order with `/` separators, explicit UTF-8 entry names, a fixed 1980-01-01 ZIP timestamp and zero external attributes. PS7 uses stored entries (`NoCompression`), avoiding Deflate implementation differences. Stored archives are larger; content manifests and SHA-256 sidecars continue to verify every byte. Manifests are outside the ZIP and deliberately include runtime identity, so manifests themselves are not byte-identical between runtime lanes.
 
+Use the shared `Encoding.UTF8` instance for entry names: .NET Framework otherwise fails to mark a custom UTF-8 encoder correctly in ZIP bit 11. Name encoding uses bytes without a BOM. The Unicode fixture includes supplementary-plane and high-BMP names to verify UTF-16 ordinal ordering in both the producer and comparator.
+
 Windows PowerShell 5.1 remains supported for module use and tests the exact downloaded canonical 7.6.6 artifact and ZIP. The helper uses PS5.1-compatible syntax/APIs and has fixture tests there, but the .NET Framework ZIP writer is not included in the cross-producer byte contract. No separate PS5.1 package is built for validation or publication.
 
 ## Historical investigation
@@ -39,6 +41,8 @@ The compressed-length differences sum to exactly 90 bytes. Header offsets and th
 5. Upload the exact tested artifact with hidden files included. Windows PowerShell 5.1 downloads the canonical 7.6.6 artifact/archive and runs its source and package tests without invoking the build.
 6. The comparison job downloads all three producer archives and runs `.github/scripts/Compare-Archives.py`. Missing lanes, wrong commit/producer, altered file content, sidecar mismatch, noncanonical metadata, compressed entries, repeat mismatch or cross-runtime byte mismatch fail the job. `ArchiveComparison.json` records sizes/hashes and counts.
 7. The protected publisher depends on the full reusable workflow, including comparison and strict documentation validation. It stages and verifies the selected tested artifact without rebuilding. This stage does not invoke publication.
+
+Local source archives without Git retain `Commit: unavailable`; they cannot supply exact-commit release evidence. When CI sets `TC_BUILD_COMMIT`, unavailable or mismatched Git identity is fatal.
 
 Local build: `Invoke-Build -File ./src/TheCleaners.build.ps1`. Use a separate worktree when existing generated outputs need preservation: the build's Clean task removes its own Artifacts, Archive, Reports and GeneratedHelp directories. Never use real cleanup data as fixtures.
 

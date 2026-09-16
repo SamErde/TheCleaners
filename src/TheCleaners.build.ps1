@@ -17,9 +17,25 @@ $ModuleName = [regex]::Match((Get-Item $BuildFile).Name, '^(.*)\.build\.ps1$').G
 . (Join-Path -Path $BuildRoot -ChildPath "$ModuleName.Settings.ps1")
 
 function Get-BuildCommitId {
-    $Commit = (& git -C $BuildRoot rev-parse HEAD | Select-Object -First 1)
-    if ($LASTEXITCODE -ne 0 -or $Commit -notmatch '^[0-9a-f]{40}$') {
-        throw 'Cannot establish the checked-out build commit.'
+    <#
+    .SYNOPSIS
+        Resolve build identity, requiring the expected exact commit in CI.
+    .DESCRIPTION
+        Local source-archive builds can report unavailable. CI must resolve Git
+        identity and match TC_BUILD_COMMIT; it never falls back to a guessed SHA.
+    #>
+    $Commit = $null
+    try {
+        $Commit = & git -C $BuildRoot rev-parse HEAD 2>$null
+        if (-not $?) { $Commit = $null }
+    } catch {
+        $Commit = $null
+    }
+    if ($Commit -notmatch '^[0-9a-f]{40}$') {
+        if ($env:TC_BUILD_COMMIT) {
+            throw 'Cannot establish the checked-out build commit required by CI.'
+        }
+        return 'unavailable'
     }
     if ($env:TC_BUILD_COMMIT -and $Commit -ne $env:TC_BUILD_COMMIT) {
         throw "Checked-out commit '$Commit' differs from expected '$env:TC_BUILD_COMMIT'."

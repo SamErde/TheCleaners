@@ -77,12 +77,18 @@ Describe 'Built-package contract' -Tag Integration {
 
 Describe 'Exact archive clean-install contract' -Tag Integration {
     It 'matches the archive hash, extracts the tested artifact, and imports it by module name in every host' {
-        $ExpectedCommit = (& git -C $PSScriptRoot rev-parse HEAD).Trim()
+        $ExpectedCommit = 'unavailable'
+        try {
+            $GitCommit = & git -C $PSScriptRoot rev-parse HEAD 2>$null
+            if ($? -and $GitCommit -match '^[0-9a-f]{40}$') { $ExpectedCommit = $GitCommit.Trim() }
+        } catch {
+            if ($env:TC_BUILD_COMMIT) { throw }
+        }
         $ArchiveManifest.Commit | Should -Be $ExpectedCommit
         if ($env:TC_BUILD_COMMIT) { $ArchiveManifest.Commit | Should -Be $env:TC_BUILD_COMMIT }
         if ($PSEdition -eq 'Core') {
             $ArchiveManifest.Runtime.PowerShellVersion | Should -Be $PSVersionTable.PSVersion.ToString()
-        } else {
+        } elseif ($env:TC_BUILD_COMMIT) {
             $ArchiveManifest.Runtime.PowerShellVersion | Should -Be '7.6.6'
         }
         $ArchivePath | Should -Exist

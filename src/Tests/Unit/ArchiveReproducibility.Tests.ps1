@@ -10,7 +10,7 @@ Describe 'Archive reproducibility' -Tag Unit {
     It 'preserves hidden, Unicode, empty and nested files with stable metadata and ordinal ordering' {
         $Root = Join-Path -Path $TestDrive -ChildPath 'package'
         $null = New-Item -Path (Join-Path -Path $Root -ChildPath 'nested') -ItemType Directory -Force
-        $Names = @('z.txt', 'A.txt', ('nested/' + [char]0x00e9 + '.txt'), '.hidden', 'empty')
+        $Names = @('z.txt', 'A.txt', ('nested/' + [char]0x00e9 + '.txt'), '.hidden', 'empty', ([char]0xe000 + '.txt'), ([char]::ConvertFromUtf32(0x1f600) + '.txt'))
         foreach ($Name in $Names) {
             $Content = if ($Name -eq 'empty') { '' } else { "content:$Name" }
             [System.IO.File]::WriteAllText((Join-Path -Path $Root -ChildPath $Name), $Content)
@@ -19,6 +19,8 @@ Describe 'Archive reproducibility' -Tag Unit {
         [System.IO.File]::SetAttributes($HiddenPath, [System.IO.FileAttributes]::Hidden)
         $First = Join-Path -Path $TestDrive -ChildPath 'first.zip'
         $Second = Join-Path -Path $TestDrive -ChildPath 'second.zip'
+        # Preserve a resolved source's trailing separator, as on a drive root.
+        Mock Resolve-Path { [pscustomobject]@{ ProviderPath = $Root + [System.IO.Path]::DirectorySeparatorChar } }
         New-DeterministicZipArchive -SourcePath $Root -DestinationPath $First
         foreach ($File in @(Get-ChildItem -LiteralPath $Root -File -Recurse -Force)) {
             $File.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-20)
