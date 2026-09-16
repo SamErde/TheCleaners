@@ -39,10 +39,6 @@ jobs:
           path: .\
           recurse: true
           settings: ./src/PSScriptAnalyzerSettings.psd1
-          # Pester fixtures intentionally share setup variables through the test scope.
-          # The action expands this value inside a PowerShell array expression;
-          # keep the rule name quoted so it is not evaluated as a command.
-          excludeRule: "'PSUseDeclaredVarsMoreThanAssignments'"
           # Include your own basic security rules. Removing this option will run all the rules
           includeRule: '"PSAvoidGlobalAliases", "PSAvoidUsingConvertToSecureStringWithPlainText"'
           output: results.sarif
