@@ -30,4 +30,4 @@ Clear-CurrentUserTemp -Days 30 -RemoveEmptyDirectory -Confirm
 
 Normal success is quiet unless `-PassThru` is requested. It returns `TheCleaners.CleanupResult`; see [command contracts](command-contracts.md) for all fields, statuses, and stable error IDs. Preview counts never count as successful removals. Enumeration failure aborts without deletion and reports unknown candidate counts. Individual deletion errors continue by default and respect `-ErrorAction Stop`.
 
-The alias `Clean-CurrentUserTemp` remains available. Windows only; Windows PowerShell 5.1 is the minimum. This implementation still needs the remaining acceptance and concurrency tests in the [release plan](release-plan-1.0.md).
+The alias `Clean-CurrentUserTemp` remains available. Windows only; Windows PowerShell 5.1 is the minimum. The remaining client/server, elevation, and filesystem acceptance gates are tracked in the [release plan](release-plan-1.0.md).

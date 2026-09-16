@@ -1,6 +1,6 @@
 # Migrating prerelease scripts toward 1.0
 
-This stabilization work is still draft and is not a published 1.0 release. The Gallery version is not automatically updated when a PR is opened or merged.
+PR #31 merged the stabilization implementation into `main`, but this is not a published 1.0 release. The source manifest is `0.0.15-beta`; the Gallery still serves `0.0.13-alpha`. A merge does not update the Gallery automatically or satisfy product/lab acceptance.
 
 ## Command inventory
 
@@ -45,4 +45,4 @@ No removal or persistent activation is available. `Clean-ExchangeLog` has the sa
 
 ## Documentation
 
-The canonical URL is [day3bits.com/thecleaners](https://day3bits.com/thecleaners/). The old Start-Cleaning documentation page is retained as a compatibility pointer. Deployment and redirects from older hosts/casing still need verification. Zensical migration remains a separate follow-up in issue #26.
+The intended canonical URL is [day3bits.com/thecleaners](https://day3bits.com/thecleaners/). The old Start-Cleaning documentation page is retained as a compatibility pointer. The exact PR #31 deployment workflow succeeded, but the lowercase path still returns HTTP 404 while `/TheCleaners/` returns HTTP 200; that site-owner correction remains open. Zensical migration remains a separate follow-up in issue #26.

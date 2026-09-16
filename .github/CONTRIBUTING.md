@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in contributing to the **The Cleaners**.
+Thanks for your interest in contributing to **The Cleaners**.
 
 Whether it's a bug report, new feature, correction, or additional documentation, your feedback and contributions are appreciated.
 
@@ -17,6 +17,8 @@ Please contribute pull requests against the `main` branch of this repository. If
 Keep changes narrowly scoped to one release-plan packet when possible. Include the packet ID, exact tested commit, runtime and OS versions, test totals/failures/skips, and links to machine-readable reports. Use isolated fixtures or mocks for cleanup development; never run a cleaner against real user, Windows, IIS, or Exchange data. IIS and Exchange remain preview-only until their product-specific gates pass.
 
 For filesystem mutation changes, demonstrate `-WhatIf`/`-Confirm`, root containment, reparse-point handling, identity/race behavior, and `-ErrorAction Stop`. Do not add provider deletion for temp candidates, a generic deletion wrapper, a force or preference override, or a persistent activation switch.
+
+For documentation-only changes, run `python -m mkdocs build --strict --site-dir site`, the documentation/help/drift tests, and `git diff --check`. Generated help must come from source comment-based help; do not hand-edit packaged external help. Do not copy test counts, hashes, CI links, product/build results, or deployment claims from an earlier commit. A successful workflow or mocked fixture is not IIS, Exchange, Windows-product, or release acceptance.
 
 ## Code of Conduct
 

@@ -30,4 +30,4 @@ Clear-WindowsTemp -Days 30 -RemoveEmptyDirectory -Confirm
 
 With `-PassThru`, return `TheCleaners.CleanupResult`; see [command contracts](command-contracts.md) for all fields, statuses, and stable error IDs. Enumeration failure aborts without deletion and reports unknown candidate counts. Individual deletion failures use the error stream, continue by default, and respect `-ErrorAction Stop`. Bytes are logical file lengths, not a measured physical free-space change.
 
-The alias `Clean-WindowsTemp` remains available. Windows PowerShell 5.1 is the minimum. See the [release plan](release-plan-1.0.md) for outstanding acceptance work.
+The alias `Clean-WindowsTemp` remains available. Windows PowerShell 5.1 is the minimum. The remaining client/server, elevation, and filesystem acceptance gates are tracked in the [release plan](release-plan-1.0.md).

@@ -27,7 +27,7 @@ Windows PowerShell 5.1 is the minimum. The 1.0 policy also includes Microsoft-su
 
 ## Installation and development
 
-Install the currently published prerelease from PowerShell Gallery:
+Install the currently published prerelease (`0.0.13-alpha`) from PowerShell Gallery:
 
 ```powershell
 Install-Module -Name TheCleaners -AllowPrerelease
@@ -57,6 +57,8 @@ IIS and Exchange require explicit `-WhatIf` and cannot remove anything. Their di
 
 ## Development status
 
-The first implementation packet is [PR #27](https://github.com/SamErde/TheCleaners/pull/27). The source-layout packaging and draft IIS/Exchange/profile safety work are now present, but Windows client/server acceptance, supported-runtime evidence, product-specific lab validation, strict documentation/deployment checks, and release authorization remain open. See `AGENTS.md`, the [command contracts](docs/command-contracts.md), and the implementation ledger before contributing. [Zensical migration](https://github.com/SamErde/TheCleaners/issues/26) is a separate follow-up.
+[PR #31](https://github.com/SamErde/TheCleaners/pull/31) merged the 1.0 safety and packaging implementation into `main` at commit `037c27a81234361620a633f68a33bfb370f0a03e`. The source manifest remains the unreleased `0.0.15-beta`; the Gallery still serves `0.0.13-alpha`, so installing from the Gallery does not install the merged behavior described here.
+
+The exact merged commit passed the hosted PowerShell 7.6.6, PowerShell 7.5.9, and Windows PowerShell 5.1 lanes, package-import checks, strict MkDocs deployment workflow, and PSScriptAnalyzer. That is merged implementation and CI evidence, not release acceptance. PowerShell 7.4 remains Microsoft-supported but is not in the hosted matrix, the 7.5 lane must be refreshed to Microsoft's latest supported servicing update, Windows client/server, broader elevated/non-elevated, real-system-root, and ReFS acceptance is incomplete, IIS and Exchange product labs remain open, the canonical lowercase documentation path still returns 404, and no release tag or Gallery publication was created. See `AGENTS.md`, the [command contracts](docs/command-contracts.md), and the [implementation ledger](docs/release-plan-1.0.md) before contributing. [Zensical migration](https://github.com/SamErde/TheCleaners/issues/26) is a separate follow-up.
 
 Canonical documentation: [day3bits.com/thecleaners](https://day3bits.com/thecleaners/).

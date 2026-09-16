@@ -7,14 +7,14 @@ Preview experimental old Exchange log candidates. **Deletion is unavailable.**
 ## Syntax
 
 ```powershell
-Clear-OldExchangeLog [-Days <Int16>] -WhatIf [-PassThru] [<CommonParameters>]
+Clear-OldExchangeLog [-Days <Int16>] -WhatIf [-PassThru] [-Confirm] [<CommonParameters>]
 ```
 
 `-Days` defaults to 60 and accepts positive Int16 values. Explicit `-WhatIf` is required; omission or `-WhatIf:$false` throws a terminating `ExchangeCleanupPreviewOnly` error before registry access. An ambient WhatIfPreference alone is not sufficient. The common `-Confirm` parameter does not bypass the guard. No `-Force`, `-EnableRemoval`, `-AllowRemoval`, or persistent activation exists in this version.
 
 ## Experimental discovery scope
 
-Read `MsiInstallPath` from the Exchange v15 setup registry key. Scan existing `Logging`, `Bin\Search\Ceres\Diagnostics\ETLTraces`, `Bin\Search\Ceres\Diagnostics\Logs`, and `TransportRoles\Logs\MessageTracking` roots with product-specific filename allowlists at or before the inclusive UTC cutoff. Skip reparse points, validate paths, and exclude mailbox database and transaction-log paths returned by Exchange management discovery. If all fixed roots are absent, discovery reports `ExchangeDiscoveryUnavailable` and `-PassThru` returns a failed result; an individual missing root is verbose-only when another approved root is available. Do not invoke IIS cleanup.
+Read `MsiInstallPath` from the Exchange v15 setup registry key. Scan existing `Logging`, `Bin\Search\Ceres\Diagnostics\ETLTraces`, `Bin\Search\Ceres\Diagnostics\Logs`, and `TransportRoles\Logs\MessageTracking` roots with directory-specific filename allowlists at or before the inclusive UTC cutoff. Skip reparse points, validate paths, and exclude mailbox database and transaction-log paths returned by Exchange management discovery. If protection metadata is missing or incomplete, `ProtectionStatus` is `Unknown`; that state cannot authorize a later removal implementation. If all fixed roots are absent, discovery reports `ExchangeDiscoveryUnavailable` and `-PassThru` returns a failed result; an individual missing root is verbose-only when another approved root is available. Do not invoke IIS cleanup.
 
 This limited preview is not a validated deletion allowlist. The supported Exchange version/build matrix and disposable-lab service-health evidence remain open. Do not use its output to implement an external deletion bypass.
 
