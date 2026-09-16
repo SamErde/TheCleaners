@@ -308,7 +308,7 @@ if ($WhatIfPreference -ne $BeforeWhatIf -or $ConfirmPreference -ne $BeforeConfir
 'CONFIRM_STATE_OK'
 '@ | Set-Content -LiteralPath $ProbePath -Encoding UTF8
 
-        $ProbeOutput = & $PowerShellExecutable -NoLogo -NoProfile -NonInteractive -File $ProbePath -ManifestPath $ManifestPath -FixtureRoot $FixtureRoot 2>&1
+        $ProbeOutput = & $PowerShellExecutable -NoLogo -NoProfile -File $ProbePath -ManifestPath $ManifestPath -FixtureRoot $FixtureRoot 2>&1
         $ProbeExitCode = $LASTEXITCODE
         $ProbeExitCode | Should -Be 0 -Because ($ProbeOutput -join [Environment]::NewLine)
         $ProbeOutput | Should -Contain 'CONFIRM_STATE_OK'
