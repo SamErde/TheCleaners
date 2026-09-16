@@ -1,3 +1,54 @@
+function Test-TheCleanersIisRolloverSuffix {
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Suffix
+    )
+
+    switch ($Suffix.Length) {
+        4 {
+            return $Suffix -match '^\d{2}(0[1-9]|1[0-2])$'
+        }
+        6 {
+            if ($Suffix -notmatch '^\d{6}$') {
+                return $false
+            }
+        }
+        8 {
+            if ($Suffix -notmatch '^\d{8}$') {
+                return $false
+            }
+        }
+        default {
+            return $false
+        }
+    }
+
+    $Year = 2000 + [int]$Suffix.Substring(0, 2)
+    $Month = [int]$Suffix.Substring(2, 2)
+    $Day = [int]$Suffix.Substring(4, 2)
+    if ($Month -lt 1 -or $Month -gt 12) {
+        return $false
+    }
+
+    $DaysInMonth = [DateTime]::DaysInMonth($Year, $Month)
+    if ($Day -lt 1 -or $Day -gt $DaysInMonth) {
+        return $false
+    }
+
+    if ($Suffix.Length -eq 8) {
+        $Hour = [int]$Suffix.Substring(6, 2)
+        if ($Hour -lt 0 -or $Hour -gt 23) {
+            return $false
+        }
+    }
+
+    return $true
+}
+
 function Test-TheCleanersIisLogFileName {
     <#
     .SYNOPSIS
@@ -54,10 +105,14 @@ function Test-TheCleanersIisLogFileName {
         'W3C' {
             $W3cPrefix = if ($LocalTimeRollover) { '' } else { 'u_' }
             if ($ServiceName -in @('FTPSVC', 'MSFTPSVC')) {
-                return $Name -match ('^{0}ex(?:\d{{2}}(?:0[1-9]|1[0-2])|\d{{6}}|\d{{8}})\.log$' -f $W3cPrefix)
+                $Pattern = '^{0}ex(?<Suffix>\d{{4}}|\d{{6}}|\d{{8}})\.log$' -f $W3cPrefix
+                $Match = [regex]::Match($Name, $Pattern)
+                return $Match.Success -and (Test-TheCleanersIisRolloverSuffix -Suffix $Match.Groups['Suffix'].Value)
             }
             if ($ServiceName -eq 'W3SVC') {
-                return $Name -match ('^{0}ex(?:\d{{2}}(?:0[1-9]|1[0-2])|\d{{6}}|\d{{8}})\.log$' -f $W3cPrefix)
+                $Pattern = '^{0}ex(?<Suffix>\d{{4}}|\d{{6}}|\d{{8}})\.log$' -f $W3cPrefix
+                $Match = [regex]::Match($Name, $Pattern)
+                return $Match.Success -and (Test-TheCleanersIisRolloverSuffix -Suffix $Match.Groups['Suffix'].Value)
             }
             return $false
         }
