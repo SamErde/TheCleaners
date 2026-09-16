@@ -17,20 +17,30 @@ $ModuleName = [regex]::Match((Get-Item $BuildFile).Name, '^(.*)\.build\.ps1$').G
 . (Join-Path -Path $BuildRoot -ChildPath "$ModuleName.Settings.ps1")
 
 function Get-BuildCommitId {
-    if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_SHA)) {
-        return $env:GITHUB_SHA
-    }
-
+    <#
+    .SYNOPSIS
+        Resolve build identity, requiring the expected exact commit in CI.
+    .DESCRIPTION
+        Local source-archive builds can report unavailable. CI must resolve Git
+        identity and match TC_BUILD_COMMIT; it never falls back to a guessed SHA.
+    #>
+    $Commit = $null
     try {
-        $Commit = (& git -C $BuildRoot rev-parse HEAD 2>$null | Select-Object -First 1)
-        if (-not [string]::IsNullOrWhiteSpace($Commit)) {
-            return $Commit.Trim()
-        }
+        $Commit = & git -C $BuildRoot rev-parse HEAD 2>$null
+        if (-not $?) { $Commit = $null }
     } catch {
+        $Commit = $null
+    }
+    if ($Commit -notmatch '^[0-9a-f]{40}$') {
+        if ($env:TC_BUILD_COMMIT) {
+            throw 'Cannot establish the checked-out build commit required by CI.'
+        }
         return 'unavailable'
     }
-
-    'unavailable'
+    if ($env:TC_BUILD_COMMIT -and $Commit -ne $env:TC_BUILD_COMMIT) {
+        throw "Checked-out commit '$Commit' differs from expected '$env:TC_BUILD_COMMIT'."
+    }
+    $Commit.Trim()
 }
 
 function Write-BuildTextFile {
@@ -135,56 +145,7 @@ function Write-TestSummary {
     Write-BuildTextFile -Path $Path -Content $SummaryJson
 }
 
-function New-DeterministicZipArchive {
-    [CmdletBinding(SupportsShouldProcess)]
-    param (
-        [Parameter(Mandatory)]
-        [string]
-        $SourcePath,
-
-        [Parameter(Mandatory)]
-        [string]
-        $DestinationPath
-    )
-
-    if (-not $PSCmdlet.ShouldProcess($DestinationPath, 'Create deterministic archive')) {
-        return
-    }
-
-    if ($PSEdition -eq 'Desktop') {
-        Add-Type -AssemblyName 'System.IO.Compression'
-        Add-Type -AssemblyName 'System.IO.Compression.FileSystem'
-    }
-
-    $ArchiveStream = [System.IO.File]::Open($DestinationPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
-    $Archive = $null
-    try {
-        $Archive = [System.IO.Compression.ZipArchive]::new($ArchiveStream, [System.IO.Compression.ZipArchiveMode]::Create, $false)
-        $Epoch = [DateTimeOffset]::new(1980, 1, 1, 0, 0, 0, [TimeSpan]::Zero)
-        $Files = @(Get-ChildItem -LiteralPath $SourcePath -File -Recurse -Force | Sort-Object FullName)
-        foreach ($File in $Files) {
-            $RelativePath = Get-RelativeArtifactPath -Path $File.FullName -Root $SourcePath
-            $Entry = $Archive.CreateEntry($RelativePath, [System.IO.Compression.CompressionLevel]::Optimal)
-            $Entry.LastWriteTime = $Epoch
-            $InputStream = [System.IO.File]::OpenRead($File.FullName)
-            $OutputStream = $null
-            try {
-                $OutputStream = $Entry.Open()
-                $InputStream.CopyTo($OutputStream)
-            } finally {
-                if ($null -ne $OutputStream) {
-                    $OutputStream.Dispose()
-                }
-                $InputStream.Dispose()
-            }
-        }
-    } finally {
-        if ($null -ne $Archive) {
-            $Archive.Dispose()
-        }
-        $ArchiveStream.Dispose()
-    }
-}
+. (Join-Path -Path $BuildRoot -ChildPath 'New-DeterministicZipArchive.ps1')
 
 function Test-ManifestBool {
     param (
@@ -212,6 +173,7 @@ $DefaultJobs = @(
     'Build'
     'Archive'
     'IntegrationTest'
+    'VerifyArchiveRepeat'
 )
 Add-BuildTask -Name . -Jobs $DefaultJobs
 Add-BuildTask TestLocal -Jobs @('Clean', 'ValidateRequirements', 'TestModuleManifest', 'ImportModuleManifest', 'Analyze', 'AnalyzeTests', 'FormattingCheck', 'Test')
@@ -290,6 +252,7 @@ Add-BuildTask Analyze {
         Verbose = $false
     }
     $Findings = @(Invoke-ScriptAnalyzer @Params)
+    $Findings += @(Invoke-ScriptAnalyzer -Path (Join-Path -Path $BuildRoot -ChildPath 'New-DeterministicZipArchive.ps1') -Settings $Params.Setting)
     if ($Findings.Count -gt 0) {
         $Findings | Format-Table
         throw 'PSScriptAnalyzer reported errors or warnings in module source.'
@@ -528,4 +491,27 @@ Add-BuildTask Archive {
     $HashPath = "$ZipPath.sha256"
     $ArchiveHash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash.ToLowerInvariant()
     Write-BuildTextFile -Path $HashPath -Content ("$ArchiveHash *$ZipName") -Encoding ([System.Text.ASCIIEncoding]::new())
+}
+
+Add-BuildTask VerifyArchiveRepeat {
+    # Recreate only the ZIP, without changing the artifact already tested above.
+    $ZipName = '{0}_{1}.zip' -f $script:ModuleName, $script:ModuleVersion
+    $Original = Join-Path -Path $script:ArchivePath -ChildPath $ZipName
+    $Repeat = Join-Path -Path $script:ArchivePath -ChildPath ($ZipName + '.repeat.zip')
+    New-DeterministicZipArchive -SourcePath $script:ArtifactsPath -DestinationPath $Repeat
+    $OriginalHash = (Get-FileHash -LiteralPath $Original -Algorithm SHA256).Hash.ToLowerInvariant()
+    $RepeatHash = (Get-FileHash -LiteralPath $Repeat -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($OriginalHash -ne $RepeatHash) {
+        throw "Repeated archive differs: $OriginalHash / $RepeatHash"
+    }
+    $Evidence = [ordered]@{
+        Commit = Get-BuildCommitId
+        PowerShellVersion = $PSVersionTable.PSVersion.ToString()
+        Framework = [System.Runtime.InteropServices.RuntimeInformation]::FrameworkDescription
+        Archive = $ZipName
+        Length = (Get-Item -LiteralPath $Original).Length
+        SHA256 = $OriginalHash
+        RepeatSHA256 = $RepeatHash
+    } | ConvertTo-Json
+    Write-BuildTextFile -Path (Join-Path -Path $script:ReportsPath -ChildPath 'ArchiveRepeat.json') -Content $Evidence
 }

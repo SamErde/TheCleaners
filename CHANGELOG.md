@@ -18,6 +18,10 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 
 ### Changed
 
+- TC-008 candidate: add current PowerShell 7.4.20 and 7.5.11 hosted lanes; preserve 7.6.6 and canonical-artifact PS5.1 testing.
+- Replace runtime-dependent ZIP compression with stored entries, ordinal ordering, UTF-8 names and fixed metadata; require repeated and cross-runtime byte equality, exact commit identity, complete extracted file verification and hidden-file uploads.
+- Pin download-artifact v8.0.1 to its immutable Node 24 commit; add strict documentation validation to the PR/reusable build gate. Exact merged evidence and release acceptance remain separate gates.
+
 - Renamed `Start-Cleaning` to `Get-TheCleaners`; retained `Start-Cleaning` as a deprecated alias through 1.x.
 - Renamed private `Show-TCLogo` to `Show-TheCleanersLogo`.
 - Made module loading explicit and import quiet.

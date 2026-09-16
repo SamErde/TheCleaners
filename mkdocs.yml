@@ -57,6 +57,7 @@ nav:
       - "Get-StaleUserProfile": "Get-StaleUserProfile.md"
       - "Start-Cleaning (alias)": "Start-Cleaning.md"
   - Development:
+      - "Packaging and reproducibility": "packaging.md"
       - "1.0 implementation plan": "release-plan-1.0.md"
       - "Windows lab acceptance": "lab-acceptance.md"
       - "Documentation deployment gate": "deployment-validation.md"

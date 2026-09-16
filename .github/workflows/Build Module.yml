@@ -10,6 +10,11 @@ on:
 permissions:
   contents: read
 
+env:
+  NO_COLOR: '1'
+  TC_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+  TC_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+
 jobs:
   powershell-7:
     name: PowerShell ${{ matrix.channel }} - test and build
@@ -22,12 +27,15 @@ jobs:
           - channel: 7.6 LTS
             version: 7.6.6
           - channel: 7.5 stable
-            version: 7.5.9
+            version: 7.5.11
+          - channel: 7.4 LTS
+            version: 7.4.20
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          ref: ${{ env.TC_BUILD_COMMIT }}
       - name: Install exact PowerShell runtime
         shell: pwsh
         run: ./.github/scripts/Install-ExactPowerShell.ps1 -Version '${{ matrix.version }}'
@@ -54,6 +62,7 @@ jobs:
         with:
           name: module-artifact-pwsh-${{ matrix.version }}
           path: ./src/Artifacts
+          include-hidden-files: true
           if-no-files-found: error
       - name: Upload build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -72,16 +81,17 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          ref: ${{ env.TC_BUILD_COMMIT }}
       - name: Bootstrap exact dependencies
         shell: powershell
         run: ./actions_bootstrap.ps1
       - name: Download PowerShell 7.6 LTS artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (Node 24)
         with:
           name: module-artifact-pwsh-7.6.6
           path: ./src/Artifacts
       - name: Download PowerShell 7.6 LTS archive
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (Node 24)
         with:
           name: zip-archive-pwsh-7.6.6
           path: ./src/Archive
@@ -117,6 +127,21 @@ jobs:
           $Configuration.TestResult.OutputFormat = 'NUnitXml'
           $Configuration.Output.Verbosity = 'Detailed'
           $Result = Invoke-Pester -Configuration $Configuration
+          $Summary = [ordered]@{
+              Commit = (& git rev-parse HEAD).Trim()
+              Runtime = $PSVersionTable.PSVersion.ToString()
+              PSEdition = $PSVersionTable.PSEdition
+              OS = [Environment]::OSVersion.VersionString
+              TotalCount = $Result.TotalCount
+              PassedCount = $Result.PassedCount
+              FailedCount = $Result.FailedCount
+              SkippedCount = $Result.SkippedCount
+              NotRunCount = $Result.NotRunCount
+              CoveragePercent = $null
+              ArtifactProducer = '7.6.6'
+              ArchiveSHA256 = (Get-FileHash ./src/Archive/TheCleaners_*.zip | Where-Object Path -NotLike '*.repeat.zip').Hash
+          }
+          $Summary | ConvertTo-Json | Set-Content (Join-Path $ResultsDirectory 'WindowsPowerShell51.json') -Encoding UTF8
           $Skipped = if ($null -eq $Result.SkippedCount) { 0 } else { [int]$Result.SkippedCount }
           $NotRun = if ($null -eq $Result.NotRunCount) { 0 } else { [int]$Result.NotRunCount }
           if ($Result.TotalCount -eq 0 -or $Result.Result -ne 'Passed' -or $Result.FailedCount -ne 0 -or $Skipped -ne 0 -or $NotRun -ne 0) {
@@ -139,3 +164,52 @@ jobs:
           name: pester-results-windows-powershell-51
           path: ./TestResults
           if-no-files-found: error
+
+  archive-reproducibility:
+    name: Compare exact archives across supported PS7 runtimes
+    runs-on: windows-latest
+    needs: powershell-7
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ env.TC_BUILD_COMMIT }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1 (Node 24)
+        with:
+          pattern: zip-archive-pwsh-*
+          path: ./downloaded-archives
+      - name: Verify content, metadata, sidecars, repeated bytes, and cross-runtime bytes
+        shell: pwsh
+        run: python .github/scripts/Compare-Archives.py ./downloaded-archives --commit $env:TC_BUILD_COMMIT --versions 7.4.20 7.5.11 7.6.6 --output ArchiveComparison.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: archive-comparison
+          path: ArchiveComparison.json
+          if-no-files-found: error
+
+  documentation:
+    name: Strict documentation build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ env.TC_BUILD_COMMIT }}
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
+        with:
+          python-version: '3.x'
+      - run: python -m pip install -r docs/requirements.txt
+      - run: python -m unittest discover -s .github/scripts -p "test_*.py" -v
+      - run: python -m mkdocs build --strict --site-dir site
+      - name: Check whitespace in the tested change range
+        shell: bash
+        run: |
+          if [[ -n "$TC_DIFF_BASE" && "$TC_DIFF_BASE" != "0000000000000000000000000000000000000000" ]]; then
+            git diff --check "$TC_DIFF_BASE" "$TC_BUILD_COMMIT"
+          else
+            git show --format= --check "$TC_BUILD_COMMIT"
+          fi
+          git diff --check

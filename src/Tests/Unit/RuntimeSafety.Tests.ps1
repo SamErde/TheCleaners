@@ -462,40 +462,48 @@ param (
 
 $ErrorActionPreference = 'Stop'
 $InteropSource = [System.IO.File]::ReadAllText($InteropScriptPath)
-$Pool = [RunspaceFactory]::CreateRunspacePool(1, 8)
-$Pool.Open()
 $Jobs = [System.Collections.Generic.List[object]]::new()
+$StartBarrier = [System.Threading.Barrier]::new(8)
 $Worker = @(
-    'param ('
-    '    [Parameter(Mandatory)]'
-    '    [string]'
-    '    $InteropSource'
-    ')'
-    ''
-    '. ([scriptblock]::Create($InteropSource))'
+    'param ($StartBarrier)'
+    'if (-not $StartBarrier.SignalAndWait(30000)) { throw "Workers did not reach the start barrier." }'
     'Initialize-TheCleanersNativeFileInterop'
 ) -join [Environment]::NewLine
 try {
+    # Load definitions serially to keep PowerShell parser/cache initialization
+    # outside this test of concurrent first-time native interop initialization.
     for ($Index = 0; $Index -lt 8; $Index++) {
+        $Runspace = [RunspaceFactory]::CreateRunspace()
+        $Runspace.Open()
         $PowerShell = [powershell]::Create()
-        $PowerShell.RunspacePool = $Pool
-        $null = $PowerShell.AddScript($Worker).AddArgument($InteropSource)
-        $Jobs.Add([pscustomobject]@{
-                PowerShell = $PowerShell
-                Handle     = $PowerShell.BeginInvoke()
-            })
+        $PowerShell.Runspace = $Runspace
+        $Job = [pscustomobject]@{ PowerShell = $PowerShell; Runspace = $Runspace; Handle = $null }
+        $Jobs.Add($Job)
+        $null = $PowerShell.AddScript($InteropSource).Invoke()
+        if ($PowerShell.HadErrors) {
+            throw (($PowerShell.Streams.Error | ForEach-Object { $_.Exception.ToString() }) -join '; ')
+        }
+        $PowerShell.Commands.Clear()
+    }
+    if ($null -ne ([System.Management.Automation.PSTypeName]'TheCleaners.NativeFileInterop').Type) {
+        throw 'Loading function definitions unexpectedly initialized the native type.'
+    }
+    foreach ($Job in $Jobs) {
+        $null = $Job.PowerShell.AddScript($Worker).AddArgument($StartBarrier)
+        $Job.Handle = $Job.PowerShell.BeginInvoke()
     }
     foreach ($Job in $Jobs) {
         $null = $Job.PowerShell.EndInvoke($Job.Handle)
         if ($Job.PowerShell.HadErrors) {
-            throw (($Job.PowerShell.Streams.Error | ForEach-Object { $_.Exception.Message }) -join '; ')
+            throw (($Job.PowerShell.Streams.Error | ForEach-Object { $_.Exception.ToString() + ' Stack: ' + $_.ScriptStackTrace }) -join '; ')
         }
     }
 } finally {
     foreach ($Job in $Jobs) {
         $Job.PowerShell.Dispose()
+        $Job.Runspace.Dispose()
     }
-    $Pool.Dispose()
+    $StartBarrier.Dispose()
 }
 if ($null -eq ([System.Management.Automation.PSTypeName]'TheCleaners.NativeFileInterop').Type) {
     throw 'Concurrent initialization did not load the native interop type.'
@@ -505,7 +513,9 @@ if ($null -eq ([System.Management.Automation.PSTypeName]'TheCleaners.NativeFileI
 
         $ProbeOutput = & $PowerShellExecutable -NoLogo -NoProfile -NonInteractive -File $ProbePath -InteropScriptPath (Join-Path -Path $ModuleRoot -ChildPath 'Private/Initialize-TheCleanersNativeFileInterop.ps1') 2>&1
         $ProbeExitCode = $LASTEXITCODE
-        $ProbeExitCode | Should -Be 0 -Because ($ProbeOutput -join [Environment]::NewLine)
+        # Child-process ANSI diagnostics are not legal XML report characters.
+        $ProbeMessage = [regex]::Replace(($ProbeOutput -join [Environment]::NewLine), '\x1B\[[0-?]*[ -/]*[@-~]', '')
+        $ProbeExitCode | Should -Be 0 -Because $ProbeMessage
         $ProbeOutput | Should -Contain 'NATIVE_INTEROP_CONCURRENCY_OK'
     }
 }

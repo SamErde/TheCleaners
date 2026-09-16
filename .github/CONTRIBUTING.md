@@ -27,3 +27,9 @@ This project has a [Code of Conduct](CODE_OF_CONDUCT.md).
 ## Licensing
 
 See the [LICENSE](../LICENSE) file for our project's licensing.
+
+## TC-008 runtime and package evidence
+
+Check Microsoft's current support lifecycle and release tags before refreshing pinned runtimes. The candidate matrix is PS7 7.4.20, 7.5.11 and 7.6.6 plus Windows PowerShell 5.1. PS7 lanes test their own exact artifacts; PS5.1 downloads the selected canonical 7.6.6 package without rebuilding. Preserve hidden files during upload and staging.
+
+Use the stored-ZIP contract in [packaging](../docs/packaging.md). Report repeated and cross-runtime archive hashes, content manifests, exact commit/runtime identity, test counts and coverage. A PR-head run validates that candidate only. After merge, verify the new main SHA and its own hosted runs before closing ledger subgates. Runtime/package evidence does not close product labs, publication, metadata, hosting or maintainer release acceptance.

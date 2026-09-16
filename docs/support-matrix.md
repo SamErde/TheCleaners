@@ -2,7 +2,7 @@
 
 The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Evidence below is for merged commit `037c27a81234361620a633f68a33bfb370f0a03e`; it does not apply automatically to a later commit.
 
-## Runtime matrix
+## Historical runtime evidence
 
 | Runtime | Contract | Evidence required before 1.0 RC |
 | --- | --- | --- |
@@ -13,6 +13,14 @@ The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-
 | Other PowerShell versions | No promise is made for unsupported, historical, preview, or future versions. | Optional diagnostic runs must not be presented as release acceptance. |
 
 Check Microsoft's [PowerShell support lifecycle](https://learn.microsoft.com/powershell/scripting/install/powershell-support-lifecycle) when this matrix is refreshed. As of this sweep, 7.4, 7.5, and 7.6 are all supported release lines. [Build run 35129434807](https://github.com/SamErde/TheCleaners/actions/runs/35129434807) supplies the exact historical evidence above, but it does not include 7.4 and its 7.5.9 lane is older than Microsoft's current 7.5.11 servicing update, so TC-008 remains open.
+
+## TC-008 matrix refresh (candidate implementation)
+
+Microsoft's lifecycle page and official release inventory were checked on September 16, 2026. The latest supported servicing releases are [7.4.20](https://github.com/PowerShell/PowerShell/releases/tag/v7.4.20), [7.5.11](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.11), and [7.6.6](https://github.com/PowerShell/PowerShell/releases/tag/v7.6.6), all published September 8. The hosted candidate matrix now includes all three and Windows PowerShell 5.1. No support-policy narrowing was approved.
+
+Each PS7 lane builds and tests its own exact artifact, then repeats ZIP generation. A dependent job downloads all three archives, checks every content record and sidecar, and requires identical archive bytes. Windows PowerShell 5.1 downloads the selected canonical 7.6.6 artifact and archive; it never rebuilds that package. Its source tests also exercise the archive helper's PS5.1 API compatibility on isolated fixtures, without making PS5.1 a canonical archive producer.
+
+The historical table above remains evidence only for `037c27a81234361620a633f68a33bfb370f0a03e`. A green candidate PR run is not evidence for the eventual merge commit. Record the exact post-merge matrix, reports, hashes and review state before closing the TC-008 runtime/reproducibility subgates; publication and release acceptance remain separate. See [packaging](packaging.md).
 
 ## Windows product matrix
 

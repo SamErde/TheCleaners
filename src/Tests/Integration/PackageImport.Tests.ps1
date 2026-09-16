@@ -77,6 +77,20 @@ Describe 'Built-package contract' -Tag Integration {
 
 Describe 'Exact archive clean-install contract' -Tag Integration {
     It 'matches the archive hash, extracts the tested artifact, and imports it by module name in every host' {
+        $ExpectedCommit = 'unavailable'
+        try {
+            $GitCommit = & git -C $PSScriptRoot rev-parse HEAD 2>$null
+            if ($? -and $GitCommit -match '^[0-9a-f]{40}$') { $ExpectedCommit = $GitCommit.Trim() }
+        } catch {
+            if ($env:TC_BUILD_COMMIT) { throw }
+        }
+        $ArchiveManifest.Commit | Should -Be $ExpectedCommit
+        if ($env:TC_BUILD_COMMIT) { $ArchiveManifest.Commit | Should -Be $env:TC_BUILD_COMMIT }
+        if ($PSEdition -eq 'Core') {
+            $ArchiveManifest.Runtime.PowerShellVersion | Should -Be $PSVersionTable.PSVersion.ToString()
+        } elseif ($env:TC_BUILD_COMMIT) {
+            $ArchiveManifest.Runtime.PowerShellVersion | Should -Be '7.6.6'
+        }
         $ArchivePath | Should -Exist
         $ArchiveHash = (Get-FileHash -LiteralPath $ArchivePath -Algorithm SHA256).Hash.ToLowerInvariant()
         $ArchiveHash | Should -Be ([string]$ArchiveManifest.ArchiveSHA256)
@@ -96,7 +110,23 @@ Describe 'Exact archive clean-install contract' -Tag Integration {
         $null = New-Item -Path $ExtractionRoot -ItemType Directory -Force
         $null = New-Item -Path $InstalledModuleRoot -ItemType Directory -Force
         Expand-Archive -LiteralPath $ArchivePath -DestinationPath $ExtractionRoot -Force
-        Copy-Item -Path (Join-Path -Path $ExtractionRoot -ChildPath '*') -Destination $InstalledModuleRoot -Recurse -Force
+        foreach ($Item in @(Get-ChildItem -LiteralPath $ExtractionRoot -Force)) {
+            Copy-Item -LiteralPath $Item.FullName -Destination $InstalledModuleRoot -Recurse -Force -ErrorAction Stop
+        }
+        foreach ($Root in @($PackageRoot, $ExtractionRoot, $InstalledModuleRoot)) {
+            $Files = @(Get-ChildItem -LiteralPath $Root -File -Recurse -Force)
+            $Files.Count | Should -Be @($ArchiveManifest.Files).Count
+            foreach ($Record in $ArchiveManifest.Files) {
+                $File = Join-Path -Path $Root -ChildPath $Record.Path
+                (Get-Item -LiteralPath $File -Force).Length | Should -Be $Record.Length
+                (Get-FileHash -LiteralPath $File -Algorithm SHA256).Hash.ToLowerInvariant() | Should -Be $Record.SHA256
+            }
+        }
+        # Repeat the full help/quiet-import/preview probe against the extracted ZIP.
+        foreach ($ProbeHost in $ProbeHosts) {
+            $Output = & $ProbeHost -NoLogo -NoProfile -NonInteractive -File $ProbePath -ManifestPath (Join-Path -Path $InstalledModuleRoot -ChildPath 'TheCleaners.psd1') 2>&1
+            $LASTEXITCODE | Should -Be 0 -Because ($Output | Out-String)
+        }
 
         $ProbePath = Join-Path -Path $TestDrive -ChildPath 'Test-CleanInstall.ps1'
         @'
@@ -116,7 +146,8 @@ param (
 
 $ErrorActionPreference = 'Stop'
 $env:PSModulePath = $ModuleSearchRoot + [System.IO.Path]::PathSeparator + (Join-Path -Path $PSHOME -ChildPath 'Modules')
-Import-Module -Name TheCleaners -RequiredVersion $Version -Force
+$ImportOutput = @(Import-Module -Name TheCleaners -RequiredVersion $Version -Force *>&1)
+if ($ImportOutput.Count -ne 0) { throw 'Module-name clean install wrote output.' }
 $Module = Get-Module -Name TheCleaners
 if ([System.IO.Path]::GetFullPath($Module.ModuleBase) -ne [System.IO.Path]::GetFullPath($ExpectedModuleRoot)) {
     throw 'The clean-install probe imported a different module path.'

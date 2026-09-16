@@ -22,3 +22,6 @@ Ignore
 ### OS ###
 Thumbs.db
 .DS_Store
+
+# Python archive-verification test caches
+__pycache__/
