@@ -140,7 +140,8 @@ param (
 
 $ErrorActionPreference = 'Stop'
 $env:PSModulePath = $ModuleSearchRoot + [System.IO.Path]::PathSeparator + (Join-Path -Path $PSHOME -ChildPath 'Modules')
-Import-Module -Name TheCleaners -RequiredVersion $Version -Force
+$ImportOutput = @(Import-Module -Name TheCleaners -RequiredVersion $Version -Force *>&1)
+if ($ImportOutput.Count -ne 0) { throw 'Module-name clean install wrote output.' }
 $Module = Get-Module -Name TheCleaners
 if ([System.IO.Path]::GetFullPath($Module.ModuleBase) -ne [System.IO.Path]::GetFullPath($ExpectedModuleRoot)) {
     throw 'The clean-install probe imported a different module path.'

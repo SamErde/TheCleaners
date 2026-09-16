@@ -7,58 +7,73 @@ from pathlib import Path
 import zipfile
 
 
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def read_manifest(directory, commit, version):
+    manifests = list(directory.glob("*.manifest.json"))
+    require(len(manifests) == 1, f"Expected one manifest for {version}")
+    manifest = json.loads(manifests[0].read_text(encoding="utf-8-sig"))
+    require(manifest["Commit"] == commit, f"Wrong commit for {version}")
+    require(manifest["Runtime"] == {"PowerShellVersion": version, "PSEdition": "Core"},
+            f"Wrong producer for {version}")
+    require(manifest["ModuleName"] == "TheCleaners", "Wrong module name")
+    require(manifest["Archive"] == f'TheCleaners_{manifest["ModuleVersion"]}.zip',
+            "Unexpected archive name")
+    require(Path(manifest["Archive"]).name == manifest["Archive"], "Unsafe archive name")
+    return manifest
+
+
+def verify_bytes(path, manifest):
+    data = path.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    require(digest == manifest["ArchiveSHA256"], "Manifest digest mismatch")
+    require(Path(str(path) + ".sha256").read_text().strip() == f"{digest} *{path.name}",
+            "Sidecar mismatch")
+    require(Path(str(path) + ".repeat.zip").read_bytes() == data, "Repeated archive differs")
+    return data, digest
+
+
+def verify_entry(archive, entry, item):
+    require(entry.date_time == (1980, 1, 1, 0, 0, 0), "Noncanonical timestamp")
+    require(entry.compress_type == zipfile.ZIP_STORED, "Runtime-dependent compression is forbidden")
+    require((entry.external_attr, entry.internal_attr, entry.extra, entry.comment) == (0, 0, b"", b""),
+            "Noncanonical entry metadata")
+    require((entry.flag_bits, entry.create_system) == (0x800, 0),
+            "Expected UTF-8 names and a Windows producer")
+    require(entry.file_size == item["Length"], "Entry length mismatch")
+    require(hashlib.sha256(archive.read(entry)).hexdigest() == item["SHA256"], "Entry content mismatch")
+
+
+def verify_contents(path, manifest):
+    expected = {item["Path"]: item for item in manifest["Files"]}
+    require(bool(expected), "Empty manifest")
+    require(len(expected) == len(manifest["Files"]), "Duplicate manifest paths")
+    with zipfile.ZipFile(path) as archive:
+        # .NET ordinal ordering compares UTF-16 code units, including supplementary characters.
+        names = sorted(expected, key=lambda name: name.encode("utf-16-be"))
+        require(archive.namelist() == names, "Entry set/order mismatch")
+        for entry in archive.infolist():
+            verify_entry(archive, entry, expected[entry.filename])
+    return len(expected)
+
+
 def verify(root, commit, versions):
     records = []
     reference = None
     for version in versions:
         directory = root / f"zip-archive-pwsh-{version}"
-        manifests = list(directory.glob("*.manifest.json"))
-        if len(manifests) != 1:
-            raise ValueError(f"Expected one manifest for {version}")
-        manifest = json.loads(manifests[0].read_text(encoding="utf-8-sig"))
-        if manifest["Commit"] != commit:
-            raise ValueError(f"Wrong commit for {version}")
-        if manifest["Runtime"] != {"PowerShellVersion": version, "PSEdition": "Core"}:
-            raise ValueError(f"Wrong producer for {version}")
-        name = manifest["Archive"]
-        if name != f'TheCleaners_{manifest["ModuleVersion"]}.zip':
-            raise ValueError(f"Unexpected archive name: {name}")
-        path = directory / name
-        data = path.read_bytes()
-        digest = hashlib.sha256(data).hexdigest()
-        if digest != manifest["ArchiveSHA256"]:
-            raise ValueError(f"Manifest digest mismatch for {version}")
-        if Path(str(path) + ".sha256").read_text().strip() != f"{digest} *{name}":
-            raise ValueError(f"Sidecar mismatch for {version}")
-        if Path(str(path) + ".repeat.zip").read_bytes() != data:
-            raise ValueError(f"Repeated archive differs for {version}")
-        expected = {item["Path"]: item for item in manifest["Files"]}
-        if not expected or len(expected) != len(manifest["Files"]):
-            raise ValueError("Empty or duplicate manifest paths")
-        with zipfile.ZipFile(path) as archive:
-            entries = archive.infolist()
-            if archive.namelist() != sorted(expected):
-                raise ValueError(f"Entry set/order mismatch for {version}")
-            for entry in entries:
-                item = expected[entry.filename]
-                if entry.date_time != (1980, 1, 1, 0, 0, 0):
-                    raise ValueError("Noncanonical timestamp")
-                if entry.compress_type != zipfile.ZIP_STORED:
-                    raise ValueError("Runtime-dependent compression is forbidden")
-                if entry.external_attr or entry.internal_attr or entry.extra or entry.comment:
-                    raise ValueError("Noncanonical entry metadata")
-                if entry.flag_bits != 0x800 or entry.create_system != 0:
-                    raise ValueError("Expected UTF-8 names and a Windows producer")
-                if entry.file_size != item["Length"]:
-                    raise ValueError("Entry length mismatch")
-                if hashlib.sha256(archive.read(entry)).hexdigest() != item["SHA256"]:
-                    raise ValueError("Entry content mismatch")
+        manifest = read_manifest(directory, commit, version)
+        path = directory / manifest["Archive"]
+        data, digest = verify_bytes(path, manifest)
+        count = verify_contents(path, manifest)
         if reference is None:
             reference = data
-        elif reference != data:
-            raise ValueError(f"Cross-runtime archive differs for {version}")
-        records.append({"Version": version, "Commit": commit, "Archive": name,
-                        "Length": len(data), "SHA256": digest, "Files": len(expected),
+        require(reference == data, f"Cross-runtime archive differs for {version}")
+        records.append({"Version": version, "Commit": commit, "Archive": path.name,
+                        "Length": len(data), "SHA256": digest, "Files": count,
                         "RepeatMatched": True})
     return records
 

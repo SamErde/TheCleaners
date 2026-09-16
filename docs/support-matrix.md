@@ -2,7 +2,7 @@
 
 The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Evidence below is for merged commit `037c27a81234361620a633f68a33bfb370f0a03e`; it does not apply automatically to a later commit.
 
-## Runtime matrix
+## Historical runtime evidence
 
 | Runtime | Contract | Evidence required before 1.0 RC |
 | --- | --- | --- |
