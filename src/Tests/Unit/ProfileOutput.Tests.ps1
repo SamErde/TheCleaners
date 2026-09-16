@@ -211,10 +211,11 @@ Describe 'Typed stale-profile output' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result.SizeBytes | Should -Be 0
     }
 
-    It 'holds profile ancestors while traversing queued directories' {
+    It 'holds profile ancestors and queued parents while traversing nested directories' {
         $QueuedDirectoryPath = Join-Path -Path $OldProfilePath -ChildPath 'QueuedSizeDirectory'
+        $NestedDirectoryPath = Join-Path -Path $QueuedDirectoryPath -ChildPath 'NestedSizeDirectory'
         $ReplacementPath = Join-Path -Path $TestDrive -ChildPath 'ProfileQueuedReplacement'
-        $null = New-Item -Path $QueuedDirectoryPath -ItemType Directory -Force
+        $null = New-Item -Path $NestedDirectoryPath -ItemType Directory -Force
         Mock Get-CimInstance {
             [pscustomobject]@{
                 LocalPath   = $OldProfilePath
@@ -235,8 +236,16 @@ Describe 'Typed stale-profile output' -Skip:(-not $WindowsHost) -Tag Unit {
                     })
             }
             if ($LiteralPath -eq $QueuedDirectoryPath) {
+                return @([pscustomobject]@{
+                        FullName      = $NestedDirectoryPath
+                        Name          = 'NestedSizeDirectory'
+                        PSIsContainer = $true
+                        Attributes    = [System.IO.FileAttributes]::Directory
+                    })
+            }
+            if ($LiteralPath -eq $NestedDirectoryPath) {
                 try {
-                    [System.IO.Directory]::Move($OldProfilePath, $ReplacementPath)
+                    [System.IO.Directory]::Move($QueuedDirectoryPath, $ReplacementPath)
                 } catch {
                     $script:MoveBlocked = $true
                 }

@@ -134,7 +134,7 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
     }
 
     It 'fails closed when WebAdministration is unavailable and the log format is unknown' {
-        $Result = Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue
+        $Result = Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable MetadataError
 
         $Result | Should -HaveCount 1
         $Result.DiscoveryStatus | Should -Be 'Failed'
@@ -143,6 +143,8 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result.ErrorIds | Should -Contain 'IISLogFormatUnavailable'
         $Result.FilesRemoved | Should -Be 0
         $OldLog.FullName | Should -Exist
+        @($MetadataError | Where-Object { $_.FullyQualifiedErrorId -like 'IISLogFormatUnavailable,*' }) | Should -Not -BeNullOrEmpty
+        { Clear-OldIISLog -Days 60 -WhatIf -WarningAction SilentlyContinue -ErrorAction Stop } | Should -Throw '*unavailable*'
     }
 
     It 'does not guess a fallback FTP format without WebAdministration' {
@@ -151,7 +153,7 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'u_ex240101.log') -ItemType File
         $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
 
-        $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
+        $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
 
         $Result | Should -HaveCount 1
         $Result[0].DiscoveryStatus | Should -Be 'Failed'
@@ -162,6 +164,25 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result[0].FilesRemoved | Should -Be 0
         $OldLog.FullName | Should -Exist
         $FtpLog.FullName | Should -Exist
+    }
+
+    It 'fails closed when fallback metadata is known only for W3SVC' {
+        $FtpRoot = Join-Path -Path $IISRoot -ChildPath 'FTPSVC7'
+        $null = New-Item -Path $FtpRoot -ItemType Directory -Force
+        $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'u_ex240101.log') -ItemType File
+        $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
+        Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $IISRoot; LogFormat = 'W3C'; LocalTimeRollover = $false } }
+
+        $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -ErrorVariable MetadataError)
+
+        $Result | Should -HaveCount 1
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].ErrorIds | Should -Contain 'IISServiceMetadataUnavailable'
+        @($MetadataError | Where-Object { $_.FullyQualifiedErrorId -like 'IISServiceMetadataUnavailable,*' }) | Should -Not -BeNullOrEmpty
+        $FtpLog.FullName | Should -Exist
+        $OldLog.FullName | Should -Exist
     }
 
     It 'reports an invalid configured root before probing existence' {

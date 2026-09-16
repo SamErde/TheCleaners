@@ -92,7 +92,7 @@ $PreviousWhatIfPreference = $WhatIfPreference
 $PreviousConfirmPreference = $ConfirmPreference
 $ObservedError = $null
 $Results = @()
-$DiscoveryErrorAction = if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot', 'FtpRootFailureWithValidWeb')) { 'SilentlyContinue' } else { 'Stop' }
+$DiscoveryErrorAction = if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot', 'FtpRootFailureWithValidWeb', 'WebFormatUnknown')) { 'SilentlyContinue' } else { 'Stop' }
 try {
     $Results = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction $DiscoveryErrorAction)
 } catch {
@@ -275,7 +275,7 @@ Describe 'IIS registry-root deduplication' -Skip:(-not $WindowsHost) -Tag Unit {
             $env:SystemDrive = ''
             Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $IISRoot; LogFormat = 'W3C' } }
 
-            $Results = @(Clear-OldIISLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
+            $Results = @(Clear-OldIISLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
         } finally {
             $env:SystemDrive = $PreviousSystemDriveForTest
         }
@@ -292,7 +292,7 @@ Describe 'IIS registry-root deduplication' -Skip:(-not $WindowsHost) -Tag Unit {
         $null = New-Item -Path $CustomRoot -ItemType Directory
         Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $CustomRoot; LogFormat = 'W3C'; LocalTimeRollover = $false } }
 
-        $Results = @(Clear-OldIISLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
+        $Results = @(Clear-OldIISLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
 
         $Results | Should -HaveCount 2
         $Results.RootPath | Should -Contain ([System.IO.Path]::GetFullPath($IISRoot))

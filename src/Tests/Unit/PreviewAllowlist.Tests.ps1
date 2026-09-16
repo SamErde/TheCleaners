@@ -15,9 +15,13 @@ Describe 'IIS format and protected-path allowlists' -Skip:(-not $WindowsHost) -T
     It 'accepts only the W3C W3SVC rollover name' {
         Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format 'W3C' -Service 'W3SVC' | Should -BeTrue
         Test-TheCleanersIisLogFileName -Name 'ex240101.log' -Format 'W3C' -Service 'W3SVC' -LocalTimeRollover | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'u_ex24010123.log' -Format 'W3C' -Service 'W3SVC' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'ex24010123.log' -Format 'W3C' -Service 'W3SVC' -LocalTimeRollover | Should -BeTrue
         Test-TheCleanersIisLogFileName -Name 'ex240101.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'old.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'u_ft240101.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
+        Test-TheCleanersIisLogFileName -Name 'u_ex2401012.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
+        Test-TheCleanersIisLogFileName -Name 'u_ex240101234.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
     }
 
     It 'separates FTP, IIS, NCSA, and custom formats' {
@@ -27,6 +31,8 @@ Describe 'IIS format and protected-path allowlists' -Skip:(-not $WindowsHost) -T
         Test-TheCleanersIisLogFileName -Name 'u_ft240101.log' -Format 'W3C' -Service 'FTPSVC' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'inetsv01.log' -Format 'IIS' | Should -BeTrue
         Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format 'NCSA' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'in1234.log' -Format 'IIS' | Should -BeFalse
+        Test-TheCleanersIisLogFileName -Name 'nc1234.log' -Format 'NCSA' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format 'Custom' | Should -BeFalse
     }
 
@@ -40,7 +46,7 @@ Describe 'IIS format and protected-path allowlists' -Skip:(-not $WindowsHost) -T
         Test-TheCleanersIisLogFileName -Name 'u_ex2401010.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'u_ex12.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
         Test-TheCleanersIisLogFileName -Name 'u_ex2024.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
-        Test-TheCleanersIisLogFileName -Name 'u_ex20240101.log' -Format 'W3C' -Service 'W3SVC' | Should -BeFalse
+        Test-TheCleanersIisLogFileName -Name 'u_ex20240101.log' -Format 'W3C' -Service 'W3SVC' | Should -BeTrue
     }
 
     It 'protects IIS executable, configuration, and history paths' {

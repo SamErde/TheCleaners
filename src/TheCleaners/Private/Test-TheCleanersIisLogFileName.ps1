@@ -54,15 +54,15 @@ function Test-TheCleanersIisLogFileName {
         'W3C' {
             $W3cPrefix = if ($LocalTimeRollover) { '' } else { 'u_' }
             if ($ServiceName -in @('FTPSVC', 'MSFTPSVC')) {
-                return $Name -match ('^{0}ex\d{{6}}\.log$' -f $W3cPrefix)
+                return $Name -match ('^{0}ex\d{{6}}(?:\d{{2}})?\.log$' -f $W3cPrefix)
             }
             if ($ServiceName -eq 'W3SVC') {
-                return $Name -match ('^{0}ex\d{{6}}\.log$' -f $W3cPrefix)
+                return $Name -match ('^{0}ex\d{{6}}(?:\d{{2}})?\.log$' -f $W3cPrefix)
             }
             return $false
         }
-        'IIS' { return $Name -match '^in(?:etsv\d{2}|\d{4}|\d{6}|\d{8})\.log$' }
-        'NCSA' { return $Name -match '^nc(?:sa\d{2}|\d{4}|\d{6}|\d{8})\.log$' }
+        'IIS' { return $Name -match '^inetsv(?:\d{2}|\d{4}|\d{6}|\d{8})\.log$' }
+        'NCSA' { return $Name -match '^ncsa(?:\d{2}|\d{4}|\d{6}|\d{8})\.log$' }
         default { return $false }
     }
 }

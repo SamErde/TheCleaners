@@ -28,6 +28,9 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format '1' | Should -BeTrue
         Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format '2' | Should -BeTrue
         Test-TheCleanersIisLogFileName -Name 'ex240101.log' -Format '2' -LocalTimeRollover | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'u_ex24010123.log' -Format '2' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'in1234.log' -Format '0' | Should -BeFalse
+        Test-TheCleanersIisLogFileName -Name 'nc1234.log' -Format '1' | Should -BeFalse
         Test-TheCleanersExchangeLogFileName -Name 'old.log' -RelativeRoot 'UnknownRoot' | Should -BeFalse
         Test-TheCleanersIisProtectedPath -Path (Join-Path -Path $TestDrive -ChildPath 'ordinary-logs') | Should -BeFalse
     }
