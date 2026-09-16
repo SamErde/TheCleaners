@@ -57,12 +57,32 @@ function Clear-OldIISLog {
     $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
     $Roots = [System.Collections.Generic.List[object]]::new()
     $SeenRoots = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $IisProtectedPaths = @(Get-TheCleanersIisProtectedPaths)
-    $WebAdministrationModule = Get-Module -Name 'WebAdministration' -ListAvailable | Select-Object -First 1
     $FtpDiscoveryErrorRecords = [System.Collections.Generic.List[object]]::new()
     $DiscoveryErrorReported = $false
     $DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
     $DiscoveryFailureResultReported = $false
+    $IisProtectedPaths = @()
+    try {
+        $IisProtectedPaths = @(Get-TheCleanersIisProtectedPaths)
+    } catch {
+        $DiscoveryErrorReported = $true
+        $DiscoveryFailureResultReported = $true
+        $null = $DiscoveryErrorIds.Add('IISDiscoveryFailed')
+        $ProtectionInventoryTarget = 'IIS protected-path inventory'
+        $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'IISDiscoveryFailed' -Category ReadError -TargetObject $ProtectionInventoryTarget
+        $PSCmdlet.WriteError($ErrorRecord)
+        if ($PassThru) {
+            $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $ProtectionInventoryTarget -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Unknown' -ProtectionPathCount 0 -ProtectionPaths @() -DiscoverySource 'IIS protection inventory' -DisplayName 'IIS protection inventory' -CandidatePaths @() -Status 'DiscoveryFailed'
+            $Result.FileCandidateCount = $null
+            $Result.DirectoryCandidateCount = $null
+            $Result.DiscoveryErrorCount = 1
+            $Result.ErrorIds = @('IISDiscoveryFailed')
+            $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
+            $Result
+        }
+        return
+    }
+    $WebAdministrationModule = Get-Module -Name 'WebAdministration' -ListAvailable | Select-Object -First 1
 
     if ($null -ne $WebAdministrationModule) {
         try {

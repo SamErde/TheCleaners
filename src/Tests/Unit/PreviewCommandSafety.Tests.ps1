@@ -159,6 +159,27 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $ObservedError.FullyQualifiedErrorId | Should -Match '^IIS(LogFormatUnavailable|LocalTimeRolloverUnavailable),'
     }
 
+    It 'returns a structured failure when IIS protection discovery fails' {
+        Mock Get-TheCleanersIisProtectedPaths {
+            throw [System.UnauthorizedAccessException]::new('Fixture IIS protection inventory denial.')
+        }
+
+        $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Continue -ErrorVariable ProtectionError)
+
+        $Result | Should -HaveCount 1
+        $Result[0].RootPath | Should -Be 'IIS protected-path inventory'
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].ProtectionStatus | Should -Be 'Unknown'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DiscoveryErrorCount | Should -Be 1
+        $Result[0].ErrorIds | Should -Contain 'IISDiscoveryFailed'
+        $ProtectionError | Should -Not -BeNullOrEmpty
+
+        { Clear-OldIISLog -Days 60 -WhatIf -WarningAction SilentlyContinue -ErrorAction Stop } | Should -Throw '*Fixture IIS protection inventory denial*'
+    }
+
     It 'does not guess a fallback FTP format without WebAdministration' {
         $FtpRoot = Join-Path -Path $IISRoot -ChildPath 'FTPSVC7'
         $null = New-Item -Path $FtpRoot -ItemType Directory -Force
