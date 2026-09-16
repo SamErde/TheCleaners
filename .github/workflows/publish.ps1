@@ -92,7 +92,7 @@ if ((Get-Content -LiteralPath $ArchiveSidecarPath -Raw).Trim() -ne $ExpectedSide
 Add-Type -AssemblyName 'System.IO.Compression.FileSystem'
 $Archive = [System.IO.Compression.ZipFile]::OpenRead($ArchivePath)
 try {
-    $ArchiveEntries = @($Archive.Entries | ForEach-Object { $_.FullName.Replace('\', '/') } | Sort-Object)
+    $ArchiveEntries = @($Archive.Entries | Where-Object { -not $_.FullName.EndsWith('/') } | ForEach-Object { $_.FullName.Replace('\', '/') } | Sort-Object)
     $ExpectedEntries = @($ArchiveManifest.Files | ForEach-Object { [string]$_.Path } | Sort-Object)
     $EntryDifferences = @(Compare-Object -ReferenceObject $ExpectedEntries -DifferenceObject $ArchiveEntries)
     if ($EntryDifferences.Count -gt 0) {

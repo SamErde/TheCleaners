@@ -9,8 +9,9 @@ function Get-TheCleanersTempPlan {
         Discovery errors are terminating to prevent partial plans from being used.
         When identity capture is enabled, each queued directory is opened with a
         stable native handle while the provider enumerates it and its identity is
-        captured, so directory replacement or rename fails closed. The returned
-        plan retains only handles for candidate-file ancestors and planned empty
+        captured, so directory replacement or rename fails closed. Directory
+        pruning uses a DELETE-capable handle; traversal without pruning uses a
+        read-only identity handle. The returned plan retains only handles for candidate-file ancestors and planned empty
         directories; branches with no mutation candidate are released after
         discovery. Retained handles remain open through candidate mutation,
         preventing a required ancestor from being renamed or replaced by a
@@ -112,7 +113,11 @@ function Get-TheCleanersTempPlan {
             try {
                 if ($CaptureIdentity) {
                     Initialize-TheCleanersNativeFileInterop
-                    $DirectoryHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($DirectoryPath)
+                    $DirectoryHandle = if ($RemoveEmptyDirectory) {
+                        [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($DirectoryPath)
+                    } else {
+                        [TheCleaners.NativeFileInterop]::OpenForIdentityInspection($DirectoryPath)
+                    }
                     $HeldDirectoryEntry = [pscustomobject]@{
                         Path     = $DirectoryPath
                         Handle   = $DirectoryHandle

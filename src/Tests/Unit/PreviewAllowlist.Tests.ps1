@@ -69,6 +69,14 @@ Describe 'IIS format and protected-path allowlists' -Skip:(-not $WindowsHost) -T
         Test-TheCleanersIisProtectedPath -Path (Join-Path -Path $WindowsRoot -ChildPath 'System32') | Should -BeTrue
         Test-TheCleanersIisProtectedPath -Path $Outside | Should -BeFalse
     }
+
+    It 'fails closed when the Windows root cannot be resolved' {
+        Mock Get-TheCleanersIisWindowsRoot {
+            throw [System.InvalidOperationException]::new('The Windows directory could not be resolved from the operating system.')
+        }
+
+        { Get-TheCleanersIisProtectedPaths } | Should -Throw '*Windows directory could not be resolved*'
+    }
 }
 
 Describe 'Exchange filename and protected-location allowlists' -Skip:(-not $WindowsHost) -Tag Unit {

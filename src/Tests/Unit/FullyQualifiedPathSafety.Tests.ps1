@@ -62,6 +62,22 @@ Describe 'Fully qualified filesystem path safety' -Skip:([Environment]::OSVersio
         { Resolve-TheCleanersFileSystemPath -LiteralPath $Sibling.FullName -RootPath $Root.FullName } | Should -Throw
     }
 
+    It 'uses the OS-backed Windows root when the process environment is spoofed' {
+        $WindowsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Windows)
+        if ([string]::IsNullOrWhiteSpace($WindowsRoot)) {
+            Set-ItResult -Skipped -Because 'The test host did not expose an OS Windows root.'
+            return
+        }
+
+        $PreviousSystemRoot = $env:SystemRoot
+        try {
+            $env:SystemRoot = Join-Path -Path $TestDrive -ChildPath 'SpoofedSystemRoot'
+            { Resolve-TheCleanersFileSystemPath -LiteralPath $WindowsRoot } | Should -Throw '*broad cleanup root*'
+        } finally {
+            $env:SystemRoot = $PreviousSystemRoot
+        }
+    }
+
     It 'accepts UNC syntax only when server and share components exist' {
         Test-TheCleanersFullyQualifiedPath -Path '\\server\share\folder' | Should -BeTrue
         Test-TheCleanersFullyQualifiedPath -Path '//server/share/folder' | Should -BeTrue

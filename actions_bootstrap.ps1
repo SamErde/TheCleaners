@@ -45,10 +45,12 @@ function Resolve-ExactModuleManifest {
         }
     }
     $Documents = [Environment]::GetFolderPath([Environment+SpecialFolder]::MyDocuments)
-    foreach ($RelativeRoot in @('PowerShell\Modules', 'WindowsPowerShell\Modules')) {
-        $DocumentsRoot = Join-Path -Path $Documents -ChildPath $RelativeRoot
-        if (-not $ModuleRoots.Contains($DocumentsRoot)) {
-            $ModuleRoots.Add($DocumentsRoot)
+    if (-not [string]::IsNullOrWhiteSpace($Documents)) {
+        foreach ($RelativeRoot in @('PowerShell\Modules', 'WindowsPowerShell\Modules')) {
+            $DocumentsRoot = Join-Path -Path $Documents -ChildPath $RelativeRoot
+            if (-not $ModuleRoots.Contains($DocumentsRoot)) {
+                $ModuleRoots.Add($DocumentsRoot)
+            }
         }
     }
 

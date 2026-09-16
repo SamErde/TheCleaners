@@ -98,6 +98,7 @@ namespace TheCleaners
     public static class NativeFileInterop
     {
         private const uint Delete = 0x00010000U;
+        private const uint FileListDirectory = 0x00000001U;
         private const uint FileReadAttributes = 0x00000080U;
         private const uint FileShareRead = 0x00000001U;
         private const uint FileShareWrite = 0x00000002U;
@@ -236,7 +237,7 @@ namespace TheCleaners
             // FILE_READ_ATTRIBUTES is sufficient for identity and reparse checks.
             // This handle retains the inspected object for revalidation but does
             // not request DELETE access, so callers must compare identity again.
-            return Open(path, FileReadAttributes, FileShareRead | FileShareWrite, true);
+            return Open(path, FileListDirectory | FileReadAttributes, FileShareRead | FileShareWrite, true);
         }
 
         public static SafeFileHandle OpenForStableEnumeration(string path)

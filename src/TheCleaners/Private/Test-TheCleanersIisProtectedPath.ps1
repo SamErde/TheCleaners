@@ -1,3 +1,29 @@
+function Get-TheCleanersIisWindowsRoot {
+    <#
+    .SYNOPSIS
+        Resolve the Windows root used by the IIS protection inventory.
+    .DESCRIPTION
+        Prefer the operating-system special-folder API and use the machine
+        SystemRoot value only as a fallback. Never treat an unavailable root
+        as an empty protection inventory.
+    .OUTPUTS
+        System.String
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param ()
+
+    $WindowsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Windows)
+    if ([string]::IsNullOrWhiteSpace($WindowsRoot)) {
+        $WindowsRoot = [Environment]::GetEnvironmentVariable('SystemRoot', 'Machine')
+    }
+    if ([string]::IsNullOrWhiteSpace($WindowsRoot)) {
+        throw [System.InvalidOperationException]::new('The Windows directory could not be resolved from the operating system.')
+    }
+
+    $WindowsRoot
+}
+
 function Get-TheCleanersIisProtectedPaths {
     <#
     .SYNOPSIS
@@ -12,10 +38,7 @@ function Get-TheCleanersIisProtectedPaths {
     [OutputType([string[]])]
     param ()
 
-    $WindowsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Windows)
-    if ([string]::IsNullOrWhiteSpace($WindowsRoot)) {
-        return @()
-    }
+    $WindowsRoot = Get-TheCleanersIisWindowsRoot
 
     foreach ($ProtectedPath in @(
             (Join-Path -Path $WindowsRoot -ChildPath 'System32/inetsrv/config')

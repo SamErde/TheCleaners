@@ -169,9 +169,16 @@ function Resolve-TheCleanersFileSystemPath {
         if ($Item -isnot [System.IO.DirectoryInfo]) {
             throw "Cleanup root is not a directory: $LiteralPath"
         }
+        $WindowsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::Windows)
+        if ([string]::IsNullOrWhiteSpace($WindowsRoot)) {
+            $WindowsRoot = [Environment]::GetEnvironmentVariable('SystemRoot', 'Machine')
+        }
+        if ([string]::IsNullOrWhiteSpace($WindowsRoot)) {
+            throw [System.InvalidOperationException]::new('The Windows directory could not be resolved from the operating system.')
+        }
         $ForbiddenRoots = @(
             [System.IO.Path]::GetPathRoot($Item.FullName)
-            $env:SystemRoot
+            $WindowsRoot
             $env:USERPROFILE
             $env:ProgramFiles
             $env:ProgramData

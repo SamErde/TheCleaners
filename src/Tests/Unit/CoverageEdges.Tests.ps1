@@ -90,6 +90,54 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         { Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -RemoveEmptyDirectory -CaptureIdentity -Verbose 4> $null } | Should -Throw '*identity required for safe mutation*'
     }
 
+    It 'uses a read-only traversal handle when DELETE is denied and pruning is disabled' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'ReadOnlyTraversalRoot'
+        $FilePath = Join-Path -Path $RootPath -ChildPath 'old.tmp'
+        $null = New-Item -Path $RootPath -ItemType Directory -Force
+        $null = New-Item -Path $FilePath -ItemType File -Force
+        [System.IO.File]::SetLastWriteTimeUtc($FilePath, [DateTime]::UtcNow.AddDays(-31))
+        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
+        $RootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+        $OriginalAcl = Get-Acl -LiteralPath $RootPath
+        $AclApplied = $false
+
+        try {
+            $DeniedAcl = Get-Acl -LiteralPath $RootPath
+            $CurrentSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+            $DenyDeleteRule = [System.Security.AccessControl.FileSystemAccessRule]::new(
+                $CurrentSid,
+                [System.Security.AccessControl.FileSystemRights]::Delete,
+                [System.Security.AccessControl.InheritanceFlags]::None,
+                [System.Security.AccessControl.PropagationFlags]::None,
+                [System.Security.AccessControl.AccessControlType]::Deny
+            )
+            $DeniedAcl.AddAccessRule($DenyDeleteRule)
+            Set-Acl -LiteralPath $RootPath -AclObject $DeniedAcl -ErrorAction Stop
+            $AclApplied = $true
+        } catch {
+            if ($AclApplied) {
+                Set-Acl -LiteralPath $RootPath -AclObject $OriginalAcl -ErrorAction SilentlyContinue
+            }
+            Set-ItResult -Skipped -Because "The disposable ACL fixture could not deny DELETE: $($_.Exception.Message)"
+            return
+        }
+
+        $Plan = $null
+        try {
+            $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity -ValidatedRootIdentity $RootIdentity
+
+            $Plan.Files.Path | Should -Be $FilePath
+            $Plan.Directories | Should -BeNullOrEmpty
+        } finally {
+            if ($null -ne $Plan) {
+                Close-TheCleanersTempPlanHandles -Plan $Plan
+            }
+            if ($AclApplied) {
+                Set-Acl -LiteralPath $RootPath -AclObject $OriginalAcl -ErrorAction Stop
+            }
+        }
+    }
+
     It 'fails closed when a parent identity cannot be captured for directory pruning' {
         $RootPath = Join-Path -Path $TestDrive -ChildPath 'ParentIdentityFailureRoot'
         $ChildPath = Join-Path -Path $RootPath -ChildPath 'Child'
