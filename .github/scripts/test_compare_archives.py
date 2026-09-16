@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import struct
 import tempfile
 import unittest
 import zipfile
@@ -66,6 +67,32 @@ class ArchiveEvidenceTests(unittest.TestCase):
         self.write_lane("7.4.20", scalar_order=True)
         with self.assertRaisesRegex(ValueError, "Entry set/order mismatch"):
             self.verify()
+
+    def test_rejects_noncanonical_zip_metadata(self):
+        directory = self.root / "zip-archive-pwsh-7.4.20"
+        path = directory / "TheCleaners_0.0.15.zip"
+        original = path.read_bytes()
+        central = original.index(b"PK\x01\x02")
+        cases = [
+            ("timestamp", [(12, "H", 0x5021), (central + 14, "H", 0x5021)], "Noncanonical timestamp"),
+            ("compression", [(8, "H", 8), (central + 10, "H", 8)], "Runtime-dependent compression"),
+            ("external attributes", [(central + 38, "I", 32)], "Noncanonical entry metadata"),
+            ("internal attributes", [(central + 36, "H", 1)], "Noncanonical entry metadata"),
+            ("encoding flags", [(6, "H", 0x802), (central + 8, "H", 0x802)], "Expected UTF-8"),
+            ("producer system", [(central + 5, "B", 3)], "Expected UTF-8"),
+        ]
+        for label, patches, message in cases:
+            with self.subTest(metadata=label):
+                data = bytearray(original)
+                for offset, field_format, value in patches:
+                    struct.pack_into("<" + field_format, data, offset, value)
+                digest = hashlib.sha256(data).hexdigest()
+                path.write_bytes(data)
+                Path(str(path) + ".repeat.zip").write_bytes(data)
+                Path(str(path) + ".sha256").write_text(f"{digest} *{path.name}")
+                self.alter_manifest(lambda m: m.update(ArchiveSHA256=digest))
+                with self.assertRaisesRegex(ValueError, message):
+                    self.verify()
 
     def test_wrong_commit(self):
         self.alter_manifest(lambda m: m.update(Commit="b" * 40))

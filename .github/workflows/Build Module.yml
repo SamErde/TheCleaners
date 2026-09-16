@@ -11,6 +11,7 @@ permissions:
   contents: read
 
 env:
+  NO_COLOR: '1'
   TC_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
   TC_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
 
