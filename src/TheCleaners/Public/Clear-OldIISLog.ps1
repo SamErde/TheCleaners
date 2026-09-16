@@ -233,11 +233,24 @@ function Clear-OldIISLog {
             }
             $Roots.Add($DefaultRootDefinition)
         }
+        $RegistryRoot = $null
+        $RegistryFormat = $null
+        $RegistryLocalTimeRollover = $null
         try {
-            $RegistrySettings = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction Stop
-            $RegistryRoot = $RegistrySettings.LogDir
-            $RegistryRoot = [Environment]::ExpandEnvironmentVariables([string]$RegistryRoot)
-            $RegistryFormat = $null
+            try {
+                $RegistrySettings = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction Stop
+                $RegistryRoot = [Environment]::ExpandEnvironmentVariables([string]$RegistrySettings.LogDir)
+            } catch {
+                $OptionalRegistryLogDirIsAbsent = (
+                    $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
+                    ($_.Exception -is [System.Management.Automation.PSArgumentException] -and $_.Exception.Message -match '^Property .+ does not exist') -or
+                    $_.FullyQualifiedErrorId -match 'PathNotFound|PropertyNotFound|ItemNotFound'
+                )
+                if (-not $OptionalRegistryLogDirIsAbsent) {
+                    throw
+                }
+                Write-Verbose -Message "The optional alternate IIS log location is not configured: $($_.Exception.Message)"
+            }
             try {
                 $RegistryFormatSettings = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogFormat' -ErrorAction Stop
                 $RegistryFormat = [string]$RegistryFormatSettings.LogFormat
@@ -251,7 +264,6 @@ function Clear-OldIISLog {
                     throw
                 }
             }
-            $RegistryLocalTimeRollover = $null
             try {
                 $RegistryRolloverSettings = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LocalTimeRollover' -ErrorAction Stop
                 if ($null -ne $RegistryRolloverSettings.LocalTimeRollover) {
@@ -265,6 +277,17 @@ function Clear-OldIISLog {
                 )
                 if (-not $OptionalRegistryRolloverIsAbsent) {
                     throw
+                }
+            }
+
+            if ($null -ne $DefaultRootDefinition) {
+                if (-not [string]::IsNullOrWhiteSpace($RegistryFormat)) {
+                    $DefaultRootDefinition.Format = $RegistryFormat
+                    $null = $DefaultDiscoveryErrorIds.Remove('IISLogFormatUnavailable')
+                }
+                if ($null -ne $RegistryLocalTimeRollover) {
+                    $DefaultRootDefinition.LocalTimeRollover = $RegistryLocalTimeRollover
+                    $null = $DefaultDiscoveryErrorIds.Remove('IISLocalTimeRolloverUnavailable')
                 }
             }
             if (-not [string]::IsNullOrWhiteSpace($RegistryRoot)) {

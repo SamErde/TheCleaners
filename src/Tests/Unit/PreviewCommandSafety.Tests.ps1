@@ -197,6 +197,28 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $OldLog.FullName | Should -Exist
     }
 
+    It 'uses W3SVC metadata for the default root when no LogDir override exists' {
+        Mock Get-ItemProperty {
+            if ($Name -eq 'LogDir') {
+                throw [System.Management.Automation.ItemNotFoundException]::new('Optional LogDir is absent.')
+            }
+            [pscustomobject]@{
+                LogFormat          = 'W3C'
+                LocalTimeRollover  = $false
+            }
+        }
+
+        $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
+
+        $Result | Should -HaveCount 1
+        $Result[0].Status | Should -Be 'WhatIf'
+        $Result[0].DiscoveryStatus | Should -Be 'Experimental'
+        $Result[0].FileCandidateCount | Should -Be 1
+        $Result[0].ErrorIds | Should -Not -Contain 'IISLogFormatUnavailable'
+        $Result[0].ErrorIds | Should -Not -Contain 'IISLocalTimeRolloverUnavailable'
+        $OldLog.FullName | Should -Exist
+    }
+
     It 'reports an invalid configured root before probing existence' {
         $PreviousSystemDrive = $env:SystemDrive
         try {

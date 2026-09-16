@@ -10,8 +10,8 @@
     PowerShell Gallery API key.
 .PARAMETER ArtifactPath
     Exact source-layout module directory produced by the build.
-.PARAMETER ArchiveManifestPath
-    Content manifest produced beside the tested archive.
+.PARAMETER ArchiveDirectory
+    Directory containing the content manifest produced beside the tested archive.
 .EXAMPLE
     ./.github/workflows/publish.ps1 -PSGalleryApiKey $env:PSGALLERY_API_KEY
 #>
@@ -30,7 +30,7 @@ param (
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]
-    $ArchiveManifestPath = './src/Archive'
+    $ArchiveDirectory = './src/Archive'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,9 +56,9 @@ if ([string]$Matches.Prerelease -ne $ManifestPrerelease) {
     throw "Release tag prerelease '$($Matches.Prerelease)' does not match manifest prerelease '$ManifestPrerelease'."
 }
 
-$ArchiveManifests = @(Get-ChildItem -LiteralPath $ArchiveManifestPath -Filter '*.manifest.json' -File)
+$ArchiveManifests = @(Get-ChildItem -LiteralPath $ArchiveDirectory -Filter '*.manifest.json' -File)
 if ($ArchiveManifests.Count -ne 1) {
-    throw "Expected exactly one archive content manifest under '$ArchiveManifestPath'; found $($ArchiveManifests.Count)."
+    throw "Expected exactly one archive content manifest under '$ArchiveDirectory'; found $($ArchiveManifests.Count)."
 }
 $ArchiveManifest = Get-Content -LiteralPath $ArchiveManifests[0].FullName -Raw | ConvertFrom-Json
 if ($ArchiveManifest.ModuleName -ne 'TheCleaners' -or [string]$ArchiveManifest.ModuleVersion -ne [string]$ModuleManifest.Version) {

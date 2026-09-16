@@ -40,6 +40,6 @@ jobs:
       shell: pwsh
       run: |
         $PSVersionTable | Format-List
-        ./.github/workflows/publish.ps1 -PSGalleryApiKey $env:PSGALLERY_API_KEY -ArtifactPath ./src/Artifacts -ArchiveManifestPath ./src/Archive
+        ./.github/workflows/publish.ps1 -PSGalleryApiKey $env:PSGALLERY_API_KEY -ArtifactPath ./src/Artifacts -ArchiveDirectory ./src/Archive
       env:
         PSGALLERY_API_KEY: ${{ secrets.POWERSHELLGALLERY_KEY }}
