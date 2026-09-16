@@ -29,9 +29,8 @@ jobs:
         with:
           persist-credentials: false
       - name: Install exact PowerShell runtime
-        uses: PSModule/install-powershell@159c2929fac34e3c7fc55d75e8997fb27fc7f75a # v1
-        with:
-          Version: ${{ matrix.version }}
+        shell: pwsh
+        run: ./.github/scripts/Install-ExactPowerShell.ps1 -Version '${{ matrix.version }}'
       - name: Bootstrap
         shell: pwsh
         run: ./actions_bootstrap.ps1

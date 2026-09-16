@@ -127,13 +127,20 @@ function Clear-OldIISLog {
                     if ([string]::IsNullOrWhiteSpace($Format)) {
                         $null = $WebDiscoveryErrorIds.Add('IISLogFormatUnavailable')
                     }
+                    $LocalTimeRollover = $null
+                    $RolloverProperty = if ($null -eq $Site.LogFile) { $null } else { $Site.LogFile.PSObject.Properties['LocalTimeRollover'] }
+                    if ($null -ne $RolloverProperty -and $null -ne $RolloverProperty.Value) {
+                        $LocalTimeRollover = [bool]$RolloverProperty.Value
+                    } else {
+                        $null = $WebDiscoveryErrorIds.Add('IISLocalTimeRolloverUnavailable')
+                    }
                     $WebRootDefinition = [pscustomobject]@{
                         Path              = Join-Path -Path $ConfiguredRoot -ChildPath ('W3SVC{0}' -f $Site.Id)
                         DisplayName       = $SiteName
                         Source            = 'WebAdministration'
                         Format            = if ([string]::IsNullOrWhiteSpace($Format)) { $null } else { $Format }
                         Service           = 'W3SVC'
-                        LocalTimeRollover = [bool]$Site.LogFile.LocalTimeRollover
+                        LocalTimeRollover = $LocalTimeRollover
                         DiscoveryErrorIds = $WebDiscoveryErrorIds
                     }
                     $Roots.Add($WebRootDefinition)
@@ -161,13 +168,20 @@ function Clear-OldIISLog {
                     if ([string]::IsNullOrWhiteSpace($FtpFormat)) {
                         throw [System.InvalidOperationException]::new("The IIS FTP logging format was unavailable for site '$SiteName'.")
                     }
+                    $FtpLocalTimeRollover = $null
+                    $FtpRolloverProperty = $Site.FtpLogConfiguration.PSObject.Properties['LocalTimeRollover']
+                    if ($null -ne $FtpRolloverProperty -and $null -ne $FtpRolloverProperty.Value) {
+                        $FtpLocalTimeRollover = [bool]$FtpRolloverProperty.Value
+                    } else {
+                        throw [System.InvalidOperationException]::new("The IIS FTP local-time rollover setting was unavailable for site '$SiteName'.")
+                    }
                     $Roots.Add([pscustomobject]@{
                             Path              = Join-Path -Path $FtpConfiguredRoot -ChildPath ('FTPSVC{0}' -f $Site.Id)
                             DisplayName       = "$SiteName FTP"
                             Source            = 'WebAdministration'
                             Format            = $FtpFormat
                             Service           = 'FTPSVC'
-                            LocalTimeRollover = [bool]$Site.FtpLogConfiguration.LocalTimeRollover
+                            LocalTimeRollover = $FtpLocalTimeRollover
                             DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
                         })
                 } catch {

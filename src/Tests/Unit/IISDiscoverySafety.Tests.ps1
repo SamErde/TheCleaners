@@ -7,6 +7,7 @@ BeforeDiscovery {
         @{ Scenario = 'ExistingFailure' }
         @{ Scenario = 'FtpSuccess' }
         @{ Scenario = 'WebFormatUnknown' }
+        @{ Scenario = 'WebRolloverUnknown' }
     )
 }
 
@@ -92,7 +93,7 @@ $PreviousWhatIfPreference = $WhatIfPreference
 $PreviousConfirmPreference = $ConfirmPreference
 $ObservedError = $null
 $Results = @()
-$DiscoveryErrorAction = if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot', 'FtpRootFailureWithValidWeb', 'WebFormatUnknown')) { 'SilentlyContinue' } else { 'Stop' }
+$DiscoveryErrorAction = if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot', 'FtpRootFailureWithValidWeb', 'WebFormatUnknown', 'WebRolloverUnknown')) { 'SilentlyContinue' } else { 'Stop' }
 try {
     $Results = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction $DiscoveryErrorAction)
 } catch {
@@ -132,6 +133,12 @@ if ($Scenario.EndsWith('Failure')) {
     $UnknownFormatResult = @($Results | Where-Object { $_.RootPath -eq $ExpectedRoot })
     if ($UnknownFormatResult.Count -ne 1 -or $UnknownFormatResult[0].Status -ne 'DiscoveryFailed' -or $UnknownFormatResult[0].ErrorIds -notcontains 'IISLogFormatUnavailable' -or $null -ne $UnknownFormatResult[0].FileCandidateCount) {
         throw 'A WebAdministration root without a logging format was not rejected as an unknown-format discovery failure.'
+    }
+} elseif ($Scenario -eq 'WebRolloverUnknown') {
+    $ExpectedRoot = [System.IO.Path]::GetFullPath($LogRoot).TrimEnd([char[]]@('\', '/'))
+    $UnknownRolloverResult = @($Results | Where-Object { $_.RootPath -eq $ExpectedRoot })
+    if ($UnknownRolloverResult.Count -ne 1 -or $UnknownRolloverResult[0].Status -ne 'DiscoveryFailed' -or $UnknownRolloverResult[0].ErrorIds -notcontains 'IISLocalTimeRolloverUnavailable' -or $null -ne $UnknownRolloverResult[0].FileCandidateCount) {
+        throw 'A WebAdministration root without a rollover mode was not rejected as an unknown-rollover discovery failure.'
     }
 } else {
     if ($null -ne $ObservedError) {
@@ -192,13 +199,18 @@ Describe 'IIS dependency state and site-root deduplication: <Scenario>' -ForEach
         $OldLog = New-Item -Path (Join-Path -Path $LogRoot -ChildPath 'u_ex240101.log') -ItemType File
         $OldLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $Sites = @(
-            @{ Name = 'Normal spelling'; Id = 1; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C' } }
-            @{ Name = 'Dot segment spelling'; Id = 1; LogFile = @{ Directory = $LogBase + '\..\LogFiles\'; LogFormat = 'W3C' } }
-            @{ Name = 'Alternate separators'; Id = 1; LogFile = @{ Directory = $LogBase.Replace('\', '/') + '/'; LogFormat = 'W3C' } }
+            @{ Name = 'Normal spelling'; Id = 1; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false } }
+            @{ Name = 'Dot segment spelling'; Id = 1; LogFile = @{ Directory = $LogBase + '\..\LogFiles\'; LogFormat = 'W3C'; LocalTimeRollover = $false } }
+            @{ Name = 'Alternate separators'; Id = 1; LogFile = @{ Directory = $LogBase.Replace('\', '/') + '/'; LogFormat = 'W3C'; LocalTimeRollover = $false } }
         )
         if ($Scenario -eq 'WebFormatUnknown') {
             $Sites = @(
                 @{ Name = 'Unknown web format'; Id = 1; LogFile = @{ Directory = $LogBase } }
+            )
+        }
+        if ($Scenario -eq 'WebRolloverUnknown') {
+            $Sites = @(
+                @{ Name = 'Unknown web rollover'; Id = 1; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C' } }
             )
         }
         if ($Scenario -eq 'FtpSuccess') {
@@ -206,7 +218,7 @@ Describe 'IIS dependency state and site-root deduplication: <Scenario>' -ForEach
             $null = New-Item -Path $FtpRoot -ItemType Directory -Force
             $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'inetsv01.log') -ItemType File
             $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
-            $Sites += @{ Name = 'FTP site'; Id = 2; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C' }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'IIS' } } }
+            $Sites += @{ Name = 'FTP site'; Id = 2; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'IIS'; LocalTimeRollover = $false } } }
         }
         $Fixture = @{ FailDiscovery = $Scenario.EndsWith('Failure'); Sites = $Sites }
         $Fixture | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
@@ -344,7 +356,7 @@ Describe 'IIS FTP root discovery' -Skip:(-not $WindowsHost) -Tag Unit {
         $FtpLog = New-Item -Path $FtpLogPath -ItemType File
         $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $Sites = @(
-            @{ Name = 'FTP fixture'; Id = 7; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C' }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'W3C' } } }
+            @{ Name = 'FTP fixture'; Id = 7; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false } } }
         )
         @{ FailDiscovery = $false; Sites = $Sites } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
         Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'WebAdministration.psm1') -Value $FixtureModuleContent -Encoding UTF8
@@ -377,8 +389,8 @@ Describe 'IIS FTP root discovery' -Skip:(-not $WindowsHost) -Tag Unit {
         $ExistingWebLog = New-Item -Path $ExistingWebLogPath -ItemType File
         $ExistingWebLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $Sites = @(
-            @{ Name = 'FTP failure'; Id = 8; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C' }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $null } } }
-            @{ Name = 'Existing web'; Id = 9; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C' }; Bindings = @() }
+            @{ Name = 'FTP failure'; Id = 8; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $null } } }
+            @{ Name = 'Existing web'; Id = 9; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @() }
         )
         @{ FailDiscovery = $false; Sites = $Sites } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
         Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'WebAdministration.psm1') -Value $FixtureModuleContent -Encoding UTF8
@@ -414,7 +426,7 @@ Describe 'IIS FTP root discovery' -Skip:(-not $WindowsHost) -Tag Unit {
         $ExistingWebLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $Sites = @(
             @{ Name = 'FTP without web root'; Id = 8; LogFile = @{ Directory = $null; LogFormat = 'W3C' }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $null } } }
-            @{ Name = 'Existing web'; Id = 9; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C' }; Bindings = @() }
+            @{ Name = 'Existing web'; Id = 9; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @() }
         )
         @{ FailDiscovery = $false; Sites = $Sites } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
         Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'WebAdministration.psm1') -Value $FixtureModuleContent -Encoding UTF8
@@ -449,7 +461,7 @@ Describe 'IIS FTP root discovery' -Skip:(-not $WindowsHost) -Tag Unit {
         $WebLog = New-Item -Path $WebLogPath -ItemType File
         $WebLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $Sites = @(
-            @{ Name = 'FTP valid web'; Id = 8; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C' }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $null } } }
+            @{ Name = 'FTP valid web'; Id = 8; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $null } } }
         )
         @{ FailDiscovery = $false; Sites = $Sites } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
         Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'WebAdministration.psm1') -Value $FixtureModuleContent -Encoding UTF8

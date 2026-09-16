@@ -161,16 +161,30 @@ function Get-PreviewEvidence {
 $IisRegistry = Get-OptionalRegistryProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\InetStp'
 $ExchangeRegistry = Get-OptionalRegistryProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup'
 $IisModule = Get-Module -ListAvailable -Name WebAdministration | Sort-Object Version -Descending | Select-Object -First 1
+$ExpectedExchangeCommandNames = @('Get-ExchangeServer', 'Get-MailboxDatabase')
 $ExchangeCommands = @()
 $ExchangeCommandProbe = [ordered]@{
     Status        = $null
     ErrorId       = $null
     ErrorMessage  = $null
     CommandCount  = 0
+    ExpectedCommandCount = $ExpectedExchangeCommandNames.Count
+    MissingCommands = @()
 }
 try {
     $ExchangeCommands = @(Get-ExchangeManagementCommandEvidence)
-    $ExchangeCommandProbe.Status = if ($ExchangeCommands.Count -eq 0) { 'NotInstalled' } else { 'Validated' }
+    $DiscoveredExchangeCommandNames = @($ExchangeCommands | ForEach-Object { [string]$_.Name })
+    $MissingExchangeCommands = @($ExpectedExchangeCommandNames | Where-Object { $_ -notin $DiscoveredExchangeCommandNames })
+    $ExchangeCommandProbe.MissingCommands = $MissingExchangeCommands
+    $ExchangeCommandProbe.Status = if ($ExchangeCommands.Count -eq 0) {
+        'NotInstalled'
+    } elseif ($MissingExchangeCommands.Count -gt 0) {
+        $ExchangeCommandProbe.ErrorId = 'ExchangeManagementCommandIncomplete'
+        $ExchangeCommandProbe.ErrorMessage = 'The Exchange management command probe did not find the complete expected command set: {0}.' -f ($MissingExchangeCommands -join ', ')
+        'Partial'
+    } else {
+        'Validated'
+    }
     $ExchangeCommandProbe.CommandCount = $ExchangeCommands.Count
 } catch {
     $ExchangeCommandProbe.Status = 'Failed'

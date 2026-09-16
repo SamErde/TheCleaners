@@ -84,7 +84,19 @@ try {
     $OperatingSystem = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
     $DriveQualifier = Split-Path -Path $FixtureRoot -Qualifier
     $DriveLetter = $DriveQualifier.TrimEnd([char[]]@(':', '\'))
-    $Volume = Get-Volume -DriveLetter $DriveLetter -ErrorAction SilentlyContinue | Select-Object -First 1
+    $Volume = $null
+    $VolumeProbeError = $null
+    try {
+        $Volume = Get-Volume -DriveLetter $DriveLetter -ErrorAction Stop | Select-Object -First 1
+        if ($null -eq $Volume) {
+            $VolumeProbeError = "No volume was returned for drive '$DriveLetter'."
+        } elseif ([string]::IsNullOrWhiteSpace([string]$Volume.FileSystem)) {
+            $VolumeProbeError = "The volume for drive '$DriveLetter' did not report a filesystem."
+        }
+    } catch {
+        $VolumeProbeError = $_.Exception.Message
+    }
+    $VolumeEvidenceAvailable = $null -ne $Volume -and -not [string]::IsNullOrWhiteSpace([string]$Volume.FileSystem)
     $Principal = [System.Security.Principal.WindowsPrincipal]::new($Identity)
     $IsElevated = $Principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
     $BeforeCandidates = @($OldReadablePath, $OldNoContentReadPath)
@@ -126,6 +138,8 @@ try {
         IsElevated            = $IsElevated
         Drive                 = $DriveLetter
         FileSystem            = if ($null -eq $Volume) { 'unknown' } else { $Volume.FileSystem }
+        VolumeProbeStatus     = if ($VolumeEvidenceAvailable) { 'Validated' } else { 'Failed' }
+        VolumeProbeError      = $VolumeProbeError
         ReadWasDenied         = $ReadWasDenied
         DeleteAllowRuleFound  = ($null -ne $DeleteAllowRule)
         DeleteAllowAccessMask = [int][System.Security.AccessControl.FileSystemRights]::Delete
@@ -141,7 +155,7 @@ try {
         ResultErrorCount      = $ResultErrorCount
         RemainingNoReadFile   = [System.IO.File]::Exists($OldNoContentReadPath)
         OutcomeReconciles     = $OutcomeReconciles
-        Acceptance            = (@($CleanupErrors).Count -eq 0 -and $ReadWasDenied -and $null -ne $DeleteAllowRule -and $null -ne $ReadDenyRule -and $AfterCandidates.Count -eq 0 -and $OutcomeReconciles)
+        Acceptance            = (@($CleanupErrors).Count -eq 0 -and $VolumeEvidenceAvailable -and [string]$Volume.FileSystem -in @('NTFS', 'ReFS') -and $ReadWasDenied -and $null -ne $DeleteAllowRule -and $null -ne $ReadDenyRule -and $AfterCandidates.Count -eq 0 -and $OutcomeReconciles)
         Note                  = 'This is an isolated fixture. It does not authorize cleanup of a real Windows temporary root.'
     } | ConvertTo-Json -Depth 8
 } finally {

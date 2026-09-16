@@ -190,41 +190,28 @@ function Get-StaleUserProfile {
                             throw [System.IO.InvalidDataException]::new("The profile path or an ancestor changed before sizing: '$AncestorPath'.")
                         }
                     }
-                    $SizeTotal = [Int64]0
-                    $PendingDirectories = [System.Collections.Generic.Stack[object]]::new()
-                    $PendingDirectories.Push([pscustomobject]@{
-                            Path     = $ProfileDirectory.FullName
-                            Identity = $HeldDirectoryHandleByPath[$ProfileDirectory.FullName].Identity
-                        })
-                    while ($PendingDirectories.Count -gt 0) {
-                        $DirectoryState = $PendingDirectories.Pop()
-                        $DirectoryPath = [string]$DirectoryState.Path
-                        $ExpectedDirectoryIdentity = $DirectoryState.Identity
+                    $SizeState = [pscustomobject]@{ Total = [Int64]0 }
+                    $TraverseDirectory = {
+                        param (
+                            [Parameter(Mandatory)]
+                            [string]
+                            $DirectoryPath,
+
+                            [Parameter(Mandatory)]
+                            [object]
+                            $ExpectedDirectoryIdentity,
+
+                            [Parameter(Mandatory)]
+                            [object]
+                            $DirectoryEntry,
+
+                            [switch]
+                            $KeepHandle
+                        )
+
                         Initialize-TheCleanersNativeFileInterop
-                        $DirectoryEntry = $null
-                        $DirectoryHandle = $null
-                        $DirectoryHandleRetained = $false
+                        $DirectoryHandle = $DirectoryEntry.Handle
                         try {
-                            if ($HeldDirectoryHandleByPath.TryGetValue($DirectoryPath, [ref]$DirectoryEntry)) {
-                                $DirectoryHandle = $DirectoryEntry.Handle
-                                $DirectoryHandleRetained = $true
-                            } else {
-                                try {
-                                    $DirectoryHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($DirectoryPath)
-                                } catch {
-                                    $DirectoryHandle = [TheCleaners.NativeFileInterop]::OpenForIdentityInspection($DirectoryPath)
-                                }
-                                $DirectoryEntry = [pscustomobject]@{
-                                    Path     = $DirectoryPath
-                                    Handle   = $DirectoryHandle
-                                    Identity = $null
-                                }
-                                $HeldDirectoryHandles.Add($DirectoryEntry)
-                                $HeldDirectoryHandleByPath[$DirectoryPath] = $DirectoryEntry
-                                $DirectoryHandleRetained = $true
-                                $DirectoryHandle = $null
-                                $DirectoryHandle = $DirectoryEntry.Handle
-                            }
                             $DirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryHandle)
                             $DirectoryEntry.Identity = $DirectoryIdentity
                             if (-not $DirectoryIdentity.IsDirectory -or $null -eq $ExpectedDirectoryIdentity -or -not $DirectoryIdentity.Equals($ExpectedDirectoryIdentity)) {
@@ -239,6 +226,7 @@ function Get-StaleUserProfile {
                                     continue
                                 }
                                 if ($Item.PSIsContainer) {
+                                    $ChildIdentityHandle = $null
                                     try {
                                         try {
                                             $ChildIdentityHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($Item.FullName)
@@ -257,17 +245,14 @@ function Get-StaleUserProfile {
                                         $HeldDirectoryHandles.Add($ChildDirectoryEntry)
                                         $HeldDirectoryHandleByPath[$Item.FullName] = $ChildDirectoryEntry
                                         $ChildIdentityHandle = $null
+                                        & $TraverseDirectory -DirectoryPath $Item.FullName -ExpectedDirectoryIdentity $ChildIdentity -DirectoryEntry $ChildDirectoryEntry
                                     } finally {
                                         if ($null -ne $ChildIdentityHandle) {
                                             $ChildIdentityHandle.Dispose()
                                         }
                                     }
-                                    $PendingDirectories.Push([pscustomobject]@{
-                                            Path     = $Item.FullName
-                                            Identity = $ChildIdentity
-                                        })
                                 } else {
-                                    $SizeTotal += [Int64]$Item.Length
+                                    $SizeState.Total = [Int64]($SizeState.Total + [Int64]$Item.Length)
                                 }
                             }
                             & $ValidateHeldDirectoryHandles
@@ -276,13 +261,20 @@ function Get-StaleUserProfile {
                                 throw [System.IO.InvalidDataException]::new("The profile traversal path changed while it was being sized: '$DirectoryPath'.")
                             }
                         } finally {
-                            if ($null -ne $DirectoryHandle -and -not $DirectoryHandleRetained) {
-                                $DirectoryHandle.Dispose()
+                            if (-not $KeepHandle) {
+                                [void]$HeldDirectoryHandleByPath.Remove($DirectoryPath)
+                                [void]$HeldDirectoryHandles.Remove($DirectoryEntry)
+                                if ($null -ne $DirectoryEntry.Handle) {
+                                    $DirectoryEntry.Handle.Dispose()
+                                    $DirectoryEntry.Handle = $null
+                                }
                             }
                         }
                     }
+                    $ProfileDirectoryEntry = $HeldDirectoryHandleByPath[$ProfileDirectory.FullName]
+                    & $TraverseDirectory -DirectoryPath $ProfileDirectory.FullName -ExpectedDirectoryIdentity $ProfileDirectoryEntry.Identity -DirectoryEntry $ProfileDirectoryEntry -KeepHandle
                     & $ValidateHeldDirectoryHandles
-                    $SizeBytes = $SizeTotal
+                    $SizeBytes = $SizeState.Total
                     $SizeStatus = 'Available'
                 }
             } catch {
