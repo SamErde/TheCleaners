@@ -9,8 +9,15 @@ BeforeDiscovery {
 BeforeAll {
     $ModuleRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners')).Path
     foreach ($RelativePath in @(
+        'Private/ResultContracts.ps1'
+        'Private/Initialize-TheCleanersNativeFileInterop.ps1'
+        'Private/Get-TheCleanersWindowsTempRoot.ps1'
+        'Private/Get-TheCleanersTempPlan.ps1'
         'Private/Resolve-TheCleanersFileSystemPath.ps1'
-        'Private/Remove-OldFiles.ps1'
+        'Private/Test-TheCleanersIisLogFileName.ps1'
+        'Private/Test-TheCleanersIisProtectedPath.ps1'
+        'Private/Test-TheCleanersExchangeLogFileName.ps1'
+        'Private/Get-TheCleanersExchangeProtectedPaths.ps1'
         'Public/Clear-CurrentUserTemp.ps1'
         'Public/Clear-WindowsTemp.ps1'
         'Public/Clear-OldIISLog.ps1'
@@ -42,6 +49,7 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
         $env:TEMP = $TempRoot
         $env:TMP = $TempRoot
         $env:SystemRoot = $FakeWindows
+        Mock Get-TheCleanersWindowsTempRoot { Resolve-TheCleanersFileSystemPath -LiteralPath $TempRoot }
         Mock Get-Date { $Now }
     }
 
@@ -83,6 +91,94 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
         $Result.DirectoriesRemoved | Should -Be 0
     }
 
+    It 'does not prune ancestors after a child becomes non-empty' {
+        $ParentPath = Split-Path -Path $NestedPath -Parent
+        $ParentFile = New-Item -Path (Join-Path -Path $ParentPath -ChildPath 'old-parent.tmp') -ItemType File
+        [System.IO.File]::WriteAllBytes($ParentFile.FullName, [byte[]](7, 8, 9))
+        $ParentFile.LastWriteTimeUtc = $Now.AddDays(-31)
+        $RecentChildPath = Join-Path -Path $NestedPath -ChildPath 'recent-after-discovery.tmp'
+        $ReplacementPath = Join-Path -Path $TestDrive -ChildPath 'MovedSkippedChild'
+        $script:ChildWasMadeNonEmpty = $false
+        $script:MoveAttempted = $false
+        $script:MoveBlocked = $false
+
+        Mock Get-ChildItem {
+            if ($LiteralPath -eq $NestedPath -and
+                -not [System.IO.File]::Exists($OldFile.FullName) -and
+                -not [System.IO.File]::Exists($RecentChildPath)) {
+                $RecentChild = Microsoft.PowerShell.Management\New-Item -Path $RecentChildPath -ItemType File -Force
+                $RecentChild.LastWriteTimeUtc = $Now
+                $script:ChildWasMadeNonEmpty = $true
+            }
+            foreach ($Item in [System.IO.DirectoryInfo]::new($LiteralPath).GetFileSystemInfos()) {
+                $Item | Add-Member -MemberType NoteProperty -Name PSIsContainer -Value ($Item -is [System.IO.DirectoryInfo]) -Force
+                $Item
+            }
+        }
+        Mock Get-Item {
+            if ($LiteralPath -eq $ParentPath -and $script:ChildWasMadeNonEmpty -and -not $script:MoveAttempted) {
+                $script:MoveAttempted = $true
+                try {
+                    [System.IO.Directory]::Move($NestedPath, $ReplacementPath)
+                } catch {
+                    $script:MoveBlocked = $true
+                }
+            }
+            if ([System.IO.Directory]::Exists($LiteralPath)) {
+                [System.IO.DirectoryInfo]::new($LiteralPath)
+            } elseif ([System.IO.File]::Exists($LiteralPath)) {
+                [System.IO.FileInfo]::new($LiteralPath)
+            } else {
+                throw [System.IO.FileNotFoundException]::new("Fixture path was not found: '$LiteralPath'.")
+            }
+        }
+
+        $Result = & $CommandName -Days 30 -RemoveEmptyDirectory -Confirm:$false -PassThru -ErrorAction SilentlyContinue
+
+        $script:ChildWasMadeNonEmpty | Should -BeTrue
+        $script:MoveAttempted | Should -BeFalse
+        $script:MoveBlocked | Should -BeFalse
+        $NestedPath | Should -Exist
+        $ParentPath | Should -Exist
+        $RecentChildPath | Should -Exist
+        $Result.DirectoriesRemoved | Should -Be 0
+    }
+
+    It 'does not prune a directory when another process removes a planned candidate' {
+        $FirstFilePath = Join-Path -Path $NestedPath -ChildPath 'a-concurrent.tmp'
+        $SecondFilePath = Join-Path -Path $NestedPath -ChildPath 'b-concurrent.tmp'
+        $FirstFile = New-Item -Path $FirstFilePath -ItemType File
+        $SecondFile = New-Item -Path $SecondFilePath -ItemType File
+        $FirstFile.LastWriteTimeUtc = $Now.AddDays(-31)
+        $SecondFile.LastWriteTimeUtc = $Now.AddDays(-31)
+        $script:ConcurrentCandidateRemoved = $false
+
+        Mock Get-Item {
+            if ($LiteralPath -eq $FirstFilePath -and -not $script:ConcurrentCandidateRemoved) {
+                [System.IO.File]::Delete($SecondFilePath)
+                $script:ConcurrentCandidateRemoved = $true
+            }
+            if ([System.IO.Directory]::Exists($LiteralPath)) {
+                return [System.IO.DirectoryInfo]::new($LiteralPath)
+            }
+            if ([System.IO.File]::Exists($LiteralPath)) {
+                return [System.IO.FileInfo]::new($LiteralPath)
+            }
+            throw [System.IO.FileNotFoundException]::new("Fixture path was not found: '$LiteralPath'.")
+        }
+
+        $Result = & $CommandName -Days 30 -RemoveEmptyDirectory -Confirm:$false -PassThru
+
+        $script:ConcurrentCandidateRemoved | Should -BeTrue
+        $FirstFilePath | Should -Not -Exist
+        $SecondFilePath | Should -Not -Exist
+        $NestedPath | Should -Exist
+        (Split-Path -Path $NestedPath -Parent) | Should -Exist
+        $Result.FilesRemoved | Should -Be 2
+        $Result.FilesSkipped | Should -Be 1
+        $Result.DirectoriesRemoved | Should -Be 0
+    }
+
     It 'does not absorb an unrelated pre-existing empty sibling into its directory plan' {
         $EmptySibling = Join-Path -Path (Split-Path -Path $NestedPath -Parent) -ChildPath 'LeaveMe'
         $null = New-Item -Path $EmptySibling -ItemType Directory
@@ -105,6 +201,20 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
         $Result.BytesReclaimed | Should -Be 0
         $Result.Status | Should -Be 'WhatIf'
         Should -Invoke Remove-Item -Exactly 0
+    }
+
+    It 'lists candidate paths through the verbose stream' {
+        $VerboseOutput = @(& $CommandName -Days 30 -RemoveEmptyDirectory -WhatIf -Verbose 4>&1)
+        $VerboseMessages = @($VerboseOutput | ForEach-Object {
+                if ($_ -is [System.Management.Automation.VerboseRecord]) {
+                    $_.Message
+                } else {
+                    [string]$_
+                }
+            })
+
+        $VerboseMessages | Should -Contain ('Candidate file: {0}' -f $OldFile.FullName)
+        $VerboseMessages | Should -Contain ('Planned directory: {0}' -f $NestedPath)
     }
 
     It 'honors an explicitly false directory switch' {
@@ -152,6 +262,21 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
         }
     }
 
+    It 'does not delete a file that remains open for writing' {
+        $Writer = [System.IO.File]::Open($OldFile.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::Read -bor [System.IO.FileShare]::Delete)
+        try {
+            $Result = & $CommandName -Days 30 -Confirm:$false -PassThru -ErrorAction SilentlyContinue -ErrorVariable CleanupErrors
+            $CleanupErrors | Should -Not -BeNullOrEmpty
+            $Result.FileFailureCount | Should -Be 1
+            $Result.FilesRemoved | Should -Be 0
+            $Result.BytesReclaimed | Should -Be 0
+            $Result.Status | Should -Be 'PartialFailure'
+            $OldFile.FullName | Should -Exist
+        } finally {
+            $Writer.Dispose()
+        }
+    }
+
     It 'honors ErrorAction Stop rather than swallowing deletion errors' {
         $FileLock = [System.IO.File]::Open($OldFile.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
         try {
@@ -169,7 +294,8 @@ Describe 'Temp safety: <CommandName>' -ForEach $TempCases -Skip:(-not $WindowsHo
             $Diagnostic = 'a locked candidate must terminate; returned summary: {0}' -f ($UnexpectedResult | ConvertTo-Json -Compress)
             $CompletedNormally | Should -BeFalse -Because $Diagnostic
             $CaughtError | Should -Not -BeNullOrEmpty
-            $CaughtError.Exception.GetBaseException() | Should -BeOfType ([System.IO.IOException])
+            $CaughtError.FullyQualifiedErrorId | Should -Match '^TempFileRemovalFailed'
+            $CaughtError.Exception.GetBaseException() | Should -BeOfType ([System.ComponentModel.Win32Exception])
             $OldFile.FullName | Should -Exist
         } finally {
             $FileLock.Dispose()
@@ -294,7 +420,7 @@ Describe 'Exchange is structurally preview-only' -Skip:(-not $WindowsHost) -Tag 
         $ParseErrors | Should -BeNullOrEmpty
         $Forbidden = $Ast.FindAll({
             param($Node)
-            ($Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -in @('Remove-Item', 'Clear-OldIISLog', 'Remove-OldFiles', 'Invoke-Expression', 'Start-Process')) -or
+            ($Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -in @('Remove-Item', 'Clear-OldIISLog', 'Invoke-Expression', 'Start-Process')) -or
             ($Node -is [System.Management.Automation.Language.InvokeMemberExpressionAst] -and $Node.Member.Value -eq 'Delete')
         }, $true)
         @($Forbidden) | Should -HaveCount 0
@@ -303,9 +429,7 @@ Describe 'Exchange is structurally preview-only' -Skip:(-not $WindowsHost) -Tag 
 
 Describe 'IIS is structurally preview-only' -Skip:(-not $WindowsHost) -Tag Unit {
     It 'rejects omission of WhatIf before discovering or removing logs' {
-        Mock Remove-OldFiles { throw 'IIS must not delete.' }
         { Clear-OldIISLog -Confirm:$false } | Should -Throw '*preview-only*'
-        Should -Invoke Remove-OldFiles -Exactly 0
     }
 
     It 'does not remove logs when explicitly previewed' {
@@ -313,31 +437,11 @@ Describe 'IIS is structurally preview-only' -Skip:(-not $WindowsHost) -Tag Unit 
         Mock Get-ItemProperty { throw [System.Management.Automation.ItemNotFoundException]::new('Fixture registry value is absent.') }
         Mock Test-Path { $false }
         Mock Get-ChildItem { throw 'IIS preview test must not enumerate host paths.' }
-        Mock Remove-OldFiles { throw 'IIS must not delete.' }
 
-        Clear-OldIISLog -WhatIf
+        $DiscoveryErrors = @()
+        Clear-OldIISLog -WhatIf -ErrorAction SilentlyContinue -ErrorVariable DiscoveryErrors
+        @($DiscoveryErrors | Where-Object { $_.FullyQualifiedErrorId -match '^IISDiscoveryUnavailable' }) | Should -Not -BeNullOrEmpty
 
-        Should -Invoke Remove-OldFiles -Exactly 0
-    }
-}
-
-# Keep existing coverage of legacy code until its separate refactor is completed.
-Describe 'Remove-OldFiles legacy IIS dependency' -Tag Unit {
-    BeforeEach {
-        $TestRoot = Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)
-        $null = New-Item -Path $TestRoot -ItemType Directory
-        $OldFile = New-Item -Path (Join-Path -Path $TestRoot -ChildPath 'old.log') -ItemType File
-        $NewFile = New-Item -Path (Join-Path -Path $TestRoot -ChildPath 'new.log') -ItemType File
-        $OldFile.LastWriteTime = (Get-Date).AddDays(-31)
-    }
-    It 'removes files older than the retention window' {
-        Remove-OldFiles -Path $TestRoot -Days 30 -Confirm:$false
-        $OldFile.FullName | Should -Not -Exist
-        $NewFile.FullName | Should -Exist
-    }
-    It 'does not remove matching files with WhatIf' {
-        Remove-OldFiles -Path $TestRoot -Days 30 -WhatIf
-        $OldFile.FullName | Should -Exist
     }
 }
 

@@ -1,9 +1,14 @@
 # Load only reviewed files, in a deterministic order. Import must have no host or caller-scope side effects.
 $PrivateScripts = @(
-    'Private/Convert-SIDtoSamAccountName.ps1'
-    'Private/Convert-SamAccountNameToSID.ps1'
-    'Private/Remove-OldFiles.ps1'
+    'Private/ResultContracts.ps1'
+    'Private/Initialize-TheCleanersNativeFileInterop.ps1'
+    'Private/Get-TheCleanersWindowsTempRoot.ps1'
+    'Private/Get-TheCleanersTempPlan.ps1'
     'Private/Resolve-TheCleanersFileSystemPath.ps1'
+    'Private/Test-TheCleanersIisLogFileName.ps1'
+    'Private/Test-TheCleanersIisProtectedPath.ps1'
+    'Private/Test-TheCleanersExchangeLogFileName.ps1'
+    'Private/Get-TheCleanersExchangeProtectedPaths.ps1'
     'Private/Show-TheCleanersLogo.ps1'
 )
 $PublicScripts = @(

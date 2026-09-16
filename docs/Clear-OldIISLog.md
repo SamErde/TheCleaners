@@ -22,7 +22,7 @@ Clear-OldIISLog [[-Days] <Int16>] [-PassThru] [-WhatIf] [-Confirm]
 
 `Clear-OldIISLog` is structurally preview-only while IIS path, file-pattern, and server acceptance work remains incomplete. Explicit `-WhatIf` is required. Calling the command without it, or with `-WhatIf:$false`, produces a terminating `IISCleanupPreviewOnly` error before module, registry, or filesystem discovery.
 
-The command discovers existing IIS log roots, skips reparse points before traversal, and previews old `.log` files using one inclusive UTC cutoff. Validated roots are normalized and deduplicated before enumeration. A WebAdministration dependency imported for discovery is removed afterward, including when discovery fails; an already loaded dependency is preserved. Candidate discovery is experimental and is not a validated deletion allowlist. This version contains no deletion command and does not call the legacy generic removal helper.
+The command discovers existing IIS log roots, skips reparse points before traversal, and previews files matching the format-specific allowlist using one inclusive UTC cutoff. Validated roots are normalized and deduplicated before enumeration. A WebAdministration dependency imported for discovery is removed afterward, including when discovery fails; an already loaded dependency is preserved. Candidate discovery is experimental and is not a validated deletion allowlist. This version contains no deletion command and no generic deletion wrapper.
 
 ## EXAMPLES
 
@@ -40,7 +40,9 @@ Preview old `.log` candidates without returning summary objects.
 Clear-OldIISLog -Days 30 -WhatIf -PassThru
 ```
 
-Preview candidates and return one summary for each successfully enumerated existing root.
+Preview candidates and return one summary for each existing root. A root that fails
+validation or enumeration is returned as `Status = DiscoveryFailed` with null
+candidate counts when `-PassThru` is used.
 
 ## PARAMETERS
 
@@ -116,7 +118,7 @@ Returned only with `-PassThru`. Results have `Status = WhatIf`, `DiscoveryStatus
 
 ## NOTES
 
-When WebAdministration is available, site-specific roots are discovered from IIS configuration. Otherwise, the command considers the default IIS log root and the registry-configured root. Missing or non-directory roots are skipped. Environment variables are expanded. Existing roots pass path and reparse-point validation, are normalized to absolute paths without trailing separators, and are deduplicated case-insensitively before traversal. Equivalent `..`, separator, and trailing-separator spellings produce one summary; distinct roots remain separate.
+When WebAdministration is available, site-specific roots are discovered from IIS configuration. Otherwise, the command considers the default IIS log root and the registry-configured root. Missing roots are skipped; roots that fail validation or enumeration are reported through the error stream and, with `-PassThru`, as `DiscoveryFailed` summaries with null candidate counts. Environment variables are expanded. Existing roots pass path and reparse-point validation, are normalized to absolute paths without trailing separators, and are deduplicated case-insensitively before traversal. Equivalent `..`, separator, and trailing-separator spellings produce one summary; distinct roots remain separate.
 
 A dependency already loaded by the caller is not unloaded. A dependency loaded solely for this discovery is removed on success or failure. This restores the dependency's module/command registration, not every process-level effect of loading a Windows component; it is not a claim that loaded assemblies are unloaded. Caller WhatIf and Confirm preferences are preserved.
 

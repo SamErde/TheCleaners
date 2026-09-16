@@ -2,14 +2,10 @@
 
 ## Reporting a Vulnerability
 
-If you discover a vulnerability in **The Cleaners**, please follow the _following process_:
+If you discover a vulnerability in **The Cleaners**, report it privately through GitHub's private vulnerability reporting or security advisory workflow. Do not include exploitable details, credentials, customer data, or live cleanup paths in a public issue or pull request.
 
-1. Report the vulnerability privately through GitHub's private vulnerability reporting or security advisory workflow.
-   - Do not share specifics or details of the vulnerability in an open GitHub issue.
-2. A repo owner will review the report and may follow up privately for more information.
-3. We will evaluate the vulnerability and, if necessary, release a fix or mitigating steps to address it. We will contact you to let you know the outcome, and will credit you in the report.
+The maintainer will review the report and may follow up privately for reproduction details. Include the affected version or commit, supported Windows/PowerShell runtime, impact, and a safe fixture-based reproduction when possible. Redact personal paths and secrets.
 
-   Please **do not disclose the vulnerability publicly** until a fix is released!
+We will evaluate the report and, if necessary, release a fix or mitigating steps. Please do not disclose the vulnerability publicly until a fix is released or the maintainer has confirmed coordinated disclosure.
 
-4. Once we have either a) published a fix, or b) declined to address the vulnerability for
-whatever reason, you are free to publicly disclose it.
+The module is Windows-only and its IIS/Exchange commands are preview-only in the 1.0 preparation work. Reports involving deletion, path containment, identity races, ACLs, reparse points, or package publication should say whether the behavior was observed in an isolated fixture or a disposable lab.

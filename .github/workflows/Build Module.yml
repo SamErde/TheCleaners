@@ -5,20 +5,33 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
-  test:
-    name: PowerShell 7 - test and build
+  powershell-7:
+    name: PowerShell ${{ matrix.channel }} - test and build
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - channel: 7.6 LTS
+            version: 7.6.6
+          - channel: 7.5 stable
+            version: 7.5.9
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Install exact PowerShell runtime
+        uses: PSModule/install-powershell@159c2929fac34e3c7fc55d75e8997fb27fc7f75a # v1
+        with:
+          Version: ${{ matrix.version }}
       - name: Bootstrap
         shell: pwsh
         run: ./actions_bootstrap.ps1
@@ -26,36 +39,53 @@ jobs:
         shell: pwsh
         run: |
           $PSVersionTable | Format-List
+          if ($PSVersionTable.PSVersion -ne [version]'${{ matrix.version }}') {
+              throw "The job is running PowerShell $($PSVersionTable.PSVersion), not the requested ${{ matrix.version }}."
+          }
           Invoke-Build -File .\src\TheCleaners.build.ps1
       - name: Upload Pester results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: pester-results-pwsh
-          path: ./src/Artifacts/testOutput
+          name: pester-results-pwsh-${{ matrix.version }}
+          path: ./src/Reports
+          if-no-files-found: error
+      - name: Upload module artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: module-artifact-pwsh-${{ matrix.version }}
+          path: ./src/Artifacts
           if-no-files-found: error
       - name: Upload build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: zip-archive
-          path: ./src/Archive
+          name: zip-archive-pwsh-${{ matrix.version }}
+          path: ./src/Archive/*
           if-no-files-found: error
 
   windows-powershell:
-    name: Windows PowerShell 5.1 - safety and API tests
+    name: Windows PowerShell 5.1 - compatibility, API, and fixture safety
     runs-on: windows-latest
-    timeout-minutes: 15
+    needs: powershell-7
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - name: Install test dependency
+      - name: Bootstrap exact dependencies
         shell: powershell
-        run: |
-          [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-          Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser | Out-Null
-          Install-Module -Name Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force -ErrorAction Stop
+        run: ./actions_bootstrap.ps1
+      - name: Download PowerShell 7.6 LTS artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: module-artifact-pwsh-7.6.6
+          path: ./src/Artifacts
+      - name: Download PowerShell 7.6 LTS archive
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: zip-archive-pwsh-7.6.6
+          path: ./src/Archive
       - name: Parse and test with Windows PowerShell 5.1
         shell: powershell
         run: |
@@ -73,18 +103,35 @@ jobs:
               throw ($ParseFailures | Out-String)
           }
           Import-Module -Name Pester -RequiredVersion 5.7.1 -Force -ErrorAction Stop
+          . .\src\TheCleaners\Private\Initialize-TheCleanersNativeFileInterop.ps1
+          Initialize-TheCleanersNativeFileInterop
           $ResultsDirectory = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath 'TestResults'
           $null = New-Item -Path $ResultsDirectory -ItemType Directory -Force
           $Configuration = New-PesterConfiguration
-          $Configuration.Run.Path = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath 'src/Tests/Unit'
+          # Load the CodeDOM-generated native helper in the parent Windows
+          # PowerShell process before Pester creates worker runspaces.
+          $UnitTests = @(Get-ChildItem -LiteralPath (Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath 'src/Tests/Unit') -Filter '*.Tests.ps1' -File | ForEach-Object { $_.FullName })
+          $Configuration.Run.Path = $UnitTests + @(Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath 'src/Tests/Integration')
           $Configuration.Run.PassThru = $true
           $Configuration.TestResult.Enabled = $true
           $Configuration.TestResult.OutputPath = Join-Path -Path $ResultsDirectory -ChildPath 'WindowsPowerShell51.xml'
           $Configuration.TestResult.OutputFormat = 'NUnitXml'
           $Configuration.Output.Verbosity = 'Detailed'
           $Result = Invoke-Pester -Configuration $Configuration
-          if ($Result.TotalCount -eq 0 -or $Result.Result -ne 'Passed') {
-              throw 'Windows PowerShell 5.1 unit-test gate failed.'
+          $Skipped = if ($null -eq $Result.SkippedCount) { 0 } else { [int]$Result.SkippedCount }
+          $NotRun = if ($null -eq $Result.NotRunCount) { 0 } else { [int]$Result.NotRunCount }
+          if ($Result.TotalCount -eq 0 -or $Result.Result -ne 'Passed' -or $Result.FailedCount -ne 0 -or $Skipped -ne 0 -or $NotRun -ne 0) {
+              throw "Windows PowerShell 5.1 test gate failed. Total=$($Result.TotalCount); Failed=$($Result.FailedCount); Skipped=$Skipped; NotRun=$NotRun."
+          }
+      - name: Run native ACL fixture directly under Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ConfirmPreference = 'None'
+          $FixtureParent = Join-Path -Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)) -ChildPath 'Temp'
+          $Evidence = & .\lab\Invoke-TheCleanersAclFixture.ps1 -FixtureParent $FixtureParent | ConvertFrom-Json
+          $Evidence | ConvertTo-Json -Depth 8
+          if (-not $Evidence.Acceptance) {
+              throw 'The Windows PowerShell 5.1 native ACL fixture did not pass acceptance checks.'
           }
       - name: Upload Windows PowerShell results
         if: always()
