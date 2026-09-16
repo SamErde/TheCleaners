@@ -75,10 +75,11 @@ if ($env:THECLEANERS_CONFIRM_EXPECTED -eq 'Approved') {
 }
 'CONFIRM_INTERACTIVE_OK'
 '@
-        $EncodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($ProbeScript))
+        $ProbePath = Join-Path -Path $FixtureRoot -ChildPath 'InteractiveConfirmProbe.ps1'
+        Set-Content -LiteralPath $ProbePath -Value $ProbeScript -Encoding UTF8
         $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
         $StartInfo.FileName = $PowerShellExecutable
-        $StartInfo.Arguments = "-NoLogo -NoProfile -EncodedCommand $EncodedCommand"
+        $StartInfo.Arguments = '-NoLogo -NoProfile -File "{0}"' -f $ProbePath
         $StartInfo.UseShellExecute = $false
         $StartInfo.CreateNoWindow = $true
         $StartInfo.RedirectStandardInput = $true
