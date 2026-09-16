@@ -12,6 +12,7 @@ permissions:
 
 env:
   TC_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+  TC_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
 
 jobs:
   powershell-7:
@@ -194,6 +195,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          fetch-depth: 0
           ref: ${{ env.TC_BUILD_COMMIT }}
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
         with:
@@ -201,4 +203,12 @@ jobs:
       - run: python -m pip install -r docs/requirements.txt
       - run: python -m unittest discover -s .github/scripts -p "test_*.py" -v
       - run: python -m mkdocs build --strict --site-dir site
-      - run: git diff --check
+      - name: Check whitespace in the tested change range
+        shell: bash
+        run: |
+          if [[ -n "$TC_DIFF_BASE" && "$TC_DIFF_BASE" != "0000000000000000000000000000000000000000" ]]; then
+            git diff --check "$TC_DIFF_BASE" "$TC_BUILD_COMMIT"
+          else
+            git show --format= --check "$TC_BUILD_COMMIT"
+          fi
+          git diff --check
