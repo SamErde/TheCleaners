@@ -26,7 +26,7 @@ Use the repository ACL harness only with an already-created disposable parent:
 .\lab\Invoke-TheCleanersAclFixture.ps1 -FixtureParent C:\Disposable\TheCleanersLab -Confirm:$false
 ```
 
-The exact PR #31 hosted PS5.1 run used its isolated runner temp child and recorded two candidates (`old-readable.tmp` and `old-delete-without-read.tmp`), `2 -> 0`, `FilesRemoved = 2`, `BytesReclaimed = 6`, no failures/skips/error IDs, NTFS, elevation, and `Acceptance = true`. That fixture is not client, non-elevated, ReFS, or real system-root acceptance.
+The exact PR #31 hosted PS5.1 run used its isolated runner temp child and recorded two candidates (`old-readable.tmp` and `old-delete-without-read.tmp`), `2 -> 0`, `FilesRemoved = 2`, `BytesReclaimed = 6`, no failures/skips/error IDs, NTFS, elevation, and `Acceptance = true`. That fixture is not complete Windows client/server, broader elevated/non-elevated, ReFS, or real system-root acceptance.
 
 ## IIS and Exchange preview gates
 
