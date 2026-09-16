@@ -13,6 +13,8 @@ function Test-TheCleanersIisLogFileName {
         IIS logging format name or numeric value.
     .PARAMETER Service
         IIS service family represented by the root.
+    .PARAMETER LocalTimeRollover
+        Use the local-time W3C rollover name instead of the UTC-prefixed name.
     .OUTPUTS
         System.Boolean
     #>
@@ -30,7 +32,11 @@ function Test-TheCleanersIisLogFileName {
 
         [Parameter()]
         [string]
-        $Service = 'W3SVC'
+        $Service = 'W3SVC',
+
+        [Parameter()]
+        [switch]
+        $LocalTimeRollover
     )
 
     $NormalizedFormat = switch ($Format.ToString().ToUpperInvariant()) {
@@ -46,11 +52,12 @@ function Test-TheCleanersIisLogFileName {
     $ServiceName = $Service.ToUpperInvariant()
     switch ($NormalizedFormat) {
         'W3C' {
+            $W3cPrefix = if ($LocalTimeRollover) { '' } else { 'u_' }
             if ($ServiceName -in @('FTPSVC', 'MSFTPSVC')) {
-                return $Name -match '^u_ex(?:\d{2}|\d{4}|\d{6}|\d{8})\.log$'
+                return $Name -match ('^{0}ex\d{{6}}\.log$' -f $W3cPrefix)
             }
             if ($ServiceName -eq 'W3SVC') {
-                return $Name -match '^u_ex(?:\d{2}|\d{4}|\d{6}|\d{8})\.log$'
+                return $Name -match ('^{0}ex\d{{6}}\.log$' -f $W3cPrefix)
             }
             return $false
         }

@@ -79,6 +79,37 @@ function Get-OptionalRegistryProperty {
     }
 }
 
+function Get-ExchangeManagementCommandEvidence {
+    [CmdletBinding()]
+    param ()
+
+    $Evidence = [System.Collections.Generic.List[object]]::new()
+    foreach ($Name in @('Get-ExchangeServer', 'Get-MailboxDatabase')) {
+        try {
+            $Command = Get-Command -Name $Name -ErrorAction Stop | Select-Object -First 1
+            if ($null -ne $Command) {
+                $Evidence.Add([pscustomobject]@{
+                        Name        = $Command.Name
+                        CommandType = [string]$Command.CommandType
+                        Version     = if ($null -eq $Command.Version) { $null } else { $Command.Version.ToString() }
+                    })
+            }
+        } catch {
+            $CommandIsAbsent = (
+                $_.Exception -is [System.Management.Automation.CommandNotFoundException] -or
+                $_.FullyQualifiedErrorId -match 'CommandNotFound'
+            )
+            if (-not $CommandIsAbsent) {
+                throw [System.InvalidOperationException]::new(
+                    "Unable to determine Exchange management command '$Name': $($_.Exception.Message)",
+                    $_.Exception
+                )
+            }
+        }
+    }
+    @($Evidence.ToArray())
+}
+
 function Get-PreviewEvidence {
     param (
         [Parameter(Mandatory)]
@@ -130,10 +161,22 @@ function Get-PreviewEvidence {
 $IisRegistry = Get-OptionalRegistryProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\InetStp'
 $ExchangeRegistry = Get-OptionalRegistryProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup'
 $IisModule = Get-Module -ListAvailable -Name WebAdministration | Sort-Object Version -Descending | Select-Object -First 1
-$ExchangeCommands = @(
-    Get-Command -Name 'Get-ExchangeServer', 'Get-MailboxDatabase' -ErrorAction SilentlyContinue |
-        Select-Object Name, CommandType, Version
-)
+$ExchangeCommands = @()
+$ExchangeCommandProbe = [ordered]@{
+    Status        = $null
+    ErrorId       = $null
+    ErrorMessage  = $null
+    CommandCount  = 0
+}
+try {
+    $ExchangeCommands = @(Get-ExchangeManagementCommandEvidence)
+    $ExchangeCommandProbe.Status = if ($ExchangeCommands.Count -eq 0) { 'NotInstalled' } else { 'Validated' }
+    $ExchangeCommandProbe.CommandCount = $ExchangeCommands.Count
+} catch {
+    $ExchangeCommandProbe.Status = 'Failed'
+    $ExchangeCommandProbe.ErrorId = 'ExchangeManagementCommandProbeFailed'
+    $ExchangeCommandProbe.ErrorMessage = $_.Exception.Message
+}
 $IisPreview = Get-PreviewEvidence -CommandName 'Clear-OldIISLog'
 $ExchangePreview = Get-PreviewEvidence -CommandName 'Clear-OldExchangeLog'
 
@@ -161,6 +204,7 @@ $ExchangePreview = Get-PreviewEvidence -CommandName 'Clear-OldExchangeLog'
         ProductDetected = $null -ne $ExchangeRegistry
         ProductBuild    = if ($null -eq $ExchangeRegistry) { $null } else { [ordered]@{ DisplayVersion = $ExchangeRegistry.AdminDisplayVersion; ProductVersion = $ExchangeRegistry.MsiProductVersion; InstallPath = $ExchangeRegistry.MsiInstallPath } }
         ManagementCommands = $ExchangeCommands
+        ManagementCommandProbe = $ExchangeCommandProbe
         Services         = @(Get-ServiceEvidence -Names @('MSExchangeADTopology', 'MSExchangeTransport', 'MSExchangeIS', 'MSExchangeFrontEndTransport'))
         ProtectedPaths   = @($ExchangePreview.ProtectedPaths)
         Preview          = $ExchangePreview

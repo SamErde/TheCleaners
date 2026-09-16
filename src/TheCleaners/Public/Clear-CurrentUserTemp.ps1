@@ -56,7 +56,10 @@ function Clear-CurrentUserTemp {
         $PSCmdlet.ThrowTerminatingError($ErrorRecord)
     }
 
+    $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
     $Root = $null
+    $ValidatedRootIdentity = $null
+    $RequestedTempPath = $null
     try {
         $RequestedTempPath = [System.IO.Path]::GetTempPath()
         $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RequestedTempPath
@@ -71,15 +74,36 @@ function Clear-CurrentUserTemp {
         if ($RequestedTempComparison -ne $CanonicalUserTempPath -and -not $RequestedTempComparison.StartsWith($AllowedDescendantPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
             throw [System.UnauthorizedAccessException]::new("The current-user temporary path is outside the canonical user temp root: '$($Root.FullName)'.")
         }
+        if (-not $WhatIfPreference) {
+            $ValidatedRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $Root.FullName -Directory
+            if ($ValidatedRootIdentity.IsReparsePoint) {
+                throw [System.IO.InvalidDataException]::new("The current-user temporary root is a reparse point: '$($Root.FullName)'.")
+            }
+        }
     } catch {
+        $FailureRootPath = if ($null -ne $Root) {
+            $Root.FullName.TrimEnd([char[]]@('\', '/'))
+        } elseif (-not [string]::IsNullOrWhiteSpace($RequestedTempPath)) {
+            $RequestedTempPath.TrimEnd([char[]]@('\', '/'))
+        } else {
+            'Current-user temporary root'
+        }
+        $Result = Get-TheCleanersCleanupResult -Command 'Clear-CurrentUserTemp' -RootPath $FailureRootPath -CutoffUtc $CutoffUtc -PrivilegeStatus (Get-TheCleanersPrivilegeStatus) -DiscoveryStatus 'Failed' -Status 'DiscoveryFailed'
+        $Result.FileCandidateCount = $null
+        $Result.DirectoryCandidateCount = $null
+        $Result.DiscoveryErrorCount = 1
+        $Result.ErrorIds = @('TempRootValidationFailed')
         $ErrorRecord = Get-TheCleanersErrorRecord -Exception $_.Exception -ErrorId 'TempRootValidationFailed' -Category InvalidData
-        $PSCmdlet.ThrowTerminatingError($ErrorRecord)
+        $PSCmdlet.WriteError($ErrorRecord)
+        if ($PassThru) {
+            $Result
+        }
+        return
     }
 
-    $CutoffUtc = (Get-Date).ToUniversalTime().AddDays(-$Days)
     $Result = Get-TheCleanersCleanupResult -Command 'Clear-CurrentUserTemp' -RootPath $Root.FullName.TrimEnd([char[]]@('\', '/')) -CutoffUtc $CutoffUtc -PrivilegeStatus (Get-TheCleanersPrivilegeStatus)
     try {
-        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc $CutoffUtc -RemoveEmptyDirectory:$RemoveEmptyDirectory -CaptureIdentity:(-not $WhatIfPreference)
+        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc $CutoffUtc -RemoveEmptyDirectory:$RemoveEmptyDirectory -CaptureIdentity:(-not $WhatIfPreference) -ValidatedRootIdentity $ValidatedRootIdentity
     } catch {
         $Result.DiscoveryStatus = 'Failed'
         $Result.Status = 'DiscoveryFailed'
@@ -144,6 +168,11 @@ function Clear-CurrentUserTemp {
         $TouchedIdentities = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         $DisqualifiedIdentities = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
         $DisqualifiedPaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        foreach ($BlockedPath in @($Plan.DisqualifiedDirectoryPaths)) {
+            if (-not [string]::IsNullOrWhiteSpace($BlockedPath)) {
+                $null = $DisqualifiedPaths.Add($BlockedPath)
+            }
+        }
         $MarkDirectoryDisqualified = {
             param (
                 [string] $Path,

@@ -133,17 +133,19 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         Should -Invoke Get-ItemProperty -Exactly 0
     }
 
-    It 'previews candidates without invoking the removal helper' {
+    It 'fails closed when WebAdministration is unavailable and the log format is unknown' {
         $Result = Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue
 
         $Result | Should -HaveCount 1
-        $Result.FileCandidateCount | Should -Be 1
-        $Result.CandidatePaths | Should -Contain $OldLog.FullName
+        $Result.DiscoveryStatus | Should -Be 'Failed'
+        $Result.Status | Should -Be 'DiscoveryFailed'
+        $Result.FileCandidateCount | Should -BeNullOrEmpty
+        $Result.ErrorIds | Should -Contain 'IISLogFormatUnavailable'
         $Result.FilesRemoved | Should -Be 0
         $OldLog.FullName | Should -Exist
     }
 
-    It 'classifies fallback FTP directories without WebAdministration' {
+    It 'does not guess a fallback FTP format without WebAdministration' {
         $FtpRoot = Join-Path -Path $IISRoot -ChildPath 'FTPSVC7'
         $null = New-Item -Path $FtpRoot -ItemType Directory -Force
         $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'u_ex240101.log') -ItemType File
@@ -152,9 +154,13 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
 
         $Result | Should -HaveCount 1
-        $Result[0].FileCandidateCount | Should -Be 2
-        $Result[0].CandidatePaths | Should -Contain $OldLog.FullName
-        $Result[0].CandidatePaths | Should -Contain $FtpLog.FullName
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].ErrorIds | Should -Contain 'IISLogFormatUnavailable'
+        $Result[0].CandidatePaths | Should -BeNullOrEmpty
+        $Result[0].FilesRemoved | Should -Be 0
+        $OldLog.FullName | Should -Exist
         $FtpLog.FullName | Should -Exist
     }
 
@@ -278,7 +284,7 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result[0].FileCandidateCount | Should -BeNullOrEmpty
         $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
         $Result[0].CandidatePaths | Should -BeNullOrEmpty
-        $Result[0].DiscoveryErrorCount | Should -Be 1
+        $Result[0].DiscoveryErrorCount | Should -Be 2
         $Result[0].ErrorIds | Should -Contain 'IISProtectedRoot'
         $ProtectedError | Should -Not -BeNullOrEmpty
     }

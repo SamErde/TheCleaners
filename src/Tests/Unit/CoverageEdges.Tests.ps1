@@ -27,6 +27,7 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         Test-TheCleanersIisLogFileName -Name 'inetsv01.log' -Format '0' | Should -BeTrue
         Test-TheCleanersIisLogFileName -Name 'ncsa01.log' -Format '1' | Should -BeTrue
         Test-TheCleanersIisLogFileName -Name 'u_ex240101.log' -Format '2' | Should -BeTrue
+        Test-TheCleanersIisLogFileName -Name 'ex240101.log' -Format '2' -LocalTimeRollover | Should -BeTrue
         Test-TheCleanersExchangeLogFileName -Name 'old.log' -RelativeRoot 'UnknownRoot' | Should -BeFalse
         Test-TheCleanersIisProtectedPath -Path (Join-Path -Path $TestDrive -ChildPath 'ordinary-logs') | Should -BeFalse
     }
@@ -131,6 +132,60 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity -Verbose 4> $null
 
         $Plan.Files | Should -BeNullOrEmpty
+    }
+
+    It 'retains a vanished candidate as a pruning blocker' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'VanishedPruningCandidateRoot'
+        $ChildPath = Join-Path -Path $RootPath -ChildPath 'Child'
+        $VanishingPath = Join-Path -Path $ChildPath -ChildPath 'vanishing.tmp'
+        $RemainingPath = Join-Path -Path $ChildPath -ChildPath 'remaining.tmp'
+        $null = New-Item -Path $ChildPath -ItemType Directory -Force
+        $VanishingFile = New-Item -Path $VanishingPath -ItemType File -Force
+        $RemainingFile = New-Item -Path $RemainingPath -ItemType File -Force
+        [System.IO.File]::SetLastWriteTimeUtc($VanishingPath, [DateTime]::UtcNow.AddDays(-31))
+        [System.IO.File]::SetLastWriteTimeUtc($RemainingPath, [DateTime]::UtcNow.AddDays(-31))
+        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
+        $ExpectedRootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+        $ExpectedChildIdentity = Get-TheCleanersFileIdentity -LiteralPath $ChildPath -Directory
+        $ExpectedRemainingIdentity = Get-TheCleanersFileIdentity -LiteralPath $RemainingPath
+
+        Mock Get-TheCleanersFileIdentity {
+            if ($LiteralPath -eq $RootPath) {
+                return $ExpectedRootIdentity
+            }
+            if ($LiteralPath -eq $ChildPath) {
+                return $ExpectedChildIdentity
+            }
+            if ($LiteralPath -eq $RemainingPath) {
+                return $ExpectedRemainingIdentity
+            }
+            if ($LiteralPath -eq $VanishingPath) {
+                [System.IO.File]::Delete($VanishingPath)
+                throw [System.Management.Automation.ItemNotFoundException]::new('The candidate disappeared during identity capture.')
+            }
+            throw "Unexpected identity path: $LiteralPath"
+        }
+
+        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -RemoveEmptyDirectory -CaptureIdentity -Verbose 4> $null
+
+        $Plan.Files.Path | Should -Contain $RemainingPath
+        $Plan.Files.Path | Should -Not -Contain $VanishingPath
+        $Plan.Directories.Path | Should -Contain $ChildPath
+        $Plan.DisqualifiedDirectoryPaths | Should -Contain $ChildPath
+        $Plan.DisqualifiedDirectoryPaths | Should -Contain $RootPath
+        Close-TheCleanersTempPlanHandles -Plan $Plan
+    }
+
+    It 'rejects a root replaced after validation before plan capture' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'ValidatedRootReplacement'
+        $ReplacementPath = Join-Path -Path $TestDrive -ChildPath 'ValidatedRootReplacement-Original'
+        $null = New-Item -Path $RootPath -ItemType Directory -Force
+        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
+        $ValidatedIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+        [System.IO.Directory]::Move($RootPath, $ReplacementPath)
+        $null = New-Item -Path $RootPath -ItemType Directory -Force
+
+        { Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity -ValidatedRootIdentity $ValidatedIdentity } | Should -Throw '*queued temp directory changed*'
     }
 
     It 'fails closed when a queued directory is replaced by a file before traversal' {

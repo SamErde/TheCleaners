@@ -6,7 +6,7 @@ These checks are a protocol for a disposable Windows client/server lab. They are
 
 | Fixture | Expected result |
 | --- | --- |
-| Old and recent files, including names with wildcard characters | Only old files at or before one UTC cutoff are proposed/removed; recent files remain. |
+| Old and recent legal filenames that exercise literal allowlist metacharacters, such as `[literal].tmp` | Only old files at or before one UTC cutoff are proposed/removed; recent files remain, and names are treated literally rather than as provider wildcards. |
 | Candidate replaced by a directory or a different file identity | Candidate is skipped; the replacement is never deleted or counted as a file removal. |
 | Candidate disappears, is locked, or denies the requested operation | It is skipped or reports `TempFileRemovalFailed`; no reclaimed bytes are claimed. |
 | Hard link with a name outside the approved root | Only the approved name is removed; the outside hard link remains. Logical bytes are reported, not physical free space. |

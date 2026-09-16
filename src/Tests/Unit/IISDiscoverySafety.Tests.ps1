@@ -32,7 +32,35 @@ function Get-Website {
     $Fixture.Sites
 }
 
-Export-ModuleMember -Function Get-Website
+function Get-WebConfiguration {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [string]
+        $Filter,
+
+        [Parameter(Mandatory)]
+        [string]
+        $PSPath
+    )
+
+    $Fixture = Get-Content -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath 'Sites.json') -Raw -ErrorAction Stop | ConvertFrom-Json
+    $SiteName = [regex]::Match($Filter, "site\[@name='(?<Name>[^']+)'\]").Groups['Name'].Value
+    $Site = @($Fixture.Sites | Where-Object { [string]$_.Name -eq $SiteName }) | Select-Object -First 1
+    if ($null -eq $Site -or $null -eq $Site.FtpServer) {
+        return
+    }
+    if ($Site.FtpServer.ConfigurationFailure) {
+        throw 'Fixture FTP configuration query failed.'
+    }
+    [pscustomobject]@{
+        Directory         = $Site.FtpServer.LogFile.Directory
+        LogFormat         = $Site.FtpServer.LogFile.LogFormat
+        LocalTimeRollover = $Site.FtpServer.LogFile.LocalTimeRollover
+    }
+}
+
+Export-ModuleMember -Function Get-Website, Get-WebConfiguration
 '@
     $ProbeContent = @'
 param (
@@ -204,8 +232,9 @@ Describe 'IIS registry-root deduplication' -Skip:(-not $WindowsHost) -Tag Unit {
         @{ Suffix = '/../LogFiles/' }
         @{ Suffix = '\' }
     ) {
+        $env:SystemDrive = ''
         $RegistrySpelling = $IISRoot + $Suffix
-        Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $RegistrySpelling } }
+        Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $RegistrySpelling; LogFormat = 'W3C' } }
 
         $Results = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
 
@@ -243,7 +272,7 @@ Describe 'IIS extended-length traversal' -Skip:(-not $WindowsHost) -Tag Unit {
         try {
             $env:SystemDrive = ''
             Mock Get-Module { $null } -ParameterFilter { $Name -eq 'WebAdministration' -and $ListAvailable }
-            Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $ExtendedRoot } }
+            Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $ExtendedRoot; LogFormat = 'W3C' } }
             Mock Test-TheCleanersIisProtectedPath { $false }
             Mock Test-Path { $true }
             Mock Resolve-TheCleanersFileSystemPath { [System.IO.DirectoryInfo]::new($LiteralPath) }
@@ -274,7 +303,7 @@ Describe 'IIS FTP root discovery' -Skip:(-not $WindowsHost) -Tag Unit {
         $FtpLog = New-Item -Path $FtpLogPath -ItemType File
         $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
         $Sites = @(
-            @{ Name = 'FTP fixture'; Id = 7; LogFile = @{ Directory = $LogBase }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase } } }
+            @{ Name = 'FTP fixture'; Id = 7; LogFile = @{ Directory = $LogBase }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'W3C' } } }
         )
         @{ FailDiscovery = $false; Sites = $Sites } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
         Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'WebAdministration.psm1') -Value $FixtureModuleContent -Encoding UTF8

@@ -76,7 +76,32 @@ function Clear-OldIISLog {
 
                         $ErrorActionPreference = 'Stop'
                         Import-Module -Name $ModulePath -Scope Local -ErrorAction Stop
-                        @(WebAdministration\Get-Website -ErrorAction Stop)
+                        foreach ($Site in @(WebAdministration\Get-Website -ErrorAction Stop)) {
+                            $FtpLogConfiguration = $null
+                            $FtpConfigurationErrorMessage = $null
+                            $FtpBindings = @($Site.Bindings | Where-Object { [string]$_.Protocol -ieq 'ftp' })
+                            if ($FtpBindings.Count -gt 0) {
+                                try {
+                                    $SiteNameForFilter = ([string]$Site.Name).Replace("'", "''")
+                                    $FtpFilter = "system.applicationHost/sites/site[@name='$SiteNameForFilter']/ftpServer/logFile"
+                                    $FtpLogConfiguration = @(WebAdministration\Get-WebConfiguration -Filter $FtpFilter -PSPath 'MACHINE/WEBROOT/APPHOST' -ErrorAction Stop | Select-Object -First 1)
+                                    if ($FtpLogConfiguration.Count -eq 0) {
+                                        throw [System.InvalidOperationException]::new("The IIS FTP log configuration was not returned for site '$($Site.Name)'.")
+                                    }
+                                    $FtpLogConfiguration = $FtpLogConfiguration[0]
+                                } catch {
+                                    $FtpConfigurationErrorMessage = $_.Exception.Message
+                                }
+                            }
+                            [pscustomobject]@{
+                                Name                         = $Site.Name
+                                Id                           = $Site.Id
+                                LogFile                      = $Site.LogFile
+                                Bindings                     = $Site.Bindings
+                                FtpLogConfiguration          = $FtpLogConfiguration
+                                FtpConfigurationErrorMessage = $FtpConfigurationErrorMessage
+                            }
+                        }
                     }).AddArgument($WebAdministrationModule.Path)
                 $DiscoveredSites = @($WebAdministrationDiscovery.Invoke())
                 if ($WebAdministrationDiscovery.HadErrors) {
@@ -104,6 +129,7 @@ function Clear-OldIISLog {
                         Source            = 'WebAdministration'
                         Format            = $Format
                         Service           = 'W3SVC'
+                        LocalTimeRollover = [bool]$Site.LogFile.LocalTimeRollover
                         DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
                     }
                     $Roots.Add($WebRootDefinition)
@@ -114,20 +140,30 @@ function Clear-OldIISLog {
                     continue
                 }
                 try {
-                    $FtpConfiguredRoot = [Environment]::ExpandEnvironmentVariables([string]$Site.FtpServer.LogFile.Directory)
+                    if (-not [string]::IsNullOrWhiteSpace([string]$Site.FtpConfigurationErrorMessage)) {
+                        throw [System.InvalidOperationException]::new($Site.FtpConfigurationErrorMessage)
+                    }
+                    if ($null -eq $Site.FtpLogConfiguration) {
+                        throw [System.InvalidOperationException]::new("The IIS FTP log configuration was unavailable for site '$SiteName'.")
+                    }
+                    $FtpConfiguredRoot = [Environment]::ExpandEnvironmentVariables([string]$Site.FtpLogConfiguration.Directory)
                     if ([string]::IsNullOrWhiteSpace($FtpConfiguredRoot)) {
                         if ([string]::IsNullOrWhiteSpace($env:SystemDrive)) {
                             throw [System.InvalidOperationException]::new("Cannot determine the default IIS FTP log directory for site '$SiteName'.")
                         }
                         $FtpConfiguredRoot = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
                     }
-                    $FtpFormat = if ($null -eq $Site.FtpServer.LogFile.LogFormat) { 'W3C' } else { [string]$Site.FtpServer.LogFile.LogFormat }
+                    $FtpFormat = [string]$Site.FtpLogConfiguration.LogFormat
+                    if ([string]::IsNullOrWhiteSpace($FtpFormat)) {
+                        throw [System.InvalidOperationException]::new("The IIS FTP logging format was unavailable for site '$SiteName'.")
+                    }
                     $Roots.Add([pscustomobject]@{
                             Path              = Join-Path -Path $FtpConfiguredRoot -ChildPath ('FTPSVC{0}' -f $Site.Id)
                             DisplayName       = "$SiteName FTP"
                             Source            = 'WebAdministration'
                             Format            = $FtpFormat
                             Service           = 'FTPSVC'
+                            LocalTimeRollover = [bool]$Site.FtpLogConfiguration.LocalTimeRollover
                             DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
                         })
                 } catch {
@@ -159,29 +195,38 @@ function Clear-OldIISLog {
         }
     } else {
         $DefaultRootDefinition = $null
+        $DefaultDiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
+        $null = $DefaultDiscoveryErrorIds.Add('IISLogFormatUnavailable')
         if (-not [string]::IsNullOrWhiteSpace($env:SystemDrive)) {
             $DefaultRootDefinition = [pscustomobject]@{
                 Path              = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
                 DisplayName       = 'Default IIS log root'
                 Source            = 'DefaultPath'
-                Format            = 'W3C'
+                Format            = $null
                 Service           = 'W3SVC'
-                DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
+                LocalTimeRollover = $null
+                DiscoveryErrorIds = $DefaultDiscoveryErrorIds
             }
             $Roots.Add($DefaultRootDefinition)
         }
         try {
-            $RegistryRoot = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction Stop |
-                Select-Object -ExpandProperty LogDir
+            $RegistrySettings = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LogDir' -ErrorAction Stop
+            $RegistryRoot = $RegistrySettings.LogDir
             $RegistryRoot = [Environment]::ExpandEnvironmentVariables([string]$RegistryRoot)
             if (-not [string]::IsNullOrWhiteSpace($RegistryRoot)) {
+                $RegistryDiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
+                $RegistryFormat = [string]$RegistrySettings.LogFormat
+                if ([string]::IsNullOrWhiteSpace($RegistryFormat)) {
+                    $null = $RegistryDiscoveryErrorIds.Add('IISLogFormatUnavailable')
+                }
                 $Roots.Add([pscustomobject]@{
                         Path              = $RegistryRoot
                         DisplayName       = 'Registry IIS log root'
                         Source            = 'Registry'
-                        Format            = 'W3C'
+                        Format            = if ([string]::IsNullOrWhiteSpace($RegistryFormat)) { $null } else { $RegistryFormat }
                         Service           = 'W3SVC'
-                        DiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
+                        LocalTimeRollover = $null
+                        DiscoveryErrorIds = $RegistryDiscoveryErrorIds
                     })
             }
         } catch {
@@ -281,6 +326,10 @@ function Clear-OldIISLog {
             }
             $TraversalRoot = $LogRoot.FullName
             $NormalizedRoot = Convert-TheCleanersPathForComparison -Path $LogRoot.FullName
+            if (-not $SeenRoots.Add($NormalizedRoot)) {
+                Write-Verbose -Message "Skipping duplicate IIS log root: $NormalizedRoot"
+                continue
+            }
             if ($RootDiscoveryErrorIds.Count -gt 0) {
                 if ($PassThru) {
                     $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $NormalizedRoot -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource $RootDefinition.Source -DisplayName $RootDefinition.DisplayName -CandidatePaths @() -Status 'DiscoveryFailed'
@@ -291,10 +340,6 @@ function Clear-OldIISLog {
                     $Result | Add-Member -MemberType NoteProperty -Name AllowedFilePatterns -Value @('IIS format allowlist')
                     $Result
                 }
-                continue
-            }
-            if (-not $SeenRoots.Add($NormalizedRoot)) {
-                Write-Verbose -Message "Skipping duplicate IIS log root: $NormalizedRoot"
                 continue
             }
             $Pending = [System.Collections.Generic.Stack[object]]::new()
@@ -337,7 +382,7 @@ function Clear-OldIISLog {
                                 Path    = $Item.FullName
                                 Service = $ChildService
                             })
-                    } elseif ((Test-TheCleanersIisLogFileName -Name $Item.Name -Format $RootDefinition.Format -Service $DirectoryService) -and $Item.LastWriteTimeUtc -le $CutoffUtc) {
+                    } elseif ((Test-TheCleanersIisLogFileName -Name $Item.Name -Format $RootDefinition.Format -Service $DirectoryService -LocalTimeRollover:$RootDefinition.LocalTimeRollover) -and $Item.LastWriteTimeUtc -le $CutoffUtc) {
                         $Candidates.Add($Item)
                     }
                 }

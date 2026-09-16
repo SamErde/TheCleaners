@@ -30,6 +30,11 @@ BeforeAll {
             $FixtureRoot,
 
             [Parameter(Mandatory)]
+            [ValidateSet('Clear-CurrentUserTemp', 'Clear-WindowsTemp')]
+            [string]
+            $CommandName,
+
+            [Parameter(Mandatory)]
             [ValidateSet('Approved', 'Declined')]
             [string]
             $ExpectedOutcome,
@@ -47,8 +52,20 @@ $env:TEMP = $FixtureRoot
 $env:TMP = $FixtureRoot
 $OldFile = New-Item -Path (Join-Path -Path $FixtureRoot -ChildPath 'old.tmp') -ItemType File
 [System.IO.File]::SetLastWriteTimeUtc($OldFile.FullName, [DateTime]::UtcNow.AddDays(-31))
-Import-Module -Name $env:THECLEANERS_CONFIRM_MANIFEST -Force
-$Result = Clear-CurrentUserTemp -Days 30 -Confirm -PassThru -ErrorAction Stop
+if ($env:THECLEANERS_CONFIRM_COMMAND -eq 'Clear-WindowsTemp') {
+    $ModuleRoot = Split-Path -Path $env:THECLEANERS_CONFIRM_MANIFEST -Parent
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/ResultContracts.ps1')
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Initialize-TheCleanersNativeFileInterop.ps1')
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Resolve-TheCleanersFileSystemPath.ps1')
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Private/Get-TheCleanersTempPlan.ps1')
+    function Get-TheCleanersWindowsTempRoot {
+        Get-Item -Path $FixtureRoot -Force -ErrorAction Stop
+    }
+    . (Join-Path -Path $ModuleRoot -ChildPath 'Public/Clear-WindowsTemp.ps1')
+} else {
+    Import-Module -Name $env:THECLEANERS_CONFIRM_MANIFEST -Force
+}
+$Result = & $env:THECLEANERS_CONFIRM_COMMAND -Days 30 -Confirm -PassThru -ErrorAction Stop
 if ($env:THECLEANERS_CONFIRM_EXPECTED -eq 'Approved') {
     if ($Result.Status -ne 'Completed' -or $Result.FilesRemoved -ne 1 -or [System.IO.File]::Exists($OldFile.FullName)) {
         throw 'The approval response did not complete the expected fixture removal.'
@@ -70,6 +87,7 @@ if ($env:THECLEANERS_CONFIRM_EXPECTED -eq 'Approved') {
         $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_MANIFEST'] = $ManifestPath
         $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_FIXTURE'] = $FixtureRoot
         $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_EXPECTED'] = $ExpectedOutcome
+        $StartInfo.EnvironmentVariables['THECLEANERS_CONFIRM_COMMAND'] = $CommandName
 
         $Process = New-Object System.Diagnostics.Process
         $Process.StartInfo = $StartInfo
@@ -138,6 +156,43 @@ Describe 'Windows runtime and preflight safety' -Skip:(-not $WindowsHost) -Tag U
             $env:TEMP = $PreviousTemp
             $env:TMP = $PreviousTmp
         }
+    }
+
+    It 'returns a failed summary for a rejected current-user root under continuing errors' {
+        $PreviousTemp = $env:TEMP
+        $PreviousTmp = $env:TMP
+        try {
+            $UnsafeRoot = Join-Path -Path (Split-Path -Path $env:USERPROFILE -Parent) -ChildPath 'Public'
+            $env:TEMP = $UnsafeRoot
+            $env:TMP = $UnsafeRoot
+
+            $Result = @(Clear-CurrentUserTemp -Days 30 -WhatIf -PassThru -ErrorAction Continue -ErrorVariable RootError)
+
+            $Result | Should -HaveCount 1
+            $Result[0].Status | Should -Be 'DiscoveryFailed'
+            $Result[0].DiscoveryStatus | Should -Be 'Failed'
+            $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+            $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
+            $Result[0].ErrorIds | Should -Contain 'TempRootValidationFailed'
+            $RootError | Should -Not -BeNullOrEmpty
+        } finally {
+            $env:TEMP = $PreviousTemp
+            $env:TMP = $PreviousTmp
+        }
+    }
+
+    It 'returns a failed summary for a rejected Windows temp root under continuing errors' {
+        Mock Get-TheCleanersWindowsTempRoot { throw [System.UnauthorizedAccessException]::new('Fixture Windows temp root denial.') }
+
+        $Result = @(Clear-WindowsTemp -Days 30 -WhatIf -PassThru -ErrorAction Continue -ErrorVariable RootError)
+
+        $Result | Should -HaveCount 1
+        $Result[0].Status | Should -Be 'DiscoveryFailed'
+        $Result[0].DiscoveryStatus | Should -Be 'Failed'
+        $Result[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
+        $Result[0].ErrorIds | Should -Contain 'TempRootValidationFailed'
+        $RootError | Should -Not -BeNullOrEmpty
     }
 
     It 'includes the actual privilege state in a fixture-only WhatIf result' {
@@ -260,19 +315,82 @@ if ($WhatIfPreference -ne $BeforeWhatIf -or $ConfirmPreference -ne $BeforeConfir
         (Test-Path -LiteralPath (Join-Path -Path $FixtureRoot -ChildPath 'old.tmp')) | Should -BeFalse
     }
 
-    It 'accepts and declines one explicit confirmation without nested prompts' {
-        foreach ($Case in @(
-                @{ Name = 'Approved'; Response = 'Y' }
-                @{ Name = 'Declined'; Response = 'N' }
+    It 'accepts and declines one explicit confirmation without nested prompts for both temp commands' {
+        foreach ($CommandCase in @(
+                @{ Name = 'Clear-CurrentUserTemp' }
+                @{ Name = 'Clear-WindowsTemp' }
             )) {
-            $FixtureRoot = Join-Path -Path $TestDrive -ChildPath ('InteractiveConfirm-{0}' -f $Case.Name)
-            $null = New-Item -Path $FixtureRoot -ItemType Directory -Force
-            $Probe = Invoke-TheCleanersInteractiveConfirmProbe -ManifestPath $ManifestPath -FixtureRoot $FixtureRoot -ExpectedOutcome $Case.Name -Response $Case.Response
-            $CombinedOutput = '{0}{1}' -f $Probe.Output, $Probe.Error
+            foreach ($Case in @(
+                    @{ Name = 'Approved'; Response = 'Y' }
+                    @{ Name = 'Declined'; Response = 'N' }
+                )) {
+                $FixtureRoot = Join-Path -Path $TestDrive -ChildPath ('InteractiveConfirm-{0}-{1}' -f $CommandCase.Name, $Case.Name)
+                $null = New-Item -Path $FixtureRoot -ItemType Directory -Force
+                $Probe = Invoke-TheCleanersInteractiveConfirmProbe -ManifestPath $ManifestPath -FixtureRoot $FixtureRoot -CommandName $CommandCase.Name -ExpectedOutcome $Case.Name -Response $Case.Response
+                $CombinedOutput = '{0}{1}' -f $Probe.Output, $Probe.Error
 
-            $Probe.ExitCode | Should -Be 0 -Because $CombinedOutput
-            $CombinedOutput | Should -Match 'CONFIRM_INTERACTIVE_OK'
+                $Probe.ExitCode | Should -Be 0 -Because $CombinedOutput
+                $CombinedOutput | Should -Match 'CONFIRM_INTERACTIVE_OK'
+            }
         }
+    }
+
+    It 'serializes native interop initialization across concurrent runspaces' {
+        $ProbePath = Join-Path -Path $TestDrive -ChildPath 'NativeInteropConcurrencyProbe.ps1'
+        @'
+param (
+    [Parameter(Mandatory)]
+    [string]
+    $InteropScriptPath
+)
+
+$ErrorActionPreference = 'Stop'
+$InteropSource = [System.IO.File]::ReadAllText($InteropScriptPath)
+$Pool = [RunspaceFactory]::CreateRunspacePool(1, 8)
+$Pool.Open()
+$Jobs = [System.Collections.Generic.List[object]]::new()
+$Worker = @(
+    'param ('
+    '    [Parameter(Mandatory)]'
+    '    [string]'
+    '    $InteropSource'
+    ')'
+    ''
+    '. ([scriptblock]::Create($InteropSource))'
+    'Initialize-TheCleanersNativeFileInterop'
+) -join [Environment]::NewLine
+try {
+    for ($Index = 0; $Index -lt 8; $Index++) {
+        $PowerShell = [powershell]::Create()
+        $PowerShell.RunspacePool = $Pool
+        $null = $PowerShell.AddScript($Worker).AddArgument($InteropSource)
+        $Jobs.Add([pscustomobject]@{
+                PowerShell = $PowerShell
+                Handle     = $PowerShell.BeginInvoke()
+            })
+    }
+    foreach ($Job in $Jobs) {
+        $null = $Job.PowerShell.EndInvoke($Job.Handle)
+        if ($Job.PowerShell.HadErrors) {
+            throw (($Job.PowerShell.Streams.Error | ForEach-Object { $_.Exception.Message }) -join '; ')
+        }
+    }
+} finally {
+    foreach ($Job in $Jobs) {
+        $Job.PowerShell.Dispose()
+    }
+    $Pool.Dispose()
+}
+if ($null -eq ([System.Management.Automation.PSTypeName]'TheCleaners.NativeFileInterop').Type) {
+    throw 'Concurrent initialization did not load the native interop type.'
+}
+'NATIVE_INTEROP_CONCURRENCY_OK'
+'@ | Set-Content -LiteralPath $ProbePath -Encoding UTF8
+
+        $ProbeOutput = & $PowerShellExecutable -NoLogo -NoProfile -NonInteractive -File $ProbePath -InteropScriptPath (Join-Path -Path $ModuleRoot -ChildPath 'Private/Initialize-TheCleanersNativeFileInterop.ps1') 2>&1
+        $ProbeExitCode = $LASTEXITCODE
+        $ProbeExitCode | Should -Be 0 -Because ($ProbeOutput -join [Environment]::NewLine)
+        $ProbeOutput | Should -Contain 'NATIVE_INTEROP_CONCURRENCY_OK'
     }
 }
 

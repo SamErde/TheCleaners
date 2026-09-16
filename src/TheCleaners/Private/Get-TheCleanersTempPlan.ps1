@@ -46,7 +46,11 @@ function Get-TheCleanersTempPlan {
 
         [Parameter()]
         [switch]
-        $CaptureIdentity
+        $CaptureIdentity,
+
+        [Parameter()]
+        [psobject]
+        $ValidatedRootIdentity
     )
 
     $HeldDirectoryHandles = [System.Collections.Generic.List[object]]::new()
@@ -54,9 +58,35 @@ function Get-TheCleanersTempPlan {
     try {
         $RootPath = $Root.FullName.TrimEnd([char[]]@('\', '/'))
         $RootIdentity = $null
+        $DisqualifiedDirectoryPaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        $AddPruningBlocker = {
+            param (
+                [Parameter(Mandatory)]
+                [string]
+                $Path
+            )
+
+            $CurrentPath = $Path
+            while (-not [string]::IsNullOrWhiteSpace($CurrentPath)) {
+                $null = $DisqualifiedDirectoryPaths.Add($CurrentPath)
+                if ($CurrentPath -eq $RootPath) {
+                    break
+                }
+                $ParentPath = Split-Path -Path $CurrentPath -Parent
+                if ([string]::IsNullOrWhiteSpace($ParentPath) -or $ParentPath -eq $CurrentPath) {
+                    break
+                }
+                $CurrentPath = $ParentPath
+            }
+        }
+
         if ($CaptureIdentity) {
             Initialize-TheCleanersNativeFileInterop
-            $RootIdentity = Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+            $RootIdentity = if ($null -eq $ValidatedRootIdentity) {
+                Get-TheCleanersFileIdentity -LiteralPath $RootPath -Directory
+            } else {
+                $ValidatedRootIdentity
+            }
             if ($RootIdentity.IsReparsePoint) {
                 throw [System.IO.InvalidDataException]::new("The cleanup root is a reparse point: '$RootPath'.")
             }
@@ -137,6 +167,9 @@ function Get-TheCleanersTempPlan {
                             )
                             if ($CandidateMissing) {
                                 Write-Verbose -Message "The candidate disappeared during identity capture and will be skipped: '$($Item.FullName)'"
+                                if ($RemoveEmptyDirectory) {
+                                    & $AddPruningBlocker -Path $Item.Directory.FullName
+                                }
                                 continue
                             }
                             throw [System.InvalidOperationException]::new("Could not capture the candidate identity required for safe mutation: '$($Item.FullName)'.", $BaseException)
@@ -281,12 +314,13 @@ function Get-TheCleanersTempPlan {
         }
 
         [pscustomobject]@{
-            RootPath             = $RootPath
-            RootIdentity         = $RootIdentity
-            CutoffUtc            = $CutoffUtc.ToUniversalTime()
-            Files                = @($Candidates.ToArray() | Sort-Object -Property Path)
-            Directories          = @($PlannedDirectories.ToArray())
-            HeldDirectoryHandles = @($HeldDirectoryHandles.ToArray())
+            RootPath                   = $RootPath
+            RootIdentity               = $RootIdentity
+            CutoffUtc                  = $CutoffUtc.ToUniversalTime()
+            Files                      = @($Candidates.ToArray() | Sort-Object -Property Path)
+            Directories                = @($PlannedDirectories.ToArray())
+            HeldDirectoryHandles       = @($HeldDirectoryHandles.ToArray())
+            DisqualifiedDirectoryPaths = @($DisqualifiedDirectoryPaths)
         }
     } catch {
         foreach ($HeldDirectoryEntry in @($HeldDirectoryHandles.ToArray())) {

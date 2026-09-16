@@ -41,4 +41,4 @@ The implementation follows the safety intent tracked in [issue #28](https://gith
 
 ## Preview contract
 
-IIS and Exchange require an explicit `-WhatIf` before discovery. They have no deletion implementation, no removal bypass, and no persistent activation. Their summaries use `DiscoveryStatus = Experimental`, `Status = WhatIf`, and zero mutation counts. A later Exchange minor release may revisit a per-invocation opt-in only after the product-specific gates pass.
+IIS and Exchange require an explicit `-WhatIf` before discovery. They have no deletion implementation, no removal bypass, and no persistent activation. A successful preview uses `DiscoveryStatus = Experimental`, `Status = WhatIf`, and zero mutation counts. A registry, root, protection, provider, or traversal failure uses `DiscoveryStatus = Failed`, `Status = DiscoveryFailed`, null candidate totals, and stable `ErrorIds`; it is never represented as an empty successful preview. A later Exchange minor release may revisit a per-invocation opt-in only after the product-specific gates pass.

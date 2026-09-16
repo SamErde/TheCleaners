@@ -13,12 +13,21 @@ function Initialize-TheCleanersNativeFileInterop {
     [CmdletBinding()]
     param ()
 
-    $NativeType = ([System.Management.Automation.PSTypeName]'TheCleaners.NativeFileInterop').Type
-    if ($null -ne $NativeType) {
-        return
-    }
+    $InitializationMutex = [System.Threading.Mutex]::new($false, 'TheCleaners.NativeFileInterop.Initialize')
+    $MutexAcquired = $false
+    try {
+        try {
+            $MutexAcquired = $InitializationMutex.WaitOne()
+        } catch [System.Threading.AbandonedMutexException] {
+            $MutexAcquired = $true
+        }
 
-    Add-Type -TypeDefinition @'
+        $NativeType = ([System.Management.Automation.PSTypeName]'TheCleaners.NativeFileInterop').Type
+        if ($null -ne $NativeType) {
+            return
+        }
+
+        Add-Type -TypeDefinition @'
 using System;
 using System.ComponentModel;
 using System.IO;
@@ -282,6 +291,12 @@ namespace TheCleaners
     }
 }
 '@ -ErrorAction Stop
+    } finally {
+        if ($MutexAcquired) {
+            $null = $InitializationMutex.ReleaseMutex()
+        }
+        $InitializationMutex.Dispose()
+    }
 }
 
 function Get-TheCleanersFileIdentity {
