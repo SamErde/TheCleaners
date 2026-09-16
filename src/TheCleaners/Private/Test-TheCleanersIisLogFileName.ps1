@@ -104,15 +104,19 @@ function Test-TheCleanersIisLogFileName {
     switch ($NormalizedFormat) {
         'W3C' {
             $W3cPrefix = if ($LocalTimeRollover) { '' } else { 'u_' }
-            if ($ServiceName -in @('FTPSVC', 'MSFTPSVC')) {
-                $Pattern = '^{0}ex(?<Suffix>\d{{4}}|\d{{6}}|\d{{8}})\.log$' -f $W3cPrefix
+            if ($ServiceName -in @('FTPSVC', 'MSFTPSVC', 'W3SVC')) {
+                # IIS uses the extendNN family for size rollover. Some site and
+                # FTP deployments also append a bounded sequence to the
+                # date-based name; keep both forms exact and format-scoped.
+                $Pattern = '^{0}(?:ex(?<Suffix>\d{{4}}|\d{{6}}|\d{{8}})(?:_(?<Sequence>\d{{1,3}}))?|extend\d{{1,3}})\.log$' -f $W3cPrefix
                 $Match = [regex]::Match($Name, $Pattern)
-                return $Match.Success -and (Test-TheCleanersIisRolloverSuffix -Suffix $Match.Groups['Suffix'].Value)
-            }
-            if ($ServiceName -eq 'W3SVC') {
-                $Pattern = '^{0}ex(?<Suffix>\d{{4}}|\d{{6}}|\d{{8}})\.log$' -f $W3cPrefix
-                $Match = [regex]::Match($Name, $Pattern)
-                return $Match.Success -and (Test-TheCleanersIisRolloverSuffix -Suffix $Match.Groups['Suffix'].Value)
+                if (-not $Match.Success) {
+                    return $false
+                }
+                if ($Match.Groups['Suffix'].Success) {
+                    return Test-TheCleanersIisRolloverSuffix -Suffix $Match.Groups['Suffix'].Value
+                }
+                return $true
             }
             return $false
         }
