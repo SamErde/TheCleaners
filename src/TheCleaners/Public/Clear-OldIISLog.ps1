@@ -201,6 +201,7 @@ function Clear-OldIISLog {
         $DefaultRootDefinition = $null
         $DefaultDiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
         $null = $DefaultDiscoveryErrorIds.Add('IISLogFormatUnavailable')
+        $null = $DefaultDiscoveryErrorIds.Add('IISLocalTimeRolloverUnavailable')
         if (-not [string]::IsNullOrWhiteSpace($env:SystemDrive)) {
             $DefaultRootDefinition = [pscustomobject]@{
                 Path              = Join-Path -Path $env:SystemDrive -ChildPath 'inetpub/logs/LogFiles'
@@ -231,10 +232,29 @@ function Clear-OldIISLog {
                     throw
                 }
             }
+            $RegistryLocalTimeRollover = $null
+            try {
+                $RegistryRolloverSettings = Get-ItemProperty -LiteralPath 'HKLM:\System\CurrentControlSet\Services\W3SVC\Parameters' -Name 'LocalTimeRollover' -ErrorAction Stop
+                if ($null -ne $RegistryRolloverSettings.LocalTimeRollover) {
+                    $RegistryLocalTimeRollover = [bool]$RegistryRolloverSettings.LocalTimeRollover
+                }
+            } catch {
+                $OptionalRegistryRolloverIsAbsent = (
+                    $_.Exception -is [System.Management.Automation.ItemNotFoundException] -or
+                    ($_.Exception -is [System.Management.Automation.PSArgumentException] -and $_.Exception.Message -match '^Property .+ does not exist') -or
+                    $_.FullyQualifiedErrorId -match 'PathNotFound|PropertyNotFound|ItemNotFound'
+                )
+                if (-not $OptionalRegistryRolloverIsAbsent) {
+                    throw
+                }
+            }
             if (-not [string]::IsNullOrWhiteSpace($RegistryRoot)) {
                 $RegistryDiscoveryErrorIds = [System.Collections.Generic.List[string]]::new()
                 if ([string]::IsNullOrWhiteSpace($RegistryFormat)) {
                     $null = $RegistryDiscoveryErrorIds.Add('IISLogFormatUnavailable')
+                }
+                if ($null -eq $RegistryLocalTimeRollover) {
+                    $null = $RegistryDiscoveryErrorIds.Add('IISLocalTimeRolloverUnavailable')
                 }
                 $Roots.Add([pscustomobject]@{
                         Path              = $RegistryRoot
@@ -242,7 +262,7 @@ function Clear-OldIISLog {
                         Source            = 'Registry'
                         Format            = if ([string]::IsNullOrWhiteSpace($RegistryFormat)) { $null } else { $RegistryFormat }
                         Service           = 'W3SVC'
-                        LocalTimeRollover = $null
+                        LocalTimeRollover = $RegistryLocalTimeRollover
                         DiscoveryErrorIds = $RegistryDiscoveryErrorIds
                     })
             }
@@ -286,10 +306,14 @@ function Clear-OldIISLog {
         $CurrentFormat = [string]$RootDefinition.Format
         if ([string]::IsNullOrWhiteSpace($ExistingFormat) -and -not [string]::IsNullOrWhiteSpace($CurrentFormat)) {
             $ExistingRootDefinition.Format = $CurrentFormat
+        }
+        if ($null -eq $ExistingRootDefinition.LocalTimeRollover -and $null -ne $RootDefinition.LocalTimeRollover) {
             $ExistingRootDefinition.LocalTimeRollover = $RootDefinition.LocalTimeRollover
+        }
+        if (-not [string]::IsNullOrWhiteSpace([string]$ExistingRootDefinition.Format) -and $null -ne $ExistingRootDefinition.LocalTimeRollover) {
             $FilteredErrorIds = [System.Collections.Generic.List[string]]::new()
             foreach ($ExistingErrorId in @($ExistingRootDefinition.DiscoveryErrorIds)) {
-                if ($ExistingErrorId -ne 'IISLogFormatUnavailable') {
+                if ($ExistingErrorId -ne 'IISLogFormatUnavailable' -and $ExistingErrorId -ne 'IISLocalTimeRolloverUnavailable') {
                     $null = $FilteredErrorIds.Add($ExistingErrorId)
                 }
             }
@@ -297,8 +321,12 @@ function Clear-OldIISLog {
         }
 
         $MergedRootFormat = [string]$ExistingRootDefinition.Format
+        $MergedRootLocalTimeRollover = $ExistingRootDefinition.LocalTimeRollover
         foreach ($RootErrorId in @($RootDefinition.DiscoveryErrorIds)) {
             if ($RootErrorId -eq 'IISLogFormatUnavailable' -and -not [string]::IsNullOrWhiteSpace($MergedRootFormat)) {
+                continue
+            }
+            if ($RootErrorId -eq 'IISLocalTimeRolloverUnavailable' -and $null -ne $MergedRootLocalTimeRollover) {
                 continue
             }
             if (-not $ExistingRootDefinition.DiscoveryErrorIds.Contains($RootErrorId)) {

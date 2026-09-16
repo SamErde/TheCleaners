@@ -170,7 +170,7 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
 
         $Plan.Files.Path | Should -Contain $RemainingPath
         $Plan.Files.Path | Should -Not -Contain $VanishingPath
-        $Plan.Directories.Path | Should -Contain $ChildPath
+        $Plan.Directories.Path | Should -Not -Contain $ChildPath
         $Plan.DisqualifiedDirectoryPaths | Should -Contain $ChildPath
         $Plan.DisqualifiedDirectoryPaths | Should -Contain $RootPath
         Close-TheCleanersTempPlanHandles -Plan $Plan

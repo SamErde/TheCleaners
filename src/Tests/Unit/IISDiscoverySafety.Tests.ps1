@@ -246,7 +246,7 @@ Describe 'IIS registry-root deduplication' -Skip:(-not $WindowsHost) -Tag Unit {
     ) {
         $env:SystemDrive = ''
         $RegistrySpelling = $IISRoot + $Suffix
-        Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $RegistrySpelling; LogFormat = 'W3C' } }
+        Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $RegistrySpelling; LogFormat = 'W3C'; LocalTimeRollover = $false } }
 
         $Results = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
 
@@ -259,7 +259,7 @@ Describe 'IIS registry-root deduplication' -Skip:(-not $WindowsHost) -Tag Unit {
     }
 
     It 'preserves a known registry format when it duplicates an unknown default root' {
-        Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $IISRoot; LogFormat = 'W3C' } }
+        Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $IISRoot; LogFormat = 'W3C'; LocalTimeRollover = $false } }
 
         $Results = @(Clear-OldIISLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
 
@@ -269,10 +269,28 @@ Describe 'IIS registry-root deduplication' -Skip:(-not $WindowsHost) -Tag Unit {
         $Results[0].ErrorIds | Should -Not -Contain 'IISLogFormatUnavailable'
     }
 
+    It 'fails closed when the registry rollover mode is unavailable' {
+        $PreviousSystemDriveForTest = $env:SystemDrive
+        try {
+            $env:SystemDrive = ''
+            Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $IISRoot; LogFormat = 'W3C' } }
+
+            $Results = @(Clear-OldIISLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
+        } finally {
+            $env:SystemDrive = $PreviousSystemDriveForTest
+        }
+
+        $Results | Should -HaveCount 1
+        $Results[0].Status | Should -Be 'DiscoveryFailed'
+        $Results[0].FileCandidateCount | Should -BeNullOrEmpty
+        $Results[0].ErrorIds | Should -Contain 'IISLocalTimeRolloverUnavailable'
+        $Results[0].CandidatePaths | Should -BeNullOrEmpty
+    }
+
     It 'does not collapse distinct custom and default roots' {
         $CustomRoot = Join-Path -Path $FixtureRoot -ChildPath 'CustomLogs'
         $null = New-Item -Path $CustomRoot -ItemType Directory
-        Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $CustomRoot; LogFormat = 'W3C' } }
+        Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $CustomRoot; LogFormat = 'W3C'; LocalTimeRollover = $false } }
 
         $Results = @(Clear-OldIISLog -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction Stop)
 
@@ -295,7 +313,7 @@ Describe 'IIS extended-length traversal' -Skip:(-not $WindowsHost) -Tag Unit {
         try {
             $env:SystemDrive = ''
             Mock Get-Module { $null } -ParameterFilter { $Name -eq 'WebAdministration' -and $ListAvailable }
-            Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $ExtendedRoot; LogFormat = 'W3C' } }
+            Mock Get-ItemProperty { [pscustomobject]@{ LogDir = $ExtendedRoot; LogFormat = 'W3C'; LocalTimeRollover = $false } }
             Mock Test-TheCleanersIisProtectedPath { $false }
             Mock Test-Path { $true }
             Mock Resolve-TheCleanersFileSystemPath { [System.IO.DirectoryInfo]::new($LiteralPath) }

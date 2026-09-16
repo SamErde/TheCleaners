@@ -284,7 +284,7 @@ Describe 'IIS structural preview lock' -Skip:(-not $WindowsHost) -Tag Unit {
         $Result[0].FileCandidateCount | Should -BeNullOrEmpty
         $Result[0].DirectoryCandidateCount | Should -BeNullOrEmpty
         $Result[0].CandidatePaths | Should -BeNullOrEmpty
-        $Result[0].DiscoveryErrorCount | Should -Be 2
+        $Result[0].DiscoveryErrorCount | Should -Be 3
         $Result[0].ErrorIds | Should -Contain 'IISProtectedRoot'
         $ProtectedError | Should -Not -BeNullOrEmpty
     }
