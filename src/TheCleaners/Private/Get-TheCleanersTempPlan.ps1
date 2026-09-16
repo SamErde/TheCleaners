@@ -9,10 +9,12 @@ function Get-TheCleanersTempPlan {
         Discovery errors are terminating to prevent partial plans from being used.
         When identity capture is enabled, each queued directory is opened with a
         stable native handle while the provider enumerates it and its identity is
-        captured, so directory replacement or rename fails closed. Those handles
-        remain open in the returned plan through candidate mutation, preventing an
-        ancestor from being renamed or replaced by a reparse point before a file
-        is opened for deletion.
+        captured, so directory replacement or rename fails closed. The returned
+        plan retains only handles for candidate-file ancestors and planned empty
+        directories; branches with no mutation candidate are released after
+        discovery. Retained handles remain open through candidate mutation,
+        preventing a required ancestor from being renamed or replaced by a
+        reparse point before a file is opened for deletion.
     .PARAMETER Root
         Previously validated temporary directory.
     .PARAMETER CutoffUtc
@@ -21,7 +23,7 @@ function Get-TheCleanersTempPlan {
         Include directories that can become empty after file removal.
     .PARAMETER CaptureIdentity
         Capture native file and directory identities for a removal-enabled plan
-        and retain the stable directory handles until the owning command finishes.
+        and retain only the stable directory handles required through mutation.
         Omit this switch for WhatIf discovery so the preview does not initialize
         process-global native interop state.
     .OUTPUTS
@@ -230,6 +232,52 @@ function Get-TheCleanersTempPlan {
                     Handle         = if ($null -eq $HeldDirectoryEntry) { $null } else { $HeldDirectoryEntry.Handle }
                 })
             $null = $PlannedDirectoryPaths.Add($DirectoryPath)
+        }
+
+        if ($CaptureIdentity) {
+            $RequiredDirectoryHandlePaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            $AddRequiredDirectoryPath = {
+                param (
+                    [Parameter(Mandatory)]
+                    [string]
+                    $Path
+                )
+
+                $CurrentPath = $Path
+                while (-not [string]::IsNullOrWhiteSpace($CurrentPath)) {
+                    $null = $RequiredDirectoryHandlePaths.Add($CurrentPath)
+                    if ($CurrentPath -eq $RootPath) {
+                        break
+                    }
+                    $ParentPath = Split-Path -Path $CurrentPath -Parent
+                    if ([string]::IsNullOrWhiteSpace($ParentPath) -or $ParentPath -eq $CurrentPath) {
+                        break
+                    }
+                    $CurrentPath = $ParentPath
+                }
+            }
+
+            & $AddRequiredDirectoryPath -Path $RootPath
+            foreach ($Candidate in $Candidates) {
+                & $AddRequiredDirectoryPath -Path $Candidate.ParentPath
+            }
+            foreach ($DirectoryPlan in $PlannedDirectories) {
+                & $AddRequiredDirectoryPath -Path $DirectoryPlan.Path
+            }
+
+            $RetainedDirectoryHandles = [System.Collections.Generic.List[object]]::new()
+            foreach ($HeldDirectoryEntry in @($HeldDirectoryHandles.ToArray())) {
+                if ($RequiredDirectoryHandlePaths.Contains($HeldDirectoryEntry.Path)) {
+                    $RetainedDirectoryHandles.Add($HeldDirectoryEntry)
+                } else {
+                    $HeldDirectoryEntry.Handle.Dispose()
+                }
+            }
+            $HeldDirectoryHandles = $RetainedDirectoryHandles
+            $HeldDirectoryHandleByPath = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($HeldDirectoryEntry in $HeldDirectoryHandles) {
+                $HeldDirectoryHandleByPath[$HeldDirectoryEntry.Path] = $HeldDirectoryEntry
+            }
         }
 
         [pscustomobject]@{

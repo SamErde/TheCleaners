@@ -50,7 +50,7 @@ trap {
 }
 $ErrorActionPreference = 'Stop'
 $env:PSModulePath = $ModuleSearchRoot + [System.IO.Path]::PathSeparator + (Join-Path -Path $PSHOME -ChildPath 'Modules')
-if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot')) {
+if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot', 'FtpRootFailureWithValidWeb')) {
     $env:SystemDrive = ''
 }
 Import-Module -Name $ManifestPath -ErrorAction Stop
@@ -63,7 +63,7 @@ $PreviousWhatIfPreference = $WhatIfPreference
 $PreviousConfirmPreference = $ConfirmPreference
 $ObservedError = $null
 $Results = @()
-$DiscoveryErrorAction = if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot')) { 'SilentlyContinue' } else { 'Stop' }
+$DiscoveryErrorAction = if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot', 'FtpRootFailureWithValidWeb')) { 'SilentlyContinue' } else { 'Stop' }
 try {
     $Results = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction $DiscoveryErrorAction)
 } catch {
@@ -120,10 +120,15 @@ if ($Scenario.EndsWith('Failure')) {
             throw 'The preview removed a fixture FTP log.'
         }
     }
-    if ($Scenario -eq 'FtpRootFailureWithExistingWeb') {
-        $ExpectedMissingWebRoot = [System.IO.Path]::GetFullPath((Join-Path -Path (Split-Path -Path $ExpectedRoot -Parent) -ChildPath 'W3SVC8')).TrimEnd([char[]]@('\', '/'))
-        $FailedFtpSiteResult = @($Results | Where-Object { $_.RootPath -eq $ExpectedMissingWebRoot })
-        if ($FailedFtpSiteResult.Count -ne 1 -or $FailedFtpSiteResult[0].Status -ne 'DiscoveryFailed' -or $null -ne $FailedFtpSiteResult[0].FileCandidateCount -or $FailedFtpSiteResult[0].ErrorIds -notcontains 'IISFtpDiscoveryFailed') {
+    if ($Scenario -eq 'FtpRootFailureWithValidWeb') {
+        $ValidWebResult = @($Results | Where-Object { $_.RootPath -eq $ExpectedRoot })
+        $FailedFtpSiteResult = @($Results | Where-Object { $_.DisplayName -eq 'FTP valid web FTP' })
+        if ($ValidWebResult.Count -ne 1 -or $ValidWebResult[0].Status -ne 'WhatIf' -or $ValidWebResult[0].FileCandidateCount -ne 1 -or $FailedFtpSiteResult.Count -ne 1 -or $FailedFtpSiteResult[0].Status -ne 'DiscoveryFailed' -or $FailedFtpSiteResult[0].ErrorIds -notcontains 'IISFtpDiscoveryFailed') {
+            throw 'An FTP discovery failure contaminated the valid web-root preview or lacked its own result.'
+        }
+    } elseif ($Scenario -eq 'FtpRootFailureWithExistingWeb') {
+        $FailedFtpSiteResult = @($Results | Where-Object { $_.DisplayName -eq 'FTP failure FTP' })
+        if ($FailedFtpSiteResult.Count -ne 1 -or $FailedFtpSiteResult[0].Status -ne 'DiscoveryFailed' -or $null -ne $FailedFtpSiteResult[0].FileCandidateCount -or $FailedFtpSiteResult[0].ErrorIds -notcontains 'IISFtpDiscoveryFailed' -or $FailedFtpSiteResult[0].RootPath -notlike 'IIS FTP log root unavailable*') {
             throw 'The preview omitted the failed FTP discovery for an absent web root.'
         }
     } elseif ($Scenario -eq 'FtpRootFailureWithNoWebRoot') {
@@ -360,6 +365,41 @@ Describe 'IIS FTP root discovery' -Skip:(-not $WindowsHost) -Tag Unit {
         $ProbeExitCode | Should -Be 0 -Because $Diagnostic
         $ProbeOutput | Should -Contain 'IIS_DISCOVERY_OK'
         $ExistingWebLogPath | Should -Exist
+    }
+
+    It 'keeps a valid web-root preview separate from an FTP discovery failure' {
+        $FixtureRoot = Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)
+        $ModuleSearchRoot = Join-Path -Path $FixtureRoot -ChildPath 'Modules'
+        $DependencyRoot = Join-Path -Path $ModuleSearchRoot -ChildPath 'WebAdministration'
+        $LogBase = Join-Path -Path $FixtureRoot -ChildPath 'LogFiles'
+        $WebRoot = Join-Path -Path $LogBase -ChildPath 'W3SVC8'
+        $WebLogPath = Join-Path -Path $WebRoot -ChildPath 'u_ex240101.log'
+        $null = New-Item -Path $DependencyRoot -ItemType Directory -Force
+        $null = New-Item -Path $WebRoot -ItemType Directory -Force
+        $WebLog = New-Item -Path $WebLogPath -ItemType File
+        $WebLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
+        $Sites = @(
+            @{ Name = 'FTP valid web'; Id = 8; LogFile = @{ Directory = $LogBase }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $null } } }
+        )
+        @{ FailDiscovery = $false; Sites = $Sites } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8
+        Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'WebAdministration.psm1') -Value $FixtureModuleContent -Encoding UTF8
+        $ProbePath = Join-Path -Path $FixtureRoot -ChildPath 'Probe.ps1'
+        Set-Content -LiteralPath $ProbePath -Value $ProbeContent -Encoding UTF8
+        $PreviousPSModulePath = $env:PSModulePath
+
+        try {
+            $env:PSModulePath = $ModuleSearchRoot + [System.IO.Path]::PathSeparator + $PreviousPSModulePath
+            $ProbeOutput = & $PowerShellExecutable -NoLogo -NoProfile -NonInteractive -File $ProbePath -ManifestPath $ManifestPath -ModuleSearchRoot $ModuleSearchRoot -LogRoot $WebRoot -Scenario 'FtpRootFailureWithValidWeb' 2>&1
+            $ProbeExitCode = $LASTEXITCODE
+            $Diagnostic = [regex]::Replace(($ProbeOutput -join [Environment]::NewLine), '\x1B\[[0-?]*[ -/]*[@-~]', '')
+        } finally {
+            Remove-Module -Name 'WebAdministration' -Force -ErrorAction SilentlyContinue
+            $env:PSModulePath = $PreviousPSModulePath
+        }
+
+        $ProbeExitCode | Should -Be 0 -Because $Diagnostic
+        $ProbeOutput | Should -Contain 'IIS_DISCOVERY_OK'
+        $WebLogPath | Should -Exist
     }
 }
 

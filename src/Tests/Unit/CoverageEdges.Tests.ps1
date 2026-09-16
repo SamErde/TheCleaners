@@ -203,6 +203,30 @@ Describe 'Fail-closed branch contracts' -Skip:(-not $WindowsHost) -Tag Unit {
         $ReplacementPath | Should -Exist
     }
 
+    It 'releases stable handles for branches without mutation candidates' {
+        $RootPath = Join-Path -Path $TestDrive -ChildPath 'SelectiveHandleRoot'
+        $CandidateDirectory = Join-Path -Path $RootPath -ChildPath 'Candidate'
+        $CandidatePath = Join-Path -Path $CandidateDirectory -ChildPath 'old.tmp'
+        $UnrelatedDirectory = Join-Path -Path $RootPath -ChildPath 'Unrelated'
+        $UnrelatedPath = Join-Path -Path $UnrelatedDirectory -ChildPath 'recent.tmp'
+        $null = New-Item -Path $CandidateDirectory -ItemType Directory -Force
+        $null = New-Item -Path $UnrelatedDirectory -ItemType Directory -Force
+        $OldFile = New-Item -Path $CandidatePath -ItemType File -Force
+        $RecentFile = New-Item -Path $UnrelatedPath -ItemType File -Force
+        [System.IO.File]::SetLastWriteTimeUtc($OldFile.FullName, [DateTime]::UtcNow.AddDays(-31))
+        [System.IO.File]::SetLastWriteTimeUtc($RecentFile.FullName, [DateTime]::UtcNow)
+        $Root = Resolve-TheCleanersFileSystemPath -LiteralPath $RootPath
+        $Plan = Get-TheCleanersTempPlan -Root $Root -CutoffUtc ([DateTime]::UtcNow.AddDays(-30)) -CaptureIdentity
+
+        try {
+            $Plan.HeldDirectoryHandles.Path | Should -Contain $RootPath
+            $Plan.HeldDirectoryHandles.Path | Should -Contain $CandidateDirectory
+            $Plan.HeldDirectoryHandles.Path | Should -Not -Contain $UnrelatedDirectory
+        } finally {
+            Close-TheCleanersTempPlanHandles -Plan $Plan
+        }
+    }
+
     It 'rejects a reparse-point cleanup root before planning' {
         $OutsidePath = Join-Path -Path $TestDrive -ChildPath 'OutsideRoot'
         $LinkPath = Join-Path -Path $TestDrive -ChildPath 'ReparseRoot'

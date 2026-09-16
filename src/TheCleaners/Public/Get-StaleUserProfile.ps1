@@ -189,49 +189,58 @@ function Get-StaleUserProfile {
                         $ExpectedDirectoryIdentity = $DirectoryState.Identity
                         Initialize-TheCleanersNativeFileInterop
                         $DirectoryEntry = $null
-                        if (-not $HeldDirectoryHandleByPath.TryGetValue($DirectoryPath, [ref]$DirectoryEntry)) {
-                            $DirectoryHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($DirectoryPath)
-                            $DirectoryEntry = [pscustomobject]@{
-                                Path     = $DirectoryPath
-                                Handle   = $DirectoryHandle
-                                Identity = $null
-                            }
-                            $HeldDirectoryHandles.Add($DirectoryEntry)
-                            $HeldDirectoryHandleByPath[$DirectoryPath] = $DirectoryEntry
-                        }
-                        $DirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryEntry.Handle)
-                        $DirectoryEntry.Identity = $DirectoryIdentity
-                        if (-not $DirectoryIdentity.IsDirectory -or $null -eq $ExpectedDirectoryIdentity -or -not $DirectoryIdentity.Equals($ExpectedDirectoryIdentity)) {
-                            throw [System.IO.InvalidDataException]::new("The profile traversal path is not a directory: '$DirectoryPath'.")
-                        }
-                        if ($DirectoryIdentity.IsReparsePoint) {
-                            throw [System.IO.InvalidDataException]::new("The profile traversal path became a reparse point and cannot be sized: '$DirectoryPath'.")
-                        }
-                        foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
-                            if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-                                continue
-                            }
-                            if ($Item.PSIsContainer) {
-                                $ChildIdentityHandle = [TheCleaners.NativeFileInterop]::OpenForIdentityInspection($Item.FullName)
-                                try {
-                                    $ChildIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($ChildIdentityHandle)
-                                } finally {
-                                    $ChildIdentityHandle.Dispose()
-                                }
-                                if (-not $ChildIdentity.IsDirectory -or $ChildIdentity.IsReparsePoint) {
-                                    throw [System.IO.InvalidDataException]::new("The profile traversal path changed before it was queued: '$($Item.FullName)'.")
-                                }
-                                $PendingDirectories.Push([pscustomobject]@{
-                                        Path     = $Item.FullName
-                                        Identity = $ChildIdentity
-                                    })
+                        $DirectoryHandle = $null
+                        $DirectoryHandleRetained = $false
+                        try {
+                            if ($HeldDirectoryHandleByPath.TryGetValue($DirectoryPath, [ref]$DirectoryEntry)) {
+                                $DirectoryHandle = $DirectoryEntry.Handle
+                                $DirectoryHandleRetained = $true
                             } else {
-                                $SizeTotal += [Int64]$Item.Length
+                                $DirectoryHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($DirectoryPath)
+                                $DirectoryEntry = [pscustomobject]@{
+                                    Path     = $DirectoryPath
+                                    Handle   = $DirectoryHandle
+                                    Identity = $null
+                                }
                             }
-                        }
-                        $CurrentDirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryEntry.Handle)
-                        if (-not $DirectoryIdentity.Equals($CurrentDirectoryIdentity) -or $CurrentDirectoryIdentity.IsReparsePoint) {
-                            throw [System.IO.InvalidDataException]::new("The profile traversal path changed while it was being sized: '$DirectoryPath'.")
+                            $DirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryHandle)
+                            $DirectoryEntry.Identity = $DirectoryIdentity
+                            if (-not $DirectoryIdentity.IsDirectory -or $null -eq $ExpectedDirectoryIdentity -or -not $DirectoryIdentity.Equals($ExpectedDirectoryIdentity)) {
+                                throw [System.IO.InvalidDataException]::new("The profile traversal path is not a directory: '$DirectoryPath'.")
+                            }
+                            if ($DirectoryIdentity.IsReparsePoint) {
+                                throw [System.IO.InvalidDataException]::new("The profile traversal path became a reparse point and cannot be sized: '$DirectoryPath'.")
+                            }
+                            foreach ($Item in @(Get-ChildItem -LiteralPath $DirectoryPath -Force -ErrorAction Stop)) {
+                                if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                                    continue
+                                }
+                                if ($Item.PSIsContainer) {
+                                    $ChildIdentityHandle = [TheCleaners.NativeFileInterop]::OpenForIdentityInspection($Item.FullName)
+                                    try {
+                                        $ChildIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($ChildIdentityHandle)
+                                    } finally {
+                                        $ChildIdentityHandle.Dispose()
+                                    }
+                                    if (-not $ChildIdentity.IsDirectory -or $ChildIdentity.IsReparsePoint) {
+                                        throw [System.IO.InvalidDataException]::new("The profile traversal path changed before it was queued: '$($Item.FullName)'.")
+                                    }
+                                    $PendingDirectories.Push([pscustomobject]@{
+                                            Path     = $Item.FullName
+                                            Identity = $ChildIdentity
+                                        })
+                                } else {
+                                    $SizeTotal += [Int64]$Item.Length
+                                }
+                            }
+                            $CurrentDirectoryIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($DirectoryHandle)
+                            if (-not $DirectoryIdentity.Equals($CurrentDirectoryIdentity) -or $CurrentDirectoryIdentity.IsReparsePoint) {
+                                throw [System.IO.InvalidDataException]::new("The profile traversal path changed while it was being sized: '$DirectoryPath'.")
+                            }
+                        } finally {
+                            if ($null -ne $DirectoryHandle -and -not $DirectoryHandleRetained) {
+                                $DirectoryHandle.Dispose()
+                            }
                         }
                     }
                     foreach ($AncestorEntry in $HeldDirectoryHandles) {

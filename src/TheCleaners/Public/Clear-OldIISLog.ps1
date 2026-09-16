@@ -17,7 +17,8 @@ function Clear-OldIISLog {
         Preview allowlisted log files whose LastWriteTimeUtc is at or before one UTC
         cutoff, Days days ago. The default is 60 days.
     .PARAMETER PassThru
-        Return a TheCleaners.CleanupResult preview summary for each existing root.
+        Return a TheCleaners.CleanupResult preview summary for each existing root,
+        including failed discovery results with null candidate counts.
     .EXAMPLE
         Clear-OldIISLog -Days 60 -WhatIf
     .EXAMPLE
@@ -131,11 +132,9 @@ function Clear-OldIISLog {
                         })
                 } catch {
                     $DiscoveryErrorReported = $true
+                    $DiscoveryFailureResultReported = $true
                     $null = $DiscoveryErrorIds.Add('IISFtpDiscoveryFailed')
-                    if ($null -ne $WebRootDefinition) {
-                        $null = $WebRootDefinition.DiscoveryErrorIds.Add('IISFtpDiscoveryFailed')
-                    } elseif ($PassThru) {
-                        $DiscoveryFailureResultReported = $true
+                    if ($PassThru) {
                         $FtpFailureRootPath = "IIS FTP log root unavailable for '$SiteName'"
                         $Result = Get-TheCleanersCleanupResult -Command 'Clear-OldIISLog' -RootPath $FtpFailureRootPath -CutoffUtc $CutoffUtc -DiscoveryStatus 'Failed' -ProtectionStatus 'Validated' -ProtectionPathCount $IisProtectedPaths.Count -ProtectionPaths $IisProtectedPaths -DiscoverySource 'WebAdministration' -DisplayName "$SiteName FTP" -CandidatePaths @() -Status 'DiscoveryFailed'
                         $Result.FileCandidateCount = $null
