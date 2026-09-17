@@ -72,6 +72,8 @@ Describe 'Disposable ACL harness boundaries and evidence' -Skip:(-not $WindowsHo
         @($Evidence.BeforeIdentities | Where-Object { $_.Identity -and $_.Length -eq 3 }) | Should -HaveCount 2
         @($Evidence.AfterIdentities) | Should -HaveCount 0
         $Evidence.PreviewPreserved | Should -BeTrue
+        $Evidence.PreviewInventoryMatches | Should -BeTrue
+        @($Evidence.BeforeIdentities | Where-Object { $_.ContentEvidence -eq 'Hashed' -and $_.SHA256 -match '^[0-9A-F]{64}$' }) | Should -HaveCount 1
         $Evidence.PreviewResult.Status | Should -Be 'WhatIf'
         $Evidence.Result.FilesRemoved | Should -Be 2
         $Evidence.Result.BytesReclaimed | Should -Be 6
@@ -79,6 +81,8 @@ Describe 'Disposable ACL harness boundaries and evidence' -Skip:(-not $WindowsHo
         $Evidence.Recovery.Policy | Should -Be 'RetainFixtureForInspection'
         $Evidence.Recovery.EnvironmentRestored | Should -BeTrue
         $Evidence.Recovery.HandlesClosed | Should -BeTrue
+        $Evidence.Recovery.RootReopenVerified | Should -BeTrue
+        $Evidence.Recovery.RootReopenError | Should -BeNullOrEmpty
         $Evidence.Recovery.HandleCount | Should -BeGreaterThan 1
         $Evidence.Recovery.RecursiveRecoveryAttempted | Should -BeFalse
         $Evidence.Recovery.InventoryError | Should -BeNullOrEmpty
@@ -118,13 +122,39 @@ Describe 'Disposable ACL harness boundaries and evidence' -Skip:(-not $WindowsHo
         $Evidence.Recovery.HandlesClosed | Should -BeTrue
     }
 
-    It 'refuses a false preview result and preserves both candidates' {
+    It 'rejects acceptance when an independent root handle prevents the post-disposal reopen' {
+        $Leak = [pscustomobject]@{ Handle = $null }
+        Mock Get-CimInstance {
+            $RootPath = (Get-ChildItem -LiteralPath $FixtureParent -Directory | Select-Object -First 1).FullName
+            $Leak.Handle = [TheCleaners.NativeFileInterop]::OpenForIdentityInspection($RootPath)
+            [pscustomobject]@{ Caption = 'Fixture OS'; Version = '10.0'; BuildNumber = 'fixture' }
+        }
+        try {
+            $Evidence = & $Harness -FixtureParent $FixtureParent -Confirm:$false | ConvertFrom-Json
+            $Evidence.FixturePassed | Should -BeTrue
+            $Evidence.Acceptance | Should -BeFalse
+            $Evidence.Recovery.HandlesClosed | Should -BeTrue
+            $Evidence.Recovery.RootReopenVerified | Should -BeFalse
+            $Evidence.Recovery.RootReopenError.NativeErrorCode | Should -Be 32
+            $Evidence.Recovery.ProbeHandleClosed | Should -BeTrue
+        } finally {
+            if ($null -ne $Leak.Handle) { $Leak.Handle.Dispose() }
+        }
+    }
+
+    It 'refuses a false preview <Fault> and preserves both candidates' -TestCases @(
+        @{ Fault = 'count'; Count = 0; Paths = @() }
+        @{ Fault = 'inventory'; Count = 2; Paths = @('C:\wrong-a.tmp', 'C:\wrong-b.tmp') }
+    ) {
+        param($Fault, $Count, $Paths)
         $Module = Import-Module (Join-Path $RepositoryRoot 'src/TheCleaners/TheCleaners.psd1') -PassThru
-        Mock Clear-CurrentUserTemp { [pscustomobject]@{ Status = 'WhatIf'; FileCandidateCount = 0; FilesRemoved = 0; BytesReclaimed = 0 } } -ModuleName TheCleaners
+        Mock Clear-CurrentUserTemp { [pscustomobject]@{ Status = 'WhatIf'; FileCandidateCount = $Count; CandidatePaths = $Paths; FilesRemoved = 0; BytesReclaimed = 0 } } -ModuleName TheCleaners
         $Evidence = & $Harness -FixtureParent $FixtureParent -Confirm:$false | ConvertFrom-Json
         $Evidence.Acceptance | Should -BeFalse
         $Evidence.RunFailure.Message | Should -Match 'WhatIf inventory'
         @($Evidence.Recovery.RemainingEntries) | Should -HaveCount 2
+        $Evidence.Recovery.EnvironmentRestored | Should -BeTrue
+        $Evidence.Recovery.RootReopenVerified | Should -BeTrue
         Should -Invoke Clear-CurrentUserTemp -ModuleName TheCleaners -Times 1 -Exactly -ParameterFilter { $WhatIf }
         Should -Invoke Clear-CurrentUserTemp -ModuleName TheCleaners -Times 0 -Exactly -ParameterFilter { -not $WhatIf }
     }

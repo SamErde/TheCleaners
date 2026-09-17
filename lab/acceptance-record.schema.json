@@ -160,7 +160,7 @@
     },
     {
       "if": {"properties": {"status": {"const": "Failed"}}},
-      "then": {"required": ["failureReasons"]}
+      "then": {"required": ["failureReasons"], "properties": {"recovery": {"type": "object"}}}
     },
     {
       "if": {"properties": {"status": {"const": "Passed"}}},
@@ -189,7 +189,12 @@
           },
           "recovery": {
             "type": "object",
-            "properties": {"handlesClosed": {"const": true}, "environmentRestored": {"const": true}}
+            "properties": {
+              "handlesClosed": {"const": true},
+              "environmentRestored": {"const": true},
+              "resetStatus": {"enum": ["Completed", "NotApplicable"]},
+              "healthStatus": {"enum": ["Passed", "NotApplicable"]}
+            }
           }
         }
       }

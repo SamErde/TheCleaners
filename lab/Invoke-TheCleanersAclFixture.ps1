@@ -4,8 +4,9 @@
 .DESCRIPTION
     This lab-only harness creates a disposable directory under the supplied
     parent, denies the current user file-content read access on one old file,
-    and records the cleanup result after restoring process state and releasing
-    handles. Only the new child is cleaned; the parent is never a cleaner target.
+    and records the cleanup result after restoring TEMP/TMP and releasing owned
+    handles. The native type/module lifetime ends with the dedicated process.
+    Only the new child is cleaned; the parent is never a cleaner target.
     The child is retained for inspection, even on failure. No recursive recovery
     or ACL reset is performed. Use a dedicated process and an exclusive fixture
     parent. This is fixture evidence, never product acceptance.
@@ -56,6 +57,8 @@ $PreviousTmp = $env:TMP
 $CleanupErrors = @()
 $Handles = [System.Collections.Generic.List[object]]::new()
 $Identity = $null
+$RootHandle = $null
+$RootIdentity = $null
 $Evidence = [ordered]@{
     SchemaVersion = 1
     CaseId = 'ACL-READ-DENIED'
@@ -198,6 +201,8 @@ try {
                     Length = $FileIdentity.Length
                     LastWriteTimeUtc = $FileIdentity.LastWriteTimeUtc.ToString('o')
                     Attributes = $FileIdentity.Attributes
+                    SHA256 = if ($CandidatePath -eq $OldReadablePath) { (Get-FileHash -LiteralPath $CandidatePath -Algorithm SHA256 -ErrorAction Stop).Hash } else { $null }
+                    ContentEvidence = if ($CandidatePath -eq $OldReadablePath) { 'Hashed' } else { 'ReadDeniedByFixtureAcl' }
                 }
             }
         }
@@ -212,7 +217,12 @@ try {
     $Evidence.PreviewResult = & $Module { Clear-CurrentUserTemp -Days 30 -WhatIf -Confirm:$false -PassThru -ErrorAction Stop }
     $PreviewIdentities = @(& $Snapshot)
     $Evidence.PreviewPreserved = ($Evidence.BeforeIdentities | ConvertTo-Json -Depth 5 -Compress) -ceq ($PreviewIdentities | ConvertTo-Json -Depth 5 -Compress)
+    $ExpectedPaths = @($BeforeCandidates | Sort-Object)
+    $PreviewPaths = @($Evidence.PreviewResult.CandidatePaths | Sort-Object)
+    $Evidence.PreviewInventoryMatches = ($PreviewPaths.Count -eq $ExpectedPaths.Count -and
+        [string]::Join("`n", $PreviewPaths) -eq [string]::Join("`n", $ExpectedPaths))
     if (-not $Evidence.PreviewPreserved -or $Evidence.PreviewResult.Status -ne 'WhatIf' -or
+        -not $Evidence.PreviewInventoryMatches -or
         $Evidence.PreviewResult.FileCandidateCount -ne $ExpectedFileCount -or
         $Evidence.PreviewResult.FilesRemoved -ne 0 -or $Evidence.PreviewResult.BytesReclaimed -ne 0) {
         throw 'Fixture WhatIf inventory or reconciliation failed; removal was not attempted.'
@@ -292,6 +302,28 @@ try {
         $RecoveryProbeError = $_.Exception.Message
     }
     foreach ($Handle in $Handles) { $Handle.Dispose() }
+    $RootReopenVerified = $false
+    $RootReopenError = $null
+    $ProbeHandle = $null
+    try {
+        if ($null -ne $RootIdentity) {
+            # Request DELETE access solely as a sharing/identity probe. No delete
+            # disposition or path mutation occurs, even if the object changed.
+            $ProbeHandle = [TheCleaners.NativeFileInterop]::OpenForStableEnumeration($FixtureRoot)
+            $ProbeIdentity = [TheCleaners.NativeFileInterop]::ReadIdentity($ProbeHandle)
+            $RootReopenVerified = $ProbeIdentity.Equals($RootIdentity) -and $ProbeIdentity.IsDirectory -and -not $ProbeIdentity.IsReparsePoint
+            if (-not $RootReopenVerified) { throw 'The retained fixture root identity changed after handle disposal.' }
+        }
+    } catch {
+        $RootReopenError = [ordered]@{
+            Id = $_.FullyQualifiedErrorId
+            Message = $_.Exception.Message
+            HResult = $_.Exception.HResult
+            NativeErrorCode = if ($_.Exception.InnerException -is [ComponentModel.Win32Exception]) { $_.Exception.InnerException.NativeErrorCode } else { $null }
+        }
+    } finally {
+        if ($null -ne $ProbeHandle) { $ProbeHandle.Dispose() }
+    }
     if ($null -ne $Identity) { $Identity.Dispose() }
     $Evidence.Recovery = [ordered]@{
         Policy = 'RetainFixtureForInspection'
@@ -300,12 +332,17 @@ try {
         HandleCount = $Handles.Count
         RemainingEntries = $RemainingEntries
         InventoryError = $RecoveryProbeError
+        RootReopenVerified = $RootReopenVerified
+        RootReopenError = $RootReopenError
+        ProbeHandleClosed = ($null -eq $ProbeHandle -or $ProbeHandle.IsClosed)
+        ProcessExitRequired = 'Exit the dedicated process to release module and native-type state.'
         RecursiveRecoveryAttempted = $false
         OperatorAction = 'Inspect retained fixture; use the approved disposable-host reset for recovery.'
     }
 }
 $Evidence.Acceptance = ($null -eq $Evidence.RunFailure -and -not $Evidence.WorkingTreeDirty -and
     $Evidence.FixturePassed -and $Evidence.PreviewPreserved -and
+    $Evidence.PreviewInventoryMatches -and $Evidence.Recovery.RootReopenVerified -and $Evidence.Recovery.ProbeHandleClosed -and
     $Evidence.Recovery.EnvironmentRestored -and $Evidence.Recovery.HandlesClosed -and
     $null -eq $Evidence.Recovery.InventoryError -and $null -ne $Evidence.Recovery.RemainingEntries -and
     @($Evidence.Recovery.RemainingEntries).Count -eq 0)
