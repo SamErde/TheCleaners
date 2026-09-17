@@ -5,9 +5,9 @@ The canonical documentation URL is `https://day3bits.com/TheCleaners/`, includin
 A documentation deployment is accepted only when the workflow proves all of the following for one source commit:
 
 1. MkDocs completes one strict build.
-2. The retained site manifest records every built file's relative path, byte count, and SHA-256 digest, plus a digest for the complete file set and the source repository, commit, ref, workflow run, and attempt.
+2. An empty `.nojekyll` hosting marker is added to the built site before the retained manifest records every file's relative path, byte count, and SHA-256 digest, plus a digest for the complete file set and the source repository, commit, ref, workflow run, and attempt.
 3. The deployment consumes the retained site artifact and verifies it locally against that manifest before publishing.
-4. The `gh-pages` publisher copies that directory without asking MkDocs to build again. The only branch control file added by the publisher is the empty `.nojekyll` file.
+4. The `gh-pages` publisher copies that directory without asking MkDocs to build again or adding unrecorded files.
 5. Every public file returned by `https://day3bits.com/TheCleaners/` has the recorded byte count and SHA-256 digest. Directory index files are requested through their public trailing-slash routes.
 6. The home page retains its title-case canonical declaration and links to representative function, contract, support, migration, and release-plan pages.
 
@@ -23,13 +23,13 @@ The `Deploy MkDocs to GitHub Pages` workflow has three jobs with separate permis
 | `deploy` | `contents: write` | Download and recheck the retained site, then use pinned `ghp-import` 2.1.0 to commit and push those files to the existing `gh-pages` branch. This is the only job with write access. |
 | `verify` | `contents: read` | Download the same manifest, compare every deployed file with bounded retries, validate representative navigation, and retain the result for 90 days. |
 
-The workflow uses the repository-scoped `GITHUB_TOKEN` through the checked-out remote. It does not require a separate deployment secret and does not change the repository's existing GitHub Pages hosting source. All third-party actions are pinned to full commit SHAs.
+The workflow uses the repository-scoped `GITHUB_TOKEN` through the checked-out remote. It does not require a separate deployment secret and does not change the repository's existing GitHub Pages hosting source. All third-party actions are pinned to full commit SHAs. Automatic and manual runs are restricted to `main` and share one `gh-pages` destination concurrency group. A newer request does not cancel an in-progress deployment/verification chain.
 
 The site artifact is named `mkdocs-site-<source-commit>`. It contains the complete `site` directory and `deployment-evidence/site-manifest.json`. The later `mkdocs-deployment-verification-<source-commit>` artifact contains that manifest and `deployment-report.json`. The report records the source identity, content-tree digest, `gh-pages` commit, canonical URL, required navigation routes, number of attempts used, and final pass or failure.
 
 ## Propagation and failure behavior
 
-GitHub Pages and its cache can briefly serve the preceding deployment after the branch push. The verifier therefore retries only files that have not matched. Each request asks for identity encoding and carries the source commit and attempt number as cache-busting query parameters. The production workflow permits six attempts with delays of 5, 10, 20, 30, and 30 seconds.
+GitHub Pages and its cache can briefly serve the preceding deployment after the branch push. The verifier therefore retries the complete file set and passes only when one full attempt matches every file. It never combines successes from separate attempts. Each request asks for identity encoding and carries the source commit and attempt number as cache-busting query parameters. The production workflow permits six attempts with delays of 5, 10, 20, 30, and 30 seconds.
 
 Verification fails closed when any file remains missing, redirects to a differently cased path, has the wrong length or SHA-256 digest, or returns an unexpected status. It also fails when the exact home page omits its canonical path or any required navigation link. A stale deployment can pass only after every recorded file matches the retained build. The workflow does not update release-plan status automatically; merge-commit workflow evidence must be reviewed and recorded separately.
 
@@ -52,6 +52,7 @@ From the repository root, run:
 ```powershell
 python -m unittest discover -s .github/scripts -p 'test_documentation_delivery.py' -v
 python -m mkdocs build --strict --site-dir site
+New-Item -Path site/.nojekyll -ItemType File -Force | Out-Null
 python .github/scripts/build_documentation_manifest.py create --site-dir site --output deployment-evidence/site-manifest.json --source-repository 'SamErde/TheCleaners' --source-commit (git rev-parse HEAD) --source-ref (git symbolic-ref -q HEAD)
 python .github/scripts/build_documentation_manifest.py verify --site-dir site --manifest deployment-evidence/site-manifest.json
 ```

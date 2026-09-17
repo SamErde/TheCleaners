@@ -68,4 +68,3 @@ Set-Content -LiteralPath ./PublisherReached.txt -Value 'reached'
         Get-Content -LiteralPath ./PublisherReached.txt | Should -Be 'reached'
     }
 }
-

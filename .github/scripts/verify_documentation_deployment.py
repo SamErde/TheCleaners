@@ -209,12 +209,12 @@ def verify_deployment(
 
     source_commit = manifest["source"]["commit"]
     records = {record["path"]: record for record in manifest["files"]}
-    pending = dict(records)
     verified_content: dict[str, bytes] = {}
     last_errors: dict[str, str] = {}
 
     for attempt in range(1, attempts + 1):
         last_errors = {}
+        verified_content = {}
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {
                 executor.submit(
@@ -225,7 +225,7 @@ def verify_deployment(
                     attempt,
                     timeout,
                 ): path
-                for path, record in pending.items()
+                for path, record in records.items()
             }
             for future in as_completed(futures):
                 path, body, error = future.result()
@@ -234,8 +234,7 @@ def verify_deployment(
                 else:
                     last_errors[path] = error or "empty response"
 
-        pending = {path: records[path] for path in last_errors}
-        if not pending:
+        if not last_errors:
             verify_navigation(
                 base_url,
                 verified_content["index.html"],

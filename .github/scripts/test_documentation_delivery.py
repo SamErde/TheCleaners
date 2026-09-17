@@ -51,6 +51,7 @@ def write_site(root: Path, include_navigation: bool = True) -> None:
         encoding="utf-8",
     )
     (root / "sitemap.xml").write_bytes(b"<urlset></urlset>\n")
+    (root / ".nojekyll").write_bytes(b"")
     (root / "assets").mkdir()
     (root / "assets" / "binary.dat").write_bytes(b"\x00\xff\x10exact-bytes")
     for route in routes:
@@ -71,9 +72,15 @@ def build_manifest(site: Path) -> dict:
 
 
 class SiteServer:
-    def __init__(self, files: dict[str, bytes], stale_once: set[str] | None = None):
+    def __init__(
+        self,
+        files: dict[str, bytes],
+        stale_once: set[str] | None = None,
+        stale_on_requests: dict[str, set[int]] | None = None,
+    ):
         self.files = files
         self.stale_once = set(stale_once or set())
+        self.stale_on_requests = stale_on_requests or {}
         self.request_counts: dict[str, int] = {}
 
         owner = self
@@ -82,7 +89,9 @@ class SiteServer:
             def do_GET(self):
                 path = urlparse(self.path).path
                 owner.request_counts[path] = owner.request_counts.get(path, 0) + 1
-                if path in owner.stale_once and owner.request_counts[path] == 1:
+                if (
+                    path in owner.stale_once and owner.request_counts[path] == 1
+                ) or owner.request_counts[path] in owner.stale_on_requests.get(path, set()):
                     content = b"stale"
                 else:
                     content = owner.files.get(path)
@@ -142,6 +151,9 @@ class DocumentationManifestTests(unittest.TestCase):
                 binary_record["sha256"],
                 manifest_tool.sha256_bytes(b"\x00\xff\x10exact-bytes"),
             )
+            marker = next(record for record in loaded["files"] if record["path"] == ".nojekyll")
+            self.assertEqual(marker["size"], 0)
+            self.assertEqual(marker["sha256"], manifest_tool.sha256_bytes(b""))
 
     def test_local_verification_fails_for_changed_or_unexpected_files(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -243,6 +255,39 @@ class DocumentationDeploymentTests(unittest.TestCase):
 
             self.assertEqual(attempts, 2)
             self.assertEqual(server.request_counts[stale_path], 2)
+            self.assertTrue(all(count == 2 for count in server.request_counts.values()))
+
+    def test_alternating_generations_never_form_a_complete_passing_attempt(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            site = Path(temporary_directory) / "site"
+            site.mkdir()
+            write_site(site)
+            manifest = build_manifest(site)
+            # A matches only on attempt one; B matches only on attempt two.
+            # Accumulating successes across attempts would incorrectly pass.
+            server = SiteServer(
+                public_files(site, manifest),
+                stale_on_requests={
+                    BASE_PATH: {2},
+                    BASE_PATH + "support-matrix/": {1},
+                },
+            )
+            with server as base_url:
+                with self.assertRaisesRegex(
+                    deployment_tool.DeploymentVerificationError,
+                    "after 2 attempts; 1 file.*index.html",
+                ):
+                    deployment_tool.verify_deployment(
+                        manifest,
+                        base_url,
+                        self.required_routes,
+                        attempts=2,
+                        initial_delay=0,
+                        backoff=1,
+                        maximum_delay=0,
+                        timeout=2,
+                        workers=1,
+                    )
 
     def test_wrong_bytes_fail_closed_after_bounded_attempts(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

@@ -14,11 +14,12 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: documentation-gh-pages
+  cancel-in-progress: false
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: read
 
@@ -46,6 +47,7 @@ jobs:
           python -m mkdocs build --strict --site-dir site
           test -f site/index.html
           test -f site/sitemap.xml
+          touch site/.nojekyll
 
       - name: 🧾 Record Exact Site Content
         run: |
@@ -111,7 +113,6 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch --no-tags origin gh-pages:refs/remotes/origin/gh-pages
           python -m ghp_import \
-            --no-jekyll \
             --push \
             --force \
             --branch gh-pages \
