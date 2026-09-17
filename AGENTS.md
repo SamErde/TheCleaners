@@ -24,4 +24,4 @@ Parallelize only independent work with separate branches/worktrees and explicit 
 
 For each packet, update its status, relevant help/docs, changelog, tests, and evidence links in the same PR. Use `implemented in draft`, `validated`, and `merged` distinctly. Do not mark a checkbox complete solely because code was generated or a workflow file exists. Record runtime version, tested commit, test totals/failures/skips, and lab limitations. Keep Zensical migration in issue #26.
 
-Canonical documentation URL: `https://day3bits.com/thecleaners/`.
+Canonical documentation URL: `https://day3bits.com/TheCleaners/`.
