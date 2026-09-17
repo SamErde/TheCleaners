@@ -2,9 +2,11 @@
 
 ## Unreleased - 1.0 preparation
 
-This entry describes unreleased work, not a released 1.0 package. The prepared beta notes reconcile the observed repository and Gallery history without inventing source identities for old packages.
+Following the `0.0.15-beta` prerelease, Windows client/server, IIS, Exchange, profile, and final 1.0 acceptance remain open. Lab validation is deferred future work and is not underway.
 
-The next prepared prerelease is **0.0.15-beta**, proposed tag `v0.0.15-beta`. The [release notes and history reconciliation](docs/releases/0.0.15-beta.md) map the changes below to that candidate. Publication remains pending; the old unpublished `0.0.11-alpha` GitHub draft is preserved as historical metadata and is not reused for this beta.
+## 0.0.15-beta - 2026-09-17
+
+Version `0.0.15-beta` was published from exact source `345f06c861b6d4074e5896e0b27a19f869dfa7e3` under tag `v0.0.15-beta`. The [release notes and history reconciliation](docs/releases/0.0.15-beta.md) map the changes below to that prerelease. The old unpublished `0.0.11-alpha` GitHub draft remains historical metadata and was not reused.
 
 ### Added
 
@@ -25,7 +27,7 @@ The next prepared prerelease is **0.0.15-beta**, proposed tag `v0.0.15-beta`. Th
 
 - Prioritize non-lab documentation/delivery readiness and an optional approved prerelease; Windows, IIS, Exchange, and profile lab validation is deferred future work, not underway. Require succinct Completed / Remaining summaries in every successor prompt.
 - Use the working title-case `https://day3bits.com/TheCleaners/` URL consistently in configuration, manifest, source help, and documentation. Track support for both URL cases in Zensical issue #26.
-- Configure the GitHub `powershell-gallery` environment with SamErde review, disabled administrator bypass and `v*` tag restrictions. Update the publishing workflow to use the dedicated `PSGALLERY_PUBLISH_API_KEY` environment secret, fail clearly when absent, and stop passing repository secrets to the build matrix. Credential presence is verified; Gallery validity and actual publication remain pending.
+- Configure the GitHub `powershell-gallery` environment with SamErde review, disabled administrator bypass and `v*` tag restrictions. Update the publishing workflow to use the dedicated `PSGALLERY_PUBLISH_API_KEY` environment secret, fail clearly when absent, and stop passing repository secrets to the build matrix. The protected `0.0.15-beta` run exercised the environment approval and credential through the exact-artifact publisher.
 - Add a closed local-rehearsal publisher mode that uses an existing local filesystem repository and an internal placeholder key. Preserve the exact-artifact guards shared with the fixed PSGallery production path and require an explicit valid source commit in both modes.
 - Bind publication to the maintainer-approved archive digest and verify the published version's installed payload, metadata, import, help, aliases and preview locks on fresh supported-runtime runners.
 - Build documentation once, retain a source-bound manifest, deploy that exact output and verify every public file's bytes and representative navigation with bounded propagation retries.
@@ -56,8 +58,10 @@ The next prepared prerelease is **0.0.15-beta**, proposed tag `v0.0.15-beta`. Th
 
 PR #33 merged at `fdadbee08f854b1af6fdc7654ae4532ebbf605df`. Exact-commit hosted PowerShell 7.4.20, 7.5.11, 7.6.6, Windows PowerShell 5.1, package/import, repeated and cross-runtime archive, PSScriptAnalyzer, and strict MkDocs evidence is recorded in `docs/release-plan-1.0.md`. This closes the runtime-matrix and bounded PS7 Windows archive-reproducibility subgates only; it does not validate TC-008 as a whole or accept a release.
 
-PR #37 merged at `345f06c861b6d4074e5896e0b27a19f869dfa7e3`. Its exact documentation run verified 71 retained files, the complete public Git tree and five representative routes. The merge build and analyzer passed; retained evidence verified the supported runtime matrix, archive equality and isolated local-feed publication rehearsal for the proposed `0.0.15-beta` candidate. No tag or Gallery publication has occurred.
+PR #37 merged at `345f06c861b6d4074e5896e0b27a19f869dfa7e3`. Its exact documentation run verified 71 retained files, the complete public Git tree and five representative routes. The merge build and analyzer passed; retained evidence verified the supported runtime matrix, archive equality and isolated local-feed publication rehearsal for `0.0.15-beta`.
+
+Protected publication run [35268852573](https://github.com/SamErde/TheCleaners/actions/runs/35268852573) verified the approved 19-file, 224,050-byte archive with SHA-256 `1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383`, published Gallery version `0.0.15-beta`, and passed fresh installed-package verification on Windows PowerShell 5.1 and PowerShell 7.4.20, 7.5.11, and 7.6.6. Independent verification passed all checks across 11 jobs, 15 retained artifact wrappers and four installed-package reports. The matching [GitHub prerelease](https://github.com/SamErde/TheCleaners/releases/tag/v0.0.15-beta) targets the same tag and source; its archive, manifest and sidecar assets were downloaded and matched byte-for-byte.
 
 ### Still pending
 
-Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; and Windows profile-inventory acceptance are deferred future work, not underway. Active non-lab work requires concrete prerelease approval, approved exact-artifact publication, and clean installation of the published version. Final 1.0 release acceptance remains open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. Acceptance preparation does not close them. The source manifest stays `0.0.15-beta`; the last recorded Gallery version is `0.0.13-alpha`. Zensical migration and support for both URL cases are tracked separately in issue #26.
+Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; and Windows profile-inventory acceptance are deferred future work, not underway. Final 1.0 release acceptance remains open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. The published beta does not close them. Zensical migration and support for both URL cases are tracked separately in issue #26.
