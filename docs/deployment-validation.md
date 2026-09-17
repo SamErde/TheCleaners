@@ -1,13 +1,15 @@
 # Documentation deployment gate
 
-The canonical documentation URL is `https://day3bits.com/TheCleaners/`, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links must use that casing. Support for the lowercase path remains deferred to [Zensical migration issue #26](https://github.com/SamErde/TheCleaners/issues/26).
+The canonical documentation URL is `https://day3bits.com/TheCleaners/`, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links must use that casing. The Zensical migration is open in [PR #41](https://github.com/SamErde/TheCleaners/pull/41); review, merge, fresh deployment, and lowercase-path acceptance remain open under [issue #26](https://github.com/SamErde/TheCleaners/issues/26).
+
+The lowercase project-prefix request is handled by the account-root Pages site before this project's generated files are selected. Zensical's native redirects map paths within the documentation output, so they cannot repair that missing project prefix. Case-only alias directories would also collide with canonical mixed-case directories on Windows. A companion account-root redirect is the remaining hosting-level option; this repository does not add ineffective redirect maps.
 
 A documentation deployment is accepted only when the workflow proves all of the following for one source commit:
 
-1. MkDocs completes one strict build.
+1. Zensical completes one strict, clean build into the configured `site` directory.
 2. An empty `.nojekyll` hosting marker is added to the built site before the retained manifest records every file's relative path, byte count, and SHA-256 digest, plus a digest for the complete file set and the source repository, commit, ref, workflow run, and attempt.
 3. The deployment consumes the retained site artifact and verifies it locally against that manifest before publishing.
-4. The `gh-pages` publisher copies that directory without asking MkDocs to build again or adding unrecorded files.
+4. The `gh-pages` publisher copies that directory without asking Zensical to build again or adding unrecorded files.
 5. Every public file returned by `https://day3bits.com/TheCleaners/` has the recorded byte count and SHA-256 digest. Directory index files are requested through their public trailing-slash routes.
 6. The home page retains its title-case canonical declaration and links to representative function, contract, support, migration, and release-plan pages.
 
@@ -15,17 +17,19 @@ A local build, a `gh-pages` push, an HTTP 200 response, or a green Pages deploym
 
 ## Workflow contract
 
-The `Deploy MkDocs to GitHub Pages` workflow has three jobs with separate permissions:
+The `Deploy Zensical to GitHub Pages` workflow has three jobs with separate permissions:
 
 | Job | Repository permission | Responsibility |
 | --- | --- | --- |
-| `build` | `contents: read` | Test the delivery helpers, build once with `python -m mkdocs build --strict --site-dir site`, create the byte manifest, and retain the site plus manifest for 90 days. |
+| `build` | `contents: read` | Test the delivery helpers and configuration, build once with `zensical build --strict --clean`, create the byte manifest, and retain the site plus manifest for 90 days. `site_dir = "site"` is fixed in `zensical.toml`. |
 | `deploy` | `contents: write` | Download and recheck the retained site, then use pinned `ghp-import` 2.1.0 to commit and push those files to the existing `gh-pages` branch. This is the only job with write access. |
 | `verify` | `contents: read` | Download the same manifest, compare every deployed file with bounded retries, validate representative navigation, and retain the result for 90 days. |
 
 The workflow uses the repository-scoped `GITHUB_TOKEN` through the checked-out remote. It does not require a separate deployment secret and does not change the repository's existing GitHub Pages hosting source. All third-party actions are pinned to full commit SHAs. Automatic and manual runs are restricted to `main` and share one `gh-pages` destination concurrency group. A newer request does not cancel an in-progress deployment/verification chain.
 
-The site artifact is named `mkdocs-site-<source-commit>`. It contains the complete `site` directory and `deployment-evidence/site-manifest.json`. The later `mkdocs-deployment-verification-<source-commit>` artifact contains that manifest and `deployment-report.json`. The report records the source identity, content-tree digest, `gh-pages` commit, canonical URL, required navigation routes, number of attempts used, and final pass or failure.
+Read the Docs runs a separate custom Zensical job and copies the generated HTML into its required output directory. The configuration sets `formats: []` because this repository has no offline-output generator. The removed `formats: all` setting did not produce a supported PDF, ePub, or HTMLZip for the prior MkDocs project; [Read the Docs documents those formats as unsupported with MkDocs](https://docs.readthedocs.com/platform/stable/config-file/v2.html#formats).
+
+The site artifact is named `zensical-site-<source-commit>`. It contains the complete `site` directory and `deployment-evidence/site-manifest.json`. The later `zensical-deployment-verification-<source-commit>` artifact contains that manifest and `deployment-report.json`. The report records the source identity, content-tree digest, `gh-pages` commit, canonical URL, required navigation routes, number of attempts used, and final pass or failure.
 
 ## Propagation and failure behavior
 
@@ -45,23 +49,26 @@ The byte comparison includes every other generated page and asset as well. The n
 
 ## Local validation
 
-The helper tests use only Python's standard library, isolated temporary directories, and a local HTTP server. They cover exact binary content, downloaded-tree verification, duplicate and symbolic-link rejection, retry after stale content, permanent wrong-byte failure, and missing navigation.
+The helper tests use only Python's standard library, isolated temporary directories, and a local HTTP server. They cover the Zensical configuration and navigation, exact binary content, downloaded-tree verification, duplicate and symbolic-link rejection, retry after stale content, permanent wrong-byte failure, and missing navigation.
 
 From the repository root, run:
 
 ```powershell
-python -m unittest discover -s .github/scripts -p 'test_documentation_delivery.py' -v
-python -m mkdocs build --strict --site-dir site
+python .github/scripts/validate_documentation_configuration.py
+python -m unittest discover -s .github/scripts -p 'test_documentation*.py' -v
+zensical build --strict --clean
 New-Item -Path site/.nojekyll -ItemType File -Force | Out-Null
 python .github/scripts/build_documentation_manifest.py create --site-dir site --output deployment-evidence/site-manifest.json --source-repository 'SamErde/TheCleaners' --source-commit (git rev-parse HEAD) --source-ref (git symbolic-ref -q HEAD)
 python .github/scripts/build_documentation_manifest.py verify --site-dir site --manifest deployment-evidence/site-manifest.json
 ```
 
+Run `zensical serve` to preview the site locally. That development server is for navigation and rendering checks; it is not deployment evidence.
+
 Do not run the live verifier against a newly changed source tree before that exact tree has been deployed. It is designed to reject the current site as stale.
 
-## Current verified state
+## Verified pre-migration baseline
 
-The exact deployment gate is validated for PR #37 merge commit `345f06c861b6d4074e5896e0b27a19f869dfa7e3`. [Run 35257555130](https://github.com/SamErde/TheCleaners/actions/runs/35257555130) passed its build, deploy and verify jobs. Independent inspection verified both retained artifact wrappers, the manifest and report identities, the 71-file `gh-pages` Git tree and the live public site:
+The following retained baseline validates the exact deployment gate for PR #37 merge commit `345f06c861b6d4074e5896e0b27a19f869dfa7e3`; it is not a claim that this was the final pre-migration deployment. [Run 35257555130](https://github.com/SamErde/TheCleaners/actions/runs/35257555130) passed its build, deploy and verify jobs. Independent inspection verified both retained artifact wrappers, the manifest and report identities, the 71-file `gh-pages` Git tree and the live public site:
 
 | Evidence | Verified value |
 | --- | --- |
@@ -71,7 +78,7 @@ The exact deployment gate is validated for PR #37 merge commit `345f06c861b6d407
 | Workflow verification | Passed after three complete attempts during propagation |
 | Independent live verification | Passed all 71 files and five navigation routes in one attempt |
 
-This closes exact deployed-byte and representative-navigation verification for that source commit. A later source change requires its own run and retained evidence. Support for lowercase `/thecleaners/` remains deferred to issue #26.
+This closes exact deployed-byte and representative-navigation verification for that source commit only. The Zensical migration changes the generated site and therefore requires a fresh merged-source deployment and retained evidence before it can replace this baseline. Lowercase `/thecleaners/` acceptance also remains open in issue #26.
 
 Before this gate was implemented, the September 17, 2026 live check found title-case `/TheCleaners/` HTTP 200 and lowercase `/thecleaners/` HTTP 404. GitHub Pages reported the title-case site URL, and the maintainer selected that working path as canonical.
 

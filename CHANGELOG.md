@@ -4,6 +4,10 @@
 
 Following the `0.0.15-beta` prerelease, Windows client/server, IIS, Exchange, profile, and final 1.0 acceptance remain open. Lab validation is deferred future work and is not underway.
 
+### Changed
+
+- Implement the issue #26 Zensical migration in PR #41: replace the active MkDocs/Material configuration and direct dependencies with pinned Zensical 0.0.62, preserve the classic navigation and generated command references, and retain the single-build manifest-to-`gh-pages` byte-verification controls. Review, merge, deployment, and lowercase-path acceptance remain open.
+
 ## 0.0.15-beta - 2026-09-17
 
 Version `0.0.15-beta` was published from exact source `345f06c861b6d4074e5896e0b27a19f869dfa7e3` under tag `v0.0.15-beta`. The [release notes and history reconciliation](docs/releases/0.0.15-beta.md) map the changes below to that prerelease. An earlier inventory recorded an unpublished `0.0.11-alpha` GitHub draft; it was not reused for this release. The post-publication inventory no longer returned that draft, and its disappearance is not attributed to the beta release operation.
@@ -64,4 +68,4 @@ Protected publication run [35268852573](https://github.com/SamErde/TheCleaners/a
 
 ### Still pending
 
-Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; and Windows profile-inventory acceptance are deferred future work, not underway. Final 1.0 release acceptance remains open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. The published beta does not close them. Zensical migration and support for both URL cases are tracked separately in issue #26.
+Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; and Windows profile-inventory acceptance are deferred future work, not underway. Final 1.0 release acceptance remains open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. The published beta does not close them. The Zensical framework migration is open in PR #41 under issue #26; review, merge, deployment, and the account-root lowercase redirect remain open.
