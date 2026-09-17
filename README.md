@@ -30,7 +30,7 @@ Windows PowerShell 5.1 is the minimum. The 1.0 policy also includes Microsoft-su
 Install the published `0.0.15-beta` prerelease from [PowerShell Gallery](https://www.powershellgallery.com/packages/TheCleaners/0.0.15-beta):
 
 ```powershell
-Install-Module -Name TheCleaners -RequiredVersion '0.0.15-beta' -AllowPrerelease
+Install-Module -Name TheCleaners -Repository PSGallery -RequiredVersion '0.0.15-beta' -AllowPrerelease
 ```
 
 To evaluate a checked-out development branch instead, import that source explicitly in an isolated test environment:

@@ -5,7 +5,7 @@ Windows maintenance commands with explicit safety controls. The published `0.0.1
 The [0.0.15-beta release](releases/0.0.15-beta.md) passed exact source/artifact, protected publication, and fresh Gallery-install validation. Windows, IIS, Exchange, and profile lab validation is deferred future work, not underway.
 
 ```powershell
-Install-Module -Name TheCleaners -RequiredVersion '0.0.15-beta' -AllowPrerelease
+Install-Module -Name TheCleaners -Repository PSGallery -RequiredVersion '0.0.15-beta' -AllowPrerelease
 ```
 
 Windows PowerShell 5.1 is the minimum; the target policy also includes Microsoft-supported PowerShell 7 releases on Windows. See [support and validation](support-matrix.md).
