@@ -147,8 +147,9 @@ Describe 'Disposable ACL harness boundaries and evidence' -Skip:(-not $WindowsHo
         @{ Fault = 'inventory'; Count = 2; Paths = @('C:\wrong-a.tmp', 'C:\wrong-b.tmp') }
     ) {
         param($Fault, $Count, $Paths)
+        $PreviewFault = [pscustomobject]@{ Name = $Fault; Count = $Count; Paths = $Paths }
         $Module = Import-Module (Join-Path $RepositoryRoot 'src/TheCleaners/TheCleaners.psd1') -PassThru
-        Mock Clear-CurrentUserTemp { [pscustomobject]@{ Status = 'WhatIf'; FileCandidateCount = $Count; CandidatePaths = $Paths; FilesRemoved = 0; BytesReclaimed = 0 } } -ModuleName TheCleaners
+        Mock Clear-CurrentUserTemp { [pscustomobject]@{ Status = 'WhatIf'; FileCandidateCount = $PreviewFault.Count; CandidatePaths = $PreviewFault.Paths; FilesRemoved = 0; BytesReclaimed = 0 } } -ModuleName TheCleaners
         $Evidence = & $Harness -FixtureParent $FixtureParent -Confirm:$false | ConvertFrom-Json
         $Evidence.Acceptance | Should -BeFalse
         $Evidence.RunFailure.Message | Should -Match 'WhatIf inventory'
