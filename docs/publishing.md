@@ -16,7 +16,7 @@ On September 17, 2026, the maintainer authorized resolving the missing environme
 | Build access | The reusable build matrix does not inherit repository secrets. Only the publishing step maps the dedicated secret into its process environment. |
 | Execution evidence | Publication and an actual environment approval have not been exercised. Configuration readback alone does not prove those gates. |
 
-The repository changes accompanying this record wire the dedicated secret and a clear missing-key failure into `Publish.yml`. Until those changes merge, `main` still references the older repository secret name. Do not dispatch publication from that older workflow. Reverify environment settings and the selected tag's workflow before any publication; repository settings can change independently of Git commits.
+`Publish.yml` maps only the dedicated environment secret and fails clearly when it is missing. Select a tag whose workflow uses these controls; do not dispatch a historical workflow that references the older repository secret. Reverify environment settings and the selected tag's workflow before any publication; repository settings can change independently of Git commits.
 
 ## Credential provisioning
 
