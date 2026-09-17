@@ -12,7 +12,7 @@ On September 17, 2026, the maintainer authorized resolving the missing environme
 | Required reviewer | `SamErde`. Approval must be given by the maintainer for the concrete release. |
 | Self-review | Permitted, so the sole configured maintainer can approve a manually initiated release. This is not a second-person approval policy. |
 | Deployment refs | Custom policies with one tag rule, `v*`, and no branch rule. The publisher additionally checks the full version/tag/prerelease match. |
-| Publishing credential | `PSGALLERY_PUBLISH_API_KEY`, to be configured only as an environment secret. It was not present at this verification. |
+| Publishing credential | `PSGALLERY_PUBLISH_API_KEY` is present as an environment secret, confirmed by a September 17 metadata-only read after maintainer provisioning. Its value and Gallery validity were not inspected. |
 | Build access | The reusable build matrix does not inherit repository secrets. Only the publishing step maps the dedicated secret into its process environment. |
 | Execution evidence | Publication and an actual environment approval have not been exercised. Configuration readback alone does not prove those gates. |
 
@@ -20,7 +20,7 @@ The repository changes accompanying this record wire the dedicated secret and a 
 
 ## Credential provisioning
 
-Before publication, the maintainer must add a valid, appropriately scoped Gallery publishing key under **Settings → Environments → powershell-gallery → Environment secrets**, using the exact name `PSGALLERY_PUBLISH_API_KEY`. Do not put that name at repository or organization scope, and never paste the key into issues, logs, prompts, or source files. The workflow stops when the key is absent.
+The maintainer provisioned `PSGALLERY_PUBLISH_API_KEY` under **Settings → Environments → powershell-gallery → Environment secrets**. Keep that name only at environment scope and never paste the key into issues, logs, prompts, or source files. Metadata readback confirms presence; only an approved publication can establish that it is valid for the Gallery. The workflow stops when the key is absent.
 
 Existing repository secret names `POWERSHELLGALLERY_KEY` and `POWERSHELLGALLERY_THECLEANERS` were observed, but their values and validity were not inspected. GitHub does not return stored secret values. Provision the environment key through the settings UI or secure local input; do not attempt to retrieve an existing secret through workflow output. Review remaining consumers and retire obsolete repository credentials as part of credential setup. Their retirement is not claimed by this planning update.
 
