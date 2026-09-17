@@ -18,9 +18,9 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 
 ### Changed
 
-- TC-008 candidate: add current PowerShell 7.4.20 and 7.5.11 hosted lanes; preserve 7.6.6 and canonical-artifact PS5.1 testing.
+- TC-008 merged implementation: add current PowerShell 7.4.20 and 7.5.11 hosted lanes; preserve 7.6.6 and canonical-artifact PS5.1 testing.
 - Replace runtime-dependent ZIP compression with stored entries, ordinal ordering, UTF-8 names and fixed metadata; require repeated and cross-runtime byte equality, exact commit identity, complete extracted file verification and hidden-file uploads.
-- Pin download-artifact v8.0.1 to its immutable Node 24 commit; add strict documentation validation to the PR/reusable build gate. Exact merged evidence and release acceptance remain separate gates.
+- Pin download-artifact v8.0.1 to its immutable Node 24 commit; add strict documentation validation to the PR/reusable build gate.
 
 - Renamed `Start-Cleaning` to `Get-TheCleaners`; retained `Start-Cleaning` as a deprecated alias through 1.x.
 - Renamed private `Show-TCLogo` to `Show-TheCleanersLogo`.
@@ -42,8 +42,8 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 
 ### Verification status
 
-PR #31 merged at `037c27a81234361620a633f68a33bfb370f0a03e`. Exact-commit hosted PowerShell 7.6.6, PowerShell 7.5.9, Windows PowerShell 5.1, package-import, PSScriptAnalyzer, and strict MkDocs workflow evidence is recorded in `docs/release-plan-1.0.md`.
+PR #33 merged at `fdadbee08f854b1af6fdc7654ae4532ebbf605df`. Exact-commit hosted PowerShell 7.4.20, 7.5.11, 7.6.6, Windows PowerShell 5.1, package/import, repeated and cross-runtime archive, PSScriptAnalyzer, and strict MkDocs evidence is recorded in `docs/release-plan-1.0.md`. This closes the runtime-matrix and bounded PS7 Windows archive-reproducibility subgates only; it does not validate TC-008 as a whole or accept a release.
 
 ### Still pending
 
-Windows client/server, broader elevated/non-elevated, real-system-root, and ReFS acceptance; the still-supported PowerShell 7.4 line or an approved support-policy narrowing; a refresh of the 7.5 lane to Microsoft's latest supported servicing update; IIS and Exchange product/build labs; cross-runtime archive reproducibility; the lowercase documentation deployment; protected exact-artifact publication; final version/tag/metadata alignment; and maintainer release authorization remain open. The source manifest is `0.0.15-beta`, while the Gallery still serves `0.0.13-alpha`. Zensical migration is tracked separately in issue #26.
+Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; Windows profile-inventory acceptance; uncovered-branch risk review; lowercase canonical hosting and deployed-byte verification; protected exact-artifact publication; clean installation of the published version; final version/tag/metadata and history alignment; and maintainer release authorization remain open. The source manifest is `0.0.15-beta`, while the Gallery still serves `0.0.13-alpha`. Zensical migration is tracked separately in issue #26.

@@ -2,7 +2,7 @@
 
 ## Contract
 
-The TC-008 candidate requires identical ZIP bytes for identical staged file paths and contents across the pinned, supported PS7 Windows builders: 7.4.20, 7.5.11 and 7.6.6. This is a tested contract for those Windows runtimes and dependency pins, not a promise about future .NET writers, other operating systems, different source line endings, or changed help generators. Refreshing a runtime must pass the same comparison gate.
+The merged TC-008 implementation requires identical ZIP bytes for identical staged file paths and contents across the pinned, supported PS7 Windows builders: 7.4.20, 7.5.11 and 7.6.6. This contract is validated for exact merge commit `fdadbee08f854b1af6fdc7654ae4532ebbf605df` on those Windows runtimes and dependency pins. It is not a promise about future runtimes or .NET writers, other operating systems, different source line endings, changed staged content, or changed help generators. Refreshing any input must pass the same comparison gate.
 
 `src/New-DeterministicZipArchive.ps1` writes files in ordinal relative-path order with `/` separators, explicit UTF-8 entry names, a fixed 1980-01-01 ZIP timestamp and zero external attributes. PS7 uses stored entries (`NoCompression`), avoiding Deflate implementation differences. Stored archives are larger; content manifests and SHA-256 sidecars continue to verify every byte. Manifests are outside the ZIP and deliberately include runtime identity, so manifests themselves are not byte-identical between runtime lanes.
 
@@ -46,8 +46,20 @@ Local source archives without Git retain `Commit: unavailable`; they cannot supp
 
 Local build: `Invoke-Build -File ./src/TheCleaners.build.ps1`. Use a separate worktree when existing generated outputs need preservation: the build's Clean task removes its own Artifacts, Archive, Reports and GeneratedHelp directories. Never use real cleanup data as fixtures.
 
+## Exact merged evidence
+
+[Build run 35152376944](https://github.com/SamErde/TheCleaners/actions/runs/35152376944) checked out exact merge commit `fdadbee08f854b1af6fdc7654ae4532ebbf605df`. [PowerShell 7.4.20](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565483), [7.5.11](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565445), and [7.6.6](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565518) each produced:
+
+- `TheCleaners_0.0.15.zip`: 19 files, `223,629` bytes, SHA-256 `2eae48784e4ba18f6aee28e3c22d8191be3e6d5bde2d59e26071430fe776f2d4`.
+- `TheCleaners_0.0.15.zip.repeat.zip`: the same 19 files, size, and SHA-256.
+- A 19-file content manifest that records the exact merge commit and its own producer runtime.
+
+The [cross-runtime comparison job](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104984394111) verified sidecars, manifest identity, complete content, canonical ZIP metadata, repeated bytes, and cross-runtime bytes. Freshly downloaded hosted artifacts also matched the retained merged evidence byte-for-byte. The [Windows PowerShell 5.1 job](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104984394144) consumed the canonical 7.6.6 artifact and ZIP and reported the same archive digest; it did not produce a separate archive.
+
+These results close only the bounded PS7 Windows stored-ZIP reproducibility subgate. Protected publication, a clean install of the published version, uncovered-branch risk review, and maintainer release acceptance remain open. Runtime-bearing manifests outside the ZIP intentionally differ.
+
 ## Artifact action and acceptance boundary
 
-The historical Windows PowerShell job annotation identified `actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093` as targeting deprecated Node 20. GitHub's [v8.0.1 release](https://github.com/actions/download-artifact/releases/tag/v8.0.1) resolves to `3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c`; its [immutable action manifest](https://github.com/actions/download-artifact/blob/3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c/action.yml) declares `node24` and defaults digest mismatches to errors. The candidate updates both build and protected publish downloads. Successful hosted downloads must verify the changed action; publication itself remains unexecuted.
+The historical Windows PowerShell job annotation identified `actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093` as targeting deprecated Node 20. GitHub's [v8.0.1 release](https://github.com/actions/download-artifact/releases/tag/v8.0.1) resolves to `3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c`; its [immutable action manifest](https://github.com/actions/download-artifact/blob/3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c/action.yml) declares `node24` and defaults digest mismatches to errors. The merged implementation updates both build and protected-publish downloads. The exact-commit comparison job verified all three expected upload digests, and the PS5.1 job verified both expected canonical 7.6.6 download digests; their annotation endpoints returned no warnings. Publication itself remains unexecuted.
 
-A PR run is candidate evidence only. After merge, record the exact main SHA and its own job URLs, runtime/OS versions, test totals/failures/skips, coverage and archive comparison before marking runtime/reproducibility subgates validated. TC-008 as a whole remains open for protected publication, published clean install and maintainer release acceptance. Windows/IIS/Exchange product labs and TC-009 hosting/metadata gates remain separate; IIS and Exchange retain their explicit-WhatIf preview locks.
+PR runs remain candidate evidence only. The exact merged results above do not automatically cover a later `main` commit. TC-008 as a whole remains open for uncovered-branch risk review, protected publication, published clean installation, and maintainer release acceptance. Windows/IIS/Exchange product labs and TC-009 hosting/metadata gates remain separate; IIS and Exchange retain their explicit-WhatIf preview locks.
