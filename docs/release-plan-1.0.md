@@ -74,6 +74,14 @@ The [bounded risk review](tc008-uncovered-branch-review.md) maps every missed in
 
 This closes only the bounded analysis of that coverage baseline. It does not close TC-008 as a whole or any Windows/IIS/Exchange/profile product acceptance gate. The remaining lab variants are explicitly assigned to TC-003 through TC-007 in the review; protected publication, published clean installation, hosting, and maintainer release acceptance remain open.
 
+## TC-003/004 disposable acceptance preparation after PR #35
+
+PR #35's exact merge is `66119785413b8cd3b2004f1b9fc7f49bed504a6a`. Its [build 35218687207](https://github.com/SamErde/TheCleaners/actions/runs/35218687207) passed 252 unit plus four integration tests in each PS7.4.20/7.5.11/7.6.6 lane and 256 combined tests in PS5.1.26100.33296, with zero failures/skips/not-run. PS7 coverage was `1,626/1,858` commands (`87.51%`); PS5.1 emitted no coverage. The baseline review is merged and complete; its 232 remaining misses retain their dispositions and native/platform lab ownership. This supersedes the earlier review packet's conditional draft wording, not its acceptance limits.
+
+The next preparation packet is **implemented in draft until its PR merges**. The [lab runbook and acceptance matrix](lab-acceptance.md) now distinguish implemented fixtures from unexecuted client/server, token, filesystem, actual-root and concurrency cases. A versioned evidence envelope records exact source/host/root identity, inventories, outcomes, missing prerequisites and recovery; it cannot itself confer acceptance. The ACL harness rejects out-of-boundary/reparse parents, holds ordinary ancestry and root identities, checks WhatIf before cleanup, records native candidate identities and source hashes, and emits acceptance only after restoring environment and closing handles. Recursive ACL reset/deletion is removed; its generated child remains available for inspection. Dedicated `LabAclHarness.Tests.ps1` regressions cover these safeguards; their results must be tied to this packet's own tested head/merge, never borrowed from PR #35.
+
+No disposable host, snapshot/restore proof, ReFS volume, alternate token, product installation, or actual-root execution approval was established. No product/actual-root acceptance was executed and no TC-003/004 acceptance checkbox is closed. A later lab stage requires named approved hosts and scenario drivers, per-case evidence and successful recovery. Exact PR-head and post-merge reports belong to the preparation PR and its completion report; generated capability alone is not validation. TC-005/006 preview labs, TC-007 profile acceptance, TC-008 publication/published installation/maintainer acceptance, and TC-009 hosting/metadata/release gates remain open.
+
 ## Work packets
 
 | ID | Work | Current state |
