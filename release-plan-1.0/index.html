@@ -332,7 +332,7 @@
   
     
   
-  0.0.15-beta preparation
+  0.0.15-beta release
 
       </a>
     </li>
@@ -583,7 +583,7 @@
   <span class="md-ellipsis">
     
   
-    0.0.15-beta preparation
+    0.0.15-beta release
   
 
     
@@ -1420,7 +1420,7 @@
 
 
 <h1 id="thecleaners-10-implementation-plan">TheCleaners 1.0 implementation plan</h1>
-<p>Updated September 17, 2026. Prioritize non-lab delivery readiness and an optional approved prerelease. Windows client/server, IIS, Exchange, and profile lab validation is <strong>deferred future work, not underway</strong>. The documentation verification foundation merged in <a href="https://github.com/SamErde/TheCleaners/pull/38">PR #38</a> as <code>aad712ac09cf97ef21f1ce05991f735bfdbe6d9d</code>; the delivery implementation then merged in <a href="https://github.com/SamErde/TheCleaners/pull/37">PR #37</a> as <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>. PR-head and merged-commit validation remain separate evidence checkpoints. Exact-commit fixture/runtime/package evidence is recorded below; it does not validate TC-008 as a whole, complete product acceptance, or authorize publication.</p>
+<p>Updated September 17, 2026. Non-lab delivery readiness and the approved <code>0.0.15-beta</code> prerelease publication are complete. Windows client/server, IIS, Exchange, and profile lab validation is <strong>deferred future work, not underway</strong>. The published prerelease remains separate from final 1.0 product and release acceptance. Exact source, artifact, publication, and installed-package evidence is recorded below.</p>
 <h2 id="status-conventions">Status conventions</h2>
 <p><strong>Open</strong> means work has not been completed. <strong>Implemented in draft</strong> is reserved for code in an unmerged branch or pull request. <strong>Merged implementation</strong> means the code is on <code>main</code>, but applicable validation may still be open. <strong>Validated</strong> requires passing evidence for the exact referenced commit and scope. <strong>Release accepted</strong> additionally requires every applicable product, artifact, deployment, metadata, and maintainer gate.</p>
 <p>The manifest stays on the current prerelease version during this packet. No command is advertised as stable merely because it is exported. The plan is milestone/gate-driven, not a promised calendar deadline.</p>
@@ -1469,8 +1469,8 @@
 </tbody>
 </table>
 <h2 id="current-non-lab-delivery-sequence">Current non-lab delivery sequence</h2>
-<p><strong>Completed:</strong> TC-002 loader/naming; supported runtime and deterministic archive subgates; bounded risk review (PR #35); lab harness/schema/runbook preparation (PR #36); title-case canonical URL decision; live publishing environment configuration and credential presence; prerelease version/history inventory; merged documentation foundation (PR #38) and delivery implementation (PR #37); exact merged-source documentation deployment, runtime/archive and local-feed rehearsal verification.</p>
-<p><strong>Remaining:</strong> obtain maintainer approval for the exact prerelease candidate; after explicit approval, publish and verify its Gallery installation; deferred TC-003 through TC-007 lab acceptance; final TC-001/008/009 release acceptance.</p>
+<p><strong>Completed:</strong> Non-lab delivery readiness; exact documentation deployment; supported runtime/archive validation; local-feed rehearsal; protected <code>0.0.15-beta</code> publication from source <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>; and fresh Gallery-install verification across Windows PowerShell 5.1 and supported PowerShell 7 releases.</p>
+<p><strong>Remaining:</strong> Deferred TC-003 through TC-007 Windows/product lab acceptance and final TC-001/008/009 product and 1.0 release acceptance. Lab validation is future work and is not underway.</p>
 <table>
 <thead>
 <tr>
@@ -1483,28 +1483,31 @@
 <tr>
 <td>1. Documentation and delivery readiness</td>
 <td>Use title-case URLs throughout; deploy the exact strict-build output once; retain and compare site files/digests and verify navigation at the deployed URL. Configure publishing controls, validate publisher refusal paths and rehearse publish/install against an isolated local repository.</td>
-<td>Validated for exact merge <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>: deployed bytes/navigation, runtime/archive matrix, publisher refusal paths, local-feed rehearsal, environment rules and credential presence all have retained evidence. Gallery credential validity and actual protected publication remain untested.</td>
+<td>Validated for exact merge <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>: deployed bytes/navigation, runtime/archive matrix, publisher refusal paths, local-feed rehearsal, environment rules, credential presence, actual approval, and protected publication all have retained evidence.</td>
 </tr>
 <tr>
 <td>2. Prerelease preparation</td>
 <td>Select an unused alpha/preview or beta version, reconcile release history, align manifest/version/tag/release notes, and validate the exact candidate artifact across required hosted runtimes. Describe labs as deferred and preserve preview locks. Prepare a concrete release for maintainer approval.</td>
-<td>Candidate validated. Exact merge <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>, version <code>0.0.15-beta</code>, proposed tag <code>v0.0.15-beta</code>, <a href="../releases/0.0.15-beta/">release notes/history</a>, and archive SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code> are aligned. Maintainer approval remains open; no tag is created.</td>
+<td>Validated and approved. Exact source <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>, version <code>0.0.15-beta</code>, tag <code>v0.0.15-beta</code>, <a href="../releases/0.0.15-beta/">release notes/history</a>, and archive SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code> are aligned.</td>
 </tr>
 <tr>
 <td>3. Optional prerelease publication and installed-artifact verification</td>
 <td>After explicit approval, publish the exact tested artifact through the protected environment; install that exact Gallery version in fresh Windows CI environments, verify package payload and metadata, quiet import, help, aliases, exports and preview locks, and retain version/commit-bound evidence.</td>
-<td>Open. Local-feed rehearsal cannot close real Gallery publication or published-install gates. Prerelease evidence validates that version and the delivery process; final 1.0 needs its own artifact and acceptance.</td>
+<td>Validated for <code>0.0.15-beta</code> by protected run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35268852573">35268852573</a> and its retained fresh-install reports. This is prerelease/process evidence; final 1.0 needs its own artifact, approval, publication, installed-package evidence, and product acceptance.</td>
 </tr>
 </tbody>
 </table>
-<p>The non-lab delivery-readiness pause point is reached. The next bounded stage is concrete maintainer approval and, only if approved, protected prerelease publication plus published-install verification. The lab backlog remains explicitly deferred.</p>
+<p>The non-lab delivery sequence is complete. The remaining implementation-plan work is the explicitly deferred lab backlog followed by final product and 1.0 release acceptance. Do not start labs without a new maintainer direction and approved disposable-host prerequisites.</p>
 <p>The previous next stage (DELETE-PENDING, ROOT-RACE, HANDLE-RECOVERY fixture drivers and evidence-schema regressions) is deferred with the lab work. Do not resume provisioning, actual-root acceptance, IIS/Exchange labs, or profile acceptance automatically. Preserve the runbook and case inventory for a later maintainer-directed resumption. TC-001 product acceptance, TC-003 through TC-007 acceptance, and final stable-release acceptance remain open. No IIS/Exchange removal or 1.0 Exchange <code>-AllowRemoval</code> is introduced.</p>
 <p>See <a href="../publishing/">publishing controls</a> and the <a href="../next-stage-prompts/">copy-ready next-stage prompts</a>. Supporting both URL cases belongs to issue #26 and is not a prerequisite for these bundles.</p>
 <h2 id="september-17-delivery-checkpoints">September 17 delivery checkpoints</h2>
 <p>The documentation foundation merged in PR #38 as <code>aad712ac09cf97ef21f1ce05991f735bfdbe6d9d</code>. Its reviewed PR head <code>e338c295f9b5378cb9ffd37c90318e7614f97fd9</code> passed <a href="https://github.com/SamErde/TheCleaners/actions/runs/35253305417">build 35253305417</a> and <a href="https://github.com/SamErde/TheCleaners/actions/runs/35253305364">analysis 35253305364</a>: PowerShell 7.4.20, 7.5.11 and 7.6.6 each passed 267 unit and 4 integration tests; Windows PowerShell 5.1.26100.33296 passed 271 combined tests. All had zero failures/skips/not-run tests; PS7 coverage was 87.51% (1,626/1,858). All eleven retained artifact wrapper digests, package manifests, ACL evidence and repeat/cross-runtime archives were inspected. Its 19-file, 223,629-byte archive SHA-256 was <code>2eae48784e4ba18f6aee28e3c22d8191be3e6d5bde2d59e26071430fe776f2d4</code>. The foundation's own post-merge build, analyzer and older deployment workflow are separate checks; neither the foundation nor its previous deployment workflow establishes exact public-byte acceptance.</p>
 <p>Delivery PR #37's reviewed head <code>65e973dd7a9e523f0385ca53870de345c77f0e4e</code> passed <a href="https://github.com/SamErde/TheCleaners/actions/runs/35256189981">build 35256189981</a>: PowerShell 7.4.20, 7.5.11 and 7.6.6 each passed 305 unit plus 4 integration tests; Windows PowerShell 5.1.26100.33296 passed 309 combined tests; all had zero failures, skips or not-run tests; and the PS7 lanes measured 87.51% coverage (1,626/1,858). All 24 Python tests passed. Inspection verified all eleven artifact-wrapper digests, the local real-feed publish/acquire/duplicate-refusal and cleanup/ACL evidence, and original/repeated/cross-runtime equality for the 19-file, 224,050-byte archive with SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code>. This is exact final-head evidence, not merged-commit build evidence.</p>
 <p>PR #37 merged as <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>. Its <a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555130">documentation run 35257555130</a> passed all three jobs. Independent artifact verification matched 71 retained files totaling 3,550,003 bytes with tree SHA-256 <code>f05e2fdefd918136bf1ec215a9154499a6a5ef22b649c3bfc880831e585882d8</code> to <code>gh-pages</code> commit <code>f75772870600c880cf4393ac635b5bdecf5b5c7b</code>, verified the exact Git tree and all five required navigation routes, and repeated the live public check successfully. The workflow needed three complete attempts during propagation; an independent fresh live pass needed one.</p>
-<p>The merge commit's <a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555108">build 35257555108</a> and <a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555110">analyzer 35257555110</a> passed. Each supported PS7 lane passed 305 unit plus 4 integration tests, Windows PowerShell 5.1.26100.33296 passed 309 combined tests, and every lane reported zero failures, skips or not-run tests. PS7 coverage was 87.51% (1,626/1,858). Independent inspection verified all eleven artifact wrappers, ACL evidence, actual local-feed publish/acquire/payload checks, duplicate refusal and cleanup, plus original/repeated/cross-runtime equality for the 19-file, 224,050-byte archive with SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code>. No tag or Gallery publication was performed.</p>
+<p>The merge commit's <a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555108">build 35257555108</a> and <a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555110">analyzer 35257555110</a> passed. Each supported PS7 lane passed 305 unit plus 4 integration tests, Windows PowerShell 5.1.26100.33296 passed 309 combined tests, and every lane reported zero failures, skips or not-run tests. PS7 coverage was 87.51% (1,626/1,858). Independent inspection verified all eleven artifact wrappers, ACL evidence, actual local-feed publish/acquire/payload checks, duplicate refusal and cleanup, plus original/repeated/cross-runtime equality for the 19-file, 224,050-byte archive with SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code>.</p>
+<p>The first approved publication attempt, <a href="https://github.com/SamErde/TheCleaners/actions/runs/35266399326">run 35266399326</a>, passed all six release-gate jobs and normal environment review, then failed closed when PowerShell Gallery returned HTTP 403 for the credential. The exact Gallery version still returned 404 afterward, and the installed-package jobs were skipped. The environment secret was replaced without changing the approved tag, source, or archive.</p>
+<p>The maintainer approved exact source <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>, tag <code>v0.0.15-beta</code>, and that archive digest. Protected run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35268852573">35268852573</a> exercised the required environment review, published Gallery version <a href="https://www.powershellgallery.com/packages/TheCleaners/0.0.15-beta"><code>0.0.15-beta</code></a> at 20:20:11 UTC, and passed fresh installed-package checks on Windows PowerShell 5.1 and PowerShell 7.4.20, 7.5.11, and 7.6.6. Independent verification passed every check across all 11 jobs, 15 retained artifact wrappers and four installed-package reports. The matching <a href="https://github.com/SamErde/TheCleaners/releases/tag/v0.0.15-beta">GitHub prerelease</a>, release ID <code>391037563</code>, was published at 20:27:02 UTC; its archive, content manifest and sidecar were downloaded and matched the approved bytes and retained hashes. This validates the prerelease delivery process, not Windows/product labs or final 1.0 acceptance.</p>
+<p>An earlier inventory recorded unpublished draft release ID <code>172666498</code> with label <code>0.0.11-alpha</code>. After the beta prerelease was created, the full release inventory returned only release ID <code>391037563</code> and a direct read of the older ID returned 404. The beta creation targeted only <code>v0.0.15-beta</code>; no old-draft deletion was requested, and the cause of its disappearance is unknown.</p>
 <h2 id="historical-evidence-recorded-september-16-2026">Historical evidence recorded September 16, 2026</h2>
 <p>Historical lowercase URL observations and then-open requirements below describe their original commits. The title-case decision and current sequence above supersede those hosting requirements without rewriting the observations.</p>
 <p>This section uses only post-merge evidence for exact commit <code>037c27a81234361620a633f68a33bfb370f0a03e</code>. Earlier local results and PR-head hashes are not carried forward as merged-commit evidence. No IIS or Exchange deletion was enabled, no live cleanup was run, no release tag was created, and nothing was published to the PowerShell Gallery.</p>
@@ -1519,8 +1522,8 @@
 <tbody>
 <tr>
 <td>Source and release identity</td>
-<td>PR #31 merged to <code>main</code> as <code>037c27a81234361620a633f68a33bfb370f0a03e</code>. The manifest is <code>0.0.15</code> with prerelease label <code>beta</code>, PowerShell minimum <code>5.1</code>, project URI <code>https://github.com/SamErde/TheCleaners</code>, and documentation URI <code>https://day3bits.com/thecleaners/</code>. The repository has no Git tags; the Gallery still serves <code>0.0.13-alpha</code>; the authenticated GitHub release inventory includes an unpublished private draft named <code>Testing and Workflow Updates</code> with draft tag <code>0.0.11-alpha</code>.</td>
-<td>Final 1.0 version/tag/prerelease metadata, release notes, published artifact, and maintainer acceptance are open.</td>
+<td>At the PR #31 checkpoint, the manifest was <code>0.0.15</code> with prerelease label <code>beta</code>, PowerShell minimum <code>5.1</code>, project URI <code>https://github.com/SamErde/TheCleaners</code>, and documentation URI <code>https://day3bits.com/thecleaners/</code>. The repository then had no Git tags; the Gallery served <code>0.0.13-alpha</code>; and the authenticated GitHub release inventory included an unpublished private draft named <code>Testing and Workflow Updates</code> with draft tag <code>0.0.11-alpha</code>.</td>
+<td>Final 1.0 version/tag/prerelease metadata, release notes, published artifact, and maintainer acceptance were open at that checkpoint.</td>
 </tr>
 <tr>
 <td>Hosted PowerShell 7.6 LTS</td>
@@ -1661,12 +1664,12 @@
 <tr>
 <td>TC-008</td>
 <td>One source-layout package, exact-artifact tests/publication, reproducible build, complete runtime matrix, and CI gates</td>
-<td>Merged implementation covers source-layout artifacts, machine-readable reports, fixed-encoding staging, content manifests/hashes, protected publisher, local-feed rehearsal, exact-artifact clean-install probes, artifact download, analyzer gates, the complete supported runtime matrix, and stored-ZIP comparison gates. Exact PR #37 merge evidence validates the delivery candidate's runtime/archive checks and local-feed publish/acquire/duplicate-refusal path. Protected publication, published-version clean installation, and maintainer release acceptance remain open; TC-008 as a whole is not validated.</td>
+<td>Exact <code>0.0.15-beta</code> evidence validates the runtime/archive gates, local-feed rehearsal, protected publication, and fresh Gallery installation. TC-008 remains open for the final 1.0 artifact, approval, publication, installed-package evidence, and release acceptance; native/platform/product lab variants remain assigned to TC-003 through TC-007.</td>
 </tr>
 <tr>
 <td>TC-009</td>
 <td>Complete help/docs, canonical deployment verification, changelog/history, contributor/security policy, RC and release checks</td>
-<td>Merged implementation covers command/help/docs, strict MkDocs, drift tests, contributor/security/PR guidance, release hash metadata, module-named staging and exact public-byte verification. The title-case deployment is validated for exact source <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>, including every retained file and representative navigation. Support for both URL cases is deferred to issue #26. Prerelease approval, published-install evidence and final release acceptance remain open.</td>
+<td>Exact <code>0.0.15-beta</code> documentation, metadata, protected publication, and published-install evidence is complete. Support for both URL cases is deferred to issue #26. Final product and 1.0 release acceptance remain open.</td>
 </tr>
 </tbody>
 </table>
@@ -1704,11 +1707,11 @@
 <h3 id="tc-008009-completion-checklist">TC-008/009 completion checklist</h3>
 <ul>
 <li>[x] Replace recursive source merging with the explicit source-layout package; preserve useful stack traces and external help in the merged build.</li>
-<li>[x] Build once, record a content manifest/digest, test that artifact, and make the protected workflow publish that exact artifact without rebuilding or publishing <code>src</code> directly. No publish run has occurred.</li>
+<li>[x] Build once, record a content manifest/digest, test that artifact, and make the protected workflow publish that exact artifact without rebuilding or publishing <code>src</code> directly. The approved <code>0.0.15-beta</code> run exercised this path.</li>
 <li>[x] Implement version/tag/prerelease checks and duplicate Gallery version refusal in the publisher script.</li>
 <li>[x] Configure and read back the GitHub <code>powershell-gallery</code> environment: September 17 live API evidence confirms required reviewer <code>SamErde</code>, disabled administrator bypass, custom deployment rules, and a single <code>v*</code> tag rule (no branch rule). Self-review is permitted so the sole maintainer can approve a manually initiated release. This is configuration evidence, not an executed approval/publication test.</li>
 <li>[x] Provision the dedicated <code>PSGALLERY_PUBLISH_API_KEY</code> environment secret. September 17 metadata readback confirms its presence; no secret value was retrieved. See <a href="../publishing/">publishing controls</a>.</li>
-<li>[ ] Verify the actual environment approval and credential behavior during an approved release. Secret presence does not prove Gallery validity; actual publication remains pending.</li>
+<li>[x] Verify the actual environment approval and credential behavior during an approved release. Protected run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35268852573">35268852573</a> exercised both for <code>0.0.15-beta</code>.</li>
 <li>[x] Rehearse artifact verification, refusal paths, publication and installation against an isolated local feed without publishing to the Gallery. Exact PR #37 merge evidence records successful publish/acquire/payload checks, duplicate refusal, preview locks and cleanup.</li>
 <li>[x] Complete the supported runtime matrix on exact merged commit <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>: 7.4.20, 7.5.11 and 7.6.6 each passed 305 unit plus 4 integration tests; Windows PowerShell 5.1.26100.33296 passed 309 combined tests. Every lane reported zero failures, skips or not-run tests. Historical evidence remains labeled to its original commit.</li>
 <li>[x] Re-enable the ShouldProcess analyzer rule; no broad suppression is used in the merged source.</li>
@@ -1720,8 +1723,8 @@
 <li>[x] Verify exact deployed bytes and navigation at canonical <code>https://day3bits.com/TheCleaners/</code>. Run 35257555130 tied 71 public files and all five required navigation routes to exact merged source <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>; an independent live recheck passed. Support for both URL cases is deferred to Zensical issue #26.</li>
 <li>[x] Attach manifests and hashes to both exact hosted archive outputs and verify isolated clean installs of the tested artifacts.</li>
 <li>[x] Verify the bounded stored-ZIP reproducibility contract on exact merged commit <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>: original/repeated and cross-runtime bytes match for all three supported PS7 Windows builders at 19 files, 224,050 bytes and SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code>; PS5.1 consumed the canonical 7.6.6 archive. Historical archives remain labeled to their original commits.</li>
-<li>[ ] Align and approve concrete prerelease version/tag/manifest metadata, release notes and reconciled history.</li>
-<li>[ ] Publish the approved exact prerelease artifact and verify a clean install of that Gallery version across the supported runtime matrix. Record this as prerelease/process evidence only.</li>
+<li>[x] Align and approve concrete prerelease version/tag/manifest metadata, release notes and reconciled history for <code>0.0.15-beta</code>.</li>
+<li>[x] Publish the approved exact <code>0.0.15-beta</code> artifact and verify a clean install of that Gallery version across the supported runtime matrix. This is prerelease/process evidence only.</li>
 <li>[ ] Complete final 1.0 product/release acceptance, align final metadata, publish its exact approved artifact and verify its published clean installation. A prior prerelease does not close this final gate.</li>
 </ul>
 <h2 id="validation-evidence">Validation evidence</h2>
@@ -1821,7 +1824,7 @@
 </tr>
 <tr>
 <td>Full publication gate and module staging</td>
-<td><code>.github/workflows/Build Module.yml</code> is callable by <code>.github/workflows/Publish.yml</code>; the publish job waits for the full matrix and downloads the tested PS7.6.6 artifact/archive. <code>.github/workflows/publish.ps1</code> verifies the exact artifact, stages it beneath a temporary <code>TheCleaners</code> module directory, rechecks the staged manifest/file set and every staged-file SHA-256 against the archive manifest, and passes only that path to <code>Publish-Module</code>; no publication was performed.</td>
+<td><code>.github/workflows/Build Module.yml</code> is callable by <code>.github/workflows/Publish.yml</code>; the publish job waits for the full matrix and downloads the tested PS7.6.6 artifact/archive. <code>.github/workflows/publish.ps1</code> verifies the exact artifact, stages it beneath a temporary <code>TheCleaners</code> module directory, rechecks the staged manifest/file set and every staged-file SHA-256 against the archive manifest, and passes only that path to <code>Publish-Module</code>. Protected run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35268852573">35268852573</a> exercised this path for <code>0.0.15-beta</code>.</td>
 </tr>
 <tr>
 <td>Host and ACL evidence</td>
@@ -1829,7 +1832,7 @@
 </tr>
 </tbody>
 </table>
-<p>Adding tests is not evidence that they passed. The September 16 exact-commit hosted evidence is recorded above with exact runtimes, counts, failures/skips, coverage, hashes, job URLs, and scope limitations. Only the TC-008 runtime-matrix and bounded PS7 Windows archive-reproducibility subgates are closed by the PR #33 merge evidence. Windows/IIS/Exchange product acceptance is not replaced by CI with mocked fixtures; Windows client/server, broader elevated/non-elevated, real-system-root, ReFS, IIS, and Exchange acceptance remain explicit open gates.</p>
+<p>Adding tests or publishing a prerelease is not product acceptance. Exact <code>0.0.15-beta</code> source, artifact, publication, and installed-package evidence is recorded above with runtime, hash, and scope boundaries. Windows/IIS/Exchange product acceptance is not replaced by CI with mocked fixtures or fresh package installation; Windows client/server, broader elevated/non-elevated, real-system-root, ReFS, IIS, Exchange, profile, and final 1.0 acceptance remain explicit open gates.</p>
 <h2 id="parallel-work-boundaries">Parallel work boundaries</h2>
 <p>One integrator owns shared exports, loader, path helper, shared tests, and build/publishing files. IIS, Exchange, profile, and documentation work may proceed on separate branches with separate test files after interfaces are agreed. Merge serially, rebase, and rerun all cross-cutting tests. Do not run destructive acceptance tests concurrently against the same fixture or machine.</p>
 <h2 id="out-of-scope-for-10">Out of scope for 1.0</h2>

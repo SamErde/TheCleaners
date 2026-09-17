@@ -29,7 +29,7 @@
     
     
       
-        <title>0.0.15-beta preparation - The Cleaners PowerShell Module</title>
+        <title>0.0.15-beta release - The Cleaners PowerShell Module</title>
       
     
     
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              0.0.15-beta preparation
+              0.0.15-beta release
             
           </span>
         </div>
@@ -334,7 +334,7 @@
   
     
   
-  0.0.15-beta preparation
+  0.0.15-beta release
 
       </a>
     </li>
@@ -592,7 +592,7 @@
   <span class="md-ellipsis">
     
   
-    0.0.15-beta preparation
+    0.0.15-beta release
   
 
     
@@ -610,7 +610,7 @@
   <span class="md-ellipsis">
     
   
-    0.0.15-beta preparation
+    0.0.15-beta release
   
 
     
@@ -651,6 +651,17 @@
     <span class="md-ellipsis">
       
         Validation limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release evidence
       
     </span>
   </a>
@@ -1215,7 +1226,9 @@
 
 
 <h1 id="thecleaners-0015-beta">TheCleaners 0.0.15-beta</h1>
-<p><strong>Prepared prerelease; publication is pending.</strong> The proposed Gallery version is <code>0.0.15-beta</code> and the proposed Git tag is <code>v0.0.15-beta</code>. The release requires approval of its exact tested commit and artifact before a tag or upload is created.</p>
+<p><strong>Published prerelease.</strong> Gallery version <code>0.0.15-beta</code> and Git tag <a href="https://github.com/SamErde/TheCleaners/releases/tag/v0.0.15-beta"><code>v0.0.15-beta</code></a> identify exact source commit <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code> and its approved tested artifact.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">Install-Module</span> <span class="n">-Name</span> <span class="n">TheCleaners</span> <span class="n">-Repository</span> <span class="n">PSGallery</span> <span class="n">-RequiredVersion</span> <span class="s1">'0.0.15-beta'</span> <span class="n">-AllowPrerelease</span>
+</code></pre></div>
 <p>This beta prepares the 1.0 command and safety contracts for Windows PowerShell 5.1 and supported PowerShell 7 releases on Windows. It includes temporary-file maintenance, typed results, quiet imports, the <code>Get-TheCleaners</code> command inventory, and deterministic source-layout packaging.</p>
 <h2 id="changes-and-compatibility">Changes and compatibility</h2>
 <ul>
@@ -1229,11 +1242,23 @@
 <p>See the <a href="../../migration-to-1.0/">migration guide</a> for parameter and behavior changes and the repository <a href="https://github.com/SamErde/TheCleaners/blob/main/CHANGELOG.md">changelog</a> for the complete preparation history.</p>
 <h2 id="validation-limits">Validation limits</h2>
 <p>Windows client/server, filesystem/privilege, profile, IIS and Exchange lab validation is <strong>deferred future work and is not underway</strong>. Hosted fixture and package tests do not establish product acceptance. IIS/Exchange candidate lists remain experimental. This beta does not establish production-ready 1.0 support or enable server-log deletion.</p>
-<p>Exact candidate, publication and installed-package evidence belongs in the <a href="../../release-plan-1.0/">release ledger</a>. Prior runtime/archive evidence remains bound to its original commit; it cannot be reused as proof for this package.</p>
+<p>Exact candidate, publication and installed-package evidence is recorded in the <a href="../../release-plan-1.0/">release ledger</a>. Prior runtime/archive evidence remains bound to its original commit; it is not reused as proof for this package.</p>
+<h2 id="release-evidence">Release evidence</h2>
+<ul>
+<li>Source commit: <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code></li>
+<li>Tag: <code>v0.0.15-beta</code></li>
+<li>Approved archive: <code>TheCleaners_0.0.15.zip</code>, 19 files, 224,050 bytes</li>
+<li>Archive SHA-256: <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code></li>
+<li>Protected publication run: <a href="https://github.com/SamErde/TheCleaners/actions/runs/35268852573">35268852573</a></li>
+<li>Gallery and fresh-install verification: all 11 workflow jobs passed; independent verification matched all 15 retained artifact wrappers and four installed-package reports</li>
+<li>GitHub prerelease: <a href="https://github.com/SamErde/TheCleaners/releases/tag/v0.0.15-beta">release ID 391037563</a>, published September 17, 2026 at 20:27:02 UTC</li>
+<li>Release assets: archive above; 3,684-byte content manifest, SHA-256 <code>6454b46738291fce94eeca2d23d4092eb3f3957485ede75a81186455980dfac9</code>; 88-byte sidecar, SHA-256 <code>3346fccaeabaeec2eee9dcfd427fb1cd27c34ae51a3631258c0c3f0a49da8485</code></li>
+</ul>
+<p>The publication workflow verified the exact approved archive before upload. Fresh Windows jobs then installed the Gallery version on Windows PowerShell 5.1 and PowerShell 7.4.20, 7.5.11, and 7.6.6 and checked payload identity, metadata, quiet import, help, exports, aliases, and IIS/Exchange preview locks without live cleanup.</p>
 <h2 id="release-history-reconciliation">Release-history reconciliation</h2>
-<p>The September 17, 2026 inventory found Gallery versions <code>0.0.6-alpha</code> through <code>0.0.13-alpha</code>, with <a href="https://www.powershellgallery.com/packages/TheCleaners/0.0.13-alpha">0.0.13-alpha</a> the latest published version. The source version <code>0.0.15-beta</code> was unused in the Gallery. No Git tags existed at that check.</p>
-<p>GitHub also retained an unpublished draft, release ID <code>172666498</code>, titled <code>Testing and Workflow Updates</code> and labeled <code>0.0.11-alpha</code>; its label did not resolve to a Git tag. It is historical draft metadata and is preserved. Its dependency-only notes are not the notes for this beta, and no historical package is assigned to the current source commit without evidence. The next release establishes a new explicit version/tag/commit/artifact mapping.</p>
-<p>Recheck version availability immediately before publication. The publisher refuses an existing Gallery version. Publication and clean installation of that exact version remain pending; local-feed rehearsal is separate evidence.</p>
+<p>Before this release, the September 17, 2026 inventory found Gallery versions <code>0.0.6-alpha</code> through <code>0.0.13-alpha</code>, with <a href="https://www.powershellgallery.com/packages/TheCleaners/0.0.13-alpha">0.0.13-alpha</a> then latest. Version <a href="https://www.powershellgallery.com/packages/TheCleaners/0.0.15-beta">0.0.15-beta</a> was unused before the approved publication. No Git tags existed at that earlier check.</p>
+<p>An earlier inventory recorded unpublished draft release ID <code>172666498</code>, titled <code>Testing and Workflow Updates</code> and labeled <code>0.0.11-alpha</code>; its label did not resolve to a Git tag. It was not reused for this beta, and no historical package is assigned to the current source commit without evidence. After the beta prerelease was created, the full release inventory returned only new release ID <code>391037563</code> and a direct read of the older ID returned 404. The beta creation command targeted only <code>v0.0.15-beta</code>; no old-draft deletion was requested, and the cause of its disappearance is unknown.</p>
+<p>The protected publisher rechecked the exact candidate version and would refuse publication if that required version already existed in the Gallery. Local-feed rehearsal, actual Gallery publication, and fresh Gallery installation remain separate evidence checkpoints in the release ledger.</p>
 
 
 

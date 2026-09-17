@@ -332,7 +332,7 @@
   
     
   
-  0.0.15-beta preparation
+  0.0.15-beta release
 
       </a>
     </li>
@@ -591,7 +591,7 @@
   <span class="md-ellipsis">
     
   
-    0.0.15-beta preparation
+    0.0.15-beta release
   
 
     
@@ -1143,8 +1143,10 @@
 
 
 <h1 id="the-cleaners">The Cleaners</h1>
-<p>Windows maintenance commands with explicit safety controls. PR #31 is merged, but this remains unreleased 1.0 preparation work rather than a production-ready release. The source manifest is <code>0.0.15-beta</code>; the PowerShell Gallery still serves <code>0.0.13-alpha</code>.</p>
-<p>The <a href="releases/0.0.15-beta/">prepared 0.0.15-beta release</a> passed exact merged-source artifact and delivery validation and is awaiting publication approval. Windows, IIS, Exchange, and profile lab validation is deferred future work, not underway.</p>
+<p>Windows maintenance commands with explicit safety controls. The published <code>0.0.15-beta</code> package is a prerelease rather than a production-ready 1.0 release. The repository continues 1.0 preparation from that package's exact source.</p>
+<p>The <a href="releases/0.0.15-beta/">0.0.15-beta release</a> passed exact source/artifact, protected publication, and fresh Gallery-install validation. Windows, IIS, Exchange, and profile lab validation is deferred future work, not underway.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">Install-Module</span> <span class="n">-Name</span> <span class="n">TheCleaners</span> <span class="n">-Repository</span> <span class="n">PSGallery</span> <span class="n">-RequiredVersion</span> <span class="s1">'0.0.15-beta'</span> <span class="n">-AllowPrerelease</span>
+</code></pre></div>
 <p>Windows PowerShell 5.1 is the minimum; the target policy also includes Microsoft-supported PowerShell 7 releases on Windows. See <a href="support-matrix/">support and validation</a>.</p>
 <div class="highlight"><pre><span></span><code><span class="nb">Get-TheCleaners</span> <span class="n">-NoLogo</span>
 <span class="nb">Clear-CurrentUserTemp</span> <span class="n">-Days</span> <span class="n">30</span> <span class="n">-WhatIf</span> <span class="n">-PassThru</span>
@@ -1153,7 +1155,7 @@
 <span class="nb">Clear-OldExchangeLog</span> <span class="n">-Days</span> <span class="n">60</span> <span class="n">-WhatIf</span> <span class="n">-PassThru</span>
 </code></pre></div>
 <p>The temp cleaners preserve directories unless <code>-RemoveEmptyDirectory</code> is supplied. IIS and Exchange are structurally preview-only; their candidate lists are experimental and deletion is unavailable. Module import is quiet, and <code>Start-Cleaning</code> remains an alias for <a href="Get-TheCleaners/">Get-TheCleaners</a>.</p>
-<p>Read <a href="safety-and-confirmation/">safety and confirmation</a>, <a href="migration-to-1.0/">migration notes</a>, and the <a href="release-plan-1.0/">1.0 implementation ledger</a> before using this development version. The ledger distinguishes merged implementation, exact-commit CI evidence, product/lab acceptance, and release authorization. The <a href="https://github.com/SamErde/TheCleaners#readme">repository README</a> distinguishes the published Gallery prerelease from a source checkout.</p>
+<p>Read <a href="safety-and-confirmation/">safety and confirmation</a>, <a href="migration-to-1.0/">migration notes</a>, and the <a href="release-plan-1.0/">1.0 implementation ledger</a> before using this prerelease. The ledger distinguishes prerelease evidence from product/lab and final 1.0 acceptance. The <a href="https://github.com/SamErde/TheCleaners#readme">repository README</a> distinguishes the published Gallery prerelease from a source checkout.</p>
 <p>Canonical documentation: <a href="https://day3bits.com/TheCleaners/">https://day3bits.com/TheCleaners/</a>. The <a href="https://github.com/SamErde/TheCleaners/issues/26">Zensical migration</a> remains a separate follow-up.</p>
 
 

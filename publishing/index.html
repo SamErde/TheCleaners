@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#publishing-controls-and-prerelease-readiness" class="md-skip">
+        <a href="#publishing-controls-and-prerelease-evidence" class="md-skip">
           Skip to content
         </a>
       
@@ -332,7 +332,7 @@
   
     
   
-  0.0.15-beta preparation
+  0.0.15-beta release
 
       </a>
     </li>
@@ -583,7 +583,7 @@
   <span class="md-ellipsis">
     
   
-    0.0.15-beta preparation
+    0.0.15-beta release
   
 
     
@@ -1074,6 +1074,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#0015-beta-publication-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.0.15-beta publication evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1270,7 +1281,7 @@
   
 
 
-<h1 id="publishing-controls-and-prerelease-readiness">Publishing controls and prerelease readiness</h1>
+<h1 id="publishing-controls-and-prerelease-evidence">Publishing controls and prerelease evidence</h1>
 <p>Use the <code>powershell-gallery</code> GitHub environment for publication. GitHub environments support required approval, deployment branch/tag restrictions, and gated access to environment secrets. These controls suit an irreversible package upload; a workflow's environment name alone does not configure them. See <a href="https://docs.github.com/en/actions/concepts/workflows-and-actions/deployment-environments">GitHub's environment guidance</a>.</p>
 <h2 id="verified-configuration">Verified configuration</h2>
 <p>On September 17, 2026, the maintainer authorized resolving the missing environment. Live REST reads after configuration confirmed:</p>
@@ -1304,7 +1315,7 @@
 </tr>
 <tr>
 <td>Publishing credential</td>
-<td><code>PSGALLERY_PUBLISH_API_KEY</code> is present as an environment secret, confirmed by a September 17 metadata-only read after maintainer provisioning. Its value and Gallery validity were not inspected.</td>
+<td><code>PSGALLERY_PUBLISH_API_KEY</code> is present as an environment secret, confirmed by a September 17 metadata-only read after maintainer provisioning. Its value was not inspected; successful protected run 35268852573 established its authorization for the package upload.</td>
 </tr>
 <tr>
 <td>Build access</td>
@@ -1312,14 +1323,14 @@
 </tr>
 <tr>
 <td>Execution evidence</td>
-<td>Publication and an actual environment approval have not been exercised. Configuration readback alone does not prove those gates.</td>
+<td>Protected run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35268852573">35268852573</a> exercised the required environment approval, exact-artifact publisher, Gallery credential, and fresh installed-package matrix. Independent verification passed every check across 11 jobs, 15 retained artifact wrappers and four installed-package reports.</td>
 </tr>
 </tbody>
 </table>
 <p><code>Publish.yml</code> maps only the dedicated environment secret and fails clearly when it is missing. Select a tag whose workflow uses these controls; do not dispatch a historical workflow that references the older repository secret. Reverify environment settings and the selected tag's workflow before any publication; repository settings can change independently of Git commits.</p>
 <h2 id="credential-provisioning">Credential provisioning</h2>
-<p>The maintainer provisioned <code>PSGALLERY_PUBLISH_API_KEY</code> under <strong>Settings → Environments → powershell-gallery → Environment secrets</strong>. Keep that name only at environment scope and never paste the key into issues, logs, prompts, or source files. Metadata readback confirms presence; only an approved publication can establish that it is valid for the Gallery. The workflow stops when the key is absent.</p>
-<p>Existing repository secret names <code>POWERSHELLGALLERY_KEY</code> and <code>POWERSHELLGALLERY_THECLEANERS</code> were observed, but their values and validity were not inspected. GitHub does not return stored secret values. Provision the environment key through the settings UI or secure local input; do not attempt to retrieve an existing secret through workflow output. Review remaining consumers and retire obsolete repository credentials as part of credential setup. Their retirement is not claimed by this planning update.</p>
+<p>The maintainer provisioned <code>PSGALLERY_PUBLISH_API_KEY</code> under <strong>Settings → Environments → powershell-gallery → Environment secrets</strong>. Keep that name only at environment scope and never paste the key into issues, logs, prompts, or source files. Metadata readback confirms presence; the successful approved publication established that the replacement key could publish this package. The workflow stops when the key is absent.</p>
+<p>Existing repository secret names <code>POWERSHELLGALLERY_KEY</code> and <code>POWERSHELLGALLERY_THECLEANERS</code> were observed before publication, but their values and validity were not inspected. GitHub does not return stored secret values. After the environment credential published successfully and a fresh consumer check found no remaining use, both obsolete repository secret entries were removed. A metadata readback at 20:26:05 UTC on September 17, 2026 confirmed that no repository secrets remained and the dedicated environment secret was preserved. No secret value was read, and this repository cleanup does not claim revocation in any external system.</p>
 <h2 id="non-lab-release-sequence">Non-lab release sequence</h2>
 <ol>
 <li>Reconcile published versions and release history; prepare an unused prerelease version and matching manifest, proposed tag, and release notes. State that lab validation is deferred future work, not underway. Keep IIS and Exchange structurally preview-only.</li>
@@ -1336,9 +1347,12 @@
 </code></pre></div>
 <p>The rehearsal requires the content manifest's commit to match the current checkout. It rejects tracked changes and any untracked module source file, including ignored files that the package copy would otherwise include. It creates a unique local feed and module search root, invokes the real publisher in a fresh instance of the current PowerShell runtime, saves the exact version, checks its payload and runtime contract, and verifies that a second publication is refused. Synthetic tag variables exist only inside the worker process; no Git tag or Gallery upload is created. The report records source/version/runtime identity, package digests, completed checks and cleanup outcomes. CI requires this rehearsal in the canonical PowerShell 7.6.6 build lane and retains its report with the Pester artifacts.</p>
 <p>The shared repository-module checker accepts only the tested payload plus PowerShellGet's root <code>PSGetModuleInfo.xml</code> file. Every payload length and SHA-256 must match the tested manifest. Exact-path and module-name imports must resolve the same copy quietly, help and exports must remain intact, and IIS/Exchange must refuse calls without explicit <code>-WhatIf</code> before discovery. Local <code>Save-Module</code> acquisition exercises repository packaging; only the post-publication <code>Install-Module</code> matrix establishes real Gallery installation evidence.</p>
-<p>PR #37's exact merge <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code> passed <a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555108">build 35257555108</a>. Its PowerShell 7.6.6 rehearsal published <code>0.0.15-beta</code> to an isolated local repository, acquired and verified the 19-file payload plus <code>PSGetModuleInfo.xml</code>, checked import/help/exports/aliases and preview locks, refused a duplicate version, and restored the environment and temporary repository. The tested archive was 224,050 bytes with SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code>. Obtain explicit maintainer approval for that exact source, tag and digest before any upload.</p>
-<p>After an approved upload, <code>Publish.yml</code> installs the exact Gallery version in separate fresh Windows jobs for Windows PowerShell 5.1 and PowerShell 7.4.20, 7.5.11 and 7.6.6. The jobs use the same tested archive manifest and retain <code>published-install-&lt;runtime&gt;</code> JSON reports. A successful upload alone does not close the installed-artifact gate.</p>
-<p>Final 1.0 acceptance still requires its applicable product gates, maintainer approval, final metadata and fresh publication/install evidence. Local-feed rehearsal and prerelease delivery do not establish Windows, IIS, Exchange or profile lab acceptance. See the <a href="../release-plan-1.0/">release plan</a> and <a href="../next-stage-prompts/">next-stage prompts</a>.</p>
+<p>PR #37's exact merge <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code> passed <a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555108">build 35257555108</a>. Its PowerShell 7.6.6 rehearsal published <code>0.0.15-beta</code> to an isolated local repository, acquired and verified the 19-file payload plus <code>PSGetModuleInfo.xml</code>, checked import/help/exports/aliases and preview locks, refused a duplicate version, and restored the environment and temporary repository. The tested archive was 224,050 bytes with SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code>. The maintainer approved that exact source, tag and digest for publication.</p>
+<p>The first approved attempt, <a href="https://github.com/SamErde/TheCleaners/actions/runs/35266399326">run 35266399326</a>, passed all six release-gate jobs and normal environment review, then failed closed when PowerShell Gallery returned HTTP 403 for the credential. The exact Gallery version still returned 404 afterward, and the installed-package jobs were skipped. The environment secret was replaced without changing the approved tag, source, or archive.</p>
+<h2 id="0015-beta-publication-evidence">0.0.15-beta publication evidence</h2>
+<p>Protected run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35268852573">35268852573</a> checked out tag <code>v0.0.15-beta</code> at source <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>, reran the full supported matrix, matched the approved archive SHA-256, and published Gallery version <a href="https://www.powershellgallery.com/packages/TheCleaners/0.0.15-beta"><code>0.0.15-beta</code></a> through the reviewed environment at 20:20:11 UTC on September 17, 2026. Separate fresh Windows jobs installed the exact Gallery version on Windows PowerShell 5.1 and PowerShell 7.4.20, 7.5.11, and 7.6.6. They verified payload identity, allowed Gallery metadata, quiet import, exports, aliases, help, and IIS/Exchange preview locks without live cleanup. Independent verification passed all checks across 11 jobs, 15 retained artifact wrappers and four installed-package reports.</p>
+<p>The matching <a href="https://github.com/SamErde/TheCleaners/releases/tag/v0.0.15-beta">GitHub prerelease</a>, release ID <code>391037563</code>, was published at 20:27:02 UTC. It is not a draft, resolves through tag <code>v0.0.15-beta</code> to the same source, and retains three downloaded, byte-matched assets: the 224,050-byte archive above; the 3,684-byte content manifest with SHA-256 <code>6454b46738291fce94eeca2d23d4092eb3f3957485ede75a81186455980dfac9</code>; and its 88-byte sidecar with SHA-256 <code>3346fccaeabaeec2eee9dcfd427fb1cd27c34ae51a3631258c0c3f0a49da8485</code>.</p>
+<p>This closes publication and installed-artifact verification only for <code>0.0.15-beta</code>. Final 1.0 acceptance still requires its applicable product gates, maintainer approval, final metadata, and fresh publication/install evidence. Local-feed rehearsal and prerelease delivery do not establish Windows, IIS, Exchange, or profile lab acceptance. See the <a href="../release-plan-1.0/">release plan</a> and <a href="../next-stage-prompts/">next-stage prompts</a>.</p>
 
 
 

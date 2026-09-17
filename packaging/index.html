@@ -332,7 +332,7 @@
   
     
   
-  0.0.15-beta preparation
+  0.0.15-beta release
 
       </a>
     </li>
@@ -583,7 +583,7 @@
   <span class="md-ellipsis">
     
   
-    0.0.15-beta preparation
+    0.0.15-beta release
   
 
     
@@ -1389,10 +1389,10 @@
 <li>A 19-file content manifest that records the exact merge commit and its own producer runtime.</li>
 </ul>
 <p>The <a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104984394111">cross-runtime comparison job</a> verified sidecars, manifest identity, complete content, canonical ZIP metadata, repeated bytes, and cross-runtime bytes. Freshly downloaded hosted artifacts also matched the retained merged evidence byte-for-byte. The <a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104984394144">Windows PowerShell 5.1 job</a> consumed the canonical 7.6.6 artifact and ZIP and reported the same archive digest; it did not produce a separate archive.</p>
-<p>These results close only the bounded PS7 Windows stored-ZIP reproducibility subgate. The bounded uncovered-branch review subsequently merged in PR #35. Protected publication, a clean install of the published version, and maintainer release acceptance remain open. Runtime-bearing manifests outside the ZIP intentionally differ.</p>
+<p>At this historical checkpoint, these results closed only the bounded PS7 Windows stored-ZIP reproducibility subgate. The bounded uncovered-branch review subsequently merged in PR #35; publication and installation were then still open. Runtime-bearing manifests outside the ZIP intentionally differ.</p>
 <h2 id="artifact-action-and-acceptance-boundary">Artifact action and acceptance boundary</h2>
-<p>The historical Windows PowerShell job annotation identified <code>actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093</code> as targeting deprecated Node 20. GitHub's <a href="https://github.com/actions/download-artifact/releases/tag/v8.0.1">v8.0.1 release</a> resolves to <code>3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c</code>; its <a href="https://github.com/actions/download-artifact/blob/3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c/action.yml">immutable action manifest</a> declares <code>node24</code> and defaults digest mismatches to errors. The merged implementation updates both build and protected-publish downloads. The exact-commit comparison job verified all three expected upload digests, and the PS5.1 job verified both expected canonical 7.6.6 download digests; their annotation endpoints returned no warnings. Publication itself remains unexecuted.</p>
-<p>The current exact merged results do not automatically cover a later <code>main</code> commit. TC-008 as a whole remains open for protected publication, published clean installation, and maintainer release acceptance. The baseline risk review is complete; its remaining native/platform/product cases belong to deferred labs. Windows/IIS/Exchange/profile lab validation is future work, not underway; IIS and Exchange retain their explicit-WhatIf preview locks. Follow the <a href="../release-plan-1.0/#current-non-lab-delivery-sequence">non-lab release sequence</a> and <a href="../publishing/">publishing controls</a> for the separately approved prerelease.</p>
+<p>The historical Windows PowerShell job annotation identified <code>actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093</code> as targeting deprecated Node 20. GitHub's <a href="https://github.com/actions/download-artifact/releases/tag/v8.0.1">v8.0.1 release</a> resolves to <code>3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c</code>; its <a href="https://github.com/actions/download-artifact/blob/3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c/action.yml">immutable action manifest</a> declares <code>node24</code> and defaults digest mismatches to errors. The merged implementation updates both build and protected-publish downloads. The exact-commit comparison job verified all three expected upload digests, and the PS5.1 job verified both expected canonical 7.6.6 download digests; their annotation endpoints returned no warnings. That build did not itself publish.</p>
+<p>The exact candidate archive was subsequently used by protected publication run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35268852573">35268852573</a>. Independent verification matched its source, file count, byte count and digest across all three producers and the four installed-package reports. These results do not automatically cover a later <code>main</code> commit or final 1.0 artifact. The baseline risk review is complete; its remaining native/platform/product cases belong to deferred labs. Windows/IIS/Exchange/profile lab validation is future work, not underway; IIS and Exchange retain their explicit-WhatIf preview locks.</p>
 
 
 

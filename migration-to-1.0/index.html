@@ -334,7 +334,7 @@
   
     
   
-  0.0.15-beta preparation
+  0.0.15-beta release
 
       </a>
     </li>
@@ -685,7 +685,7 @@
   <span class="md-ellipsis">
     
   
-    0.0.15-beta preparation
+    0.0.15-beta release
   
 
     
@@ -1237,7 +1237,7 @@
 
 
 <h1 id="migrating-prerelease-scripts-toward-10">Migrating prerelease scripts toward 1.0</h1>
-<p>PR #31 merged the stabilization implementation into <code>main</code>, but this is not a published 1.0 release. The source manifest is <code>0.0.15-beta</code>; the Gallery still serves <code>0.0.13-alpha</code>. A merge does not update the Gallery automatically or satisfy product/lab acceptance.</p>
+<p>The <code>0.0.15-beta</code> prerelease is published from exact source commit <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>, but it is not a production-ready 1.0 release. Publication and fresh-install verification do not satisfy Windows, IIS, Exchange, profile, or final 1.0 acceptance.</p>
 <h2 id="command-inventory">Command inventory</h2>
 <p>Use <code>Get-TheCleaners</code> instead of <code>Start-Cleaning</code>. The old name remains a deprecated alias through 1.x. Use <code>Get-TheCleaners -NoLogo</code> for pipelines. Output is now typed command metadata with <code>Name</code>, <code>Maturity</code>, <code>RemovalEnabled</code>, and <code>SupportsWhatIf</code>, rather than a presentation-only property. No command is labeled stable yet; IIS and Exchange are reported as <code>PreviewOnly</code> with removal disabled.</p>
 <p>The private logo helper is <code>Show-TheCleanersLogo</code>; private functions are not a supported public API. Import no longer prints a welcome message or creates <code>Invoke-TheCleaners</code> in the caller's environment.</p>
