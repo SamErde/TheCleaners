@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-The project has no stable 1.0 release. Security fixes target the maintained `main` branch and are subject to the release ledger's acceptance gates. The source manifest is currently the unreleased `0.0.15-beta`; the PowerShell Gallery still serves the older `0.0.13-alpha`, which may not contain fixes present on `main`. A merged fix is not a published fix until the exact artifact is released.
+The project has no stable 1.0 release. Security fixes target the maintained `main` branch and are subject to the release ledger's acceptance gates. The published `0.0.15-beta` prerelease maps to exact source commit `345f06c861b6d4074e5896e0b27a19f869dfa7e3`; Windows, IIS, Exchange, profile and final 1.0 acceptance remain open. Fixes merged after that source commit are not part of the published beta until another exact artifact is released.
 
 ## Reporting a Vulnerability
 
