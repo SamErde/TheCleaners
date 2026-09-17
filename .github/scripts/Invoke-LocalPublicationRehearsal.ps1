@@ -140,6 +140,13 @@ function Get-RehearsalIdentity {
     if (-not $? -or $TrackedChanges.Count -gt 0) {
         throw 'Local publication rehearsal requires a clean tracked worktree.'
     }
+    $UntrackedSourceFiles = @(& git -C $RepositoryRoot ls-files --others -- src/TheCleaners)
+    if (-not $?) {
+        throw 'Could not inspect the module source for untracked payload files.'
+    }
+    if ($UntrackedSourceFiles.Count -gt 0) {
+        throw "Local publication rehearsal refuses untracked module source files: $($UntrackedSourceFiles -join ', ')."
+    }
 
     [pscustomobject]@{
         ArtifactPath = $ResolvedArtifactPath
