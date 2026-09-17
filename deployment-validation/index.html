@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="zensical-0.0.62">
     
     
       
@@ -31,10 +31,15 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      <link rel="stylesheet" href="../assets/stylesheets/classic/main.e0592429.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/classic/palette.c7ab7c71.min.css">
       
       
 
@@ -48,12 +53,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
     
       
 
@@ -74,7 +79,7 @@
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
     <div data-md-component="skip">
       
         
@@ -94,13 +99,13 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="The Cleaners PowerShell Module" class="md-header__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
+    <a href="./.." title="The Cleaners PowerShell Module" class="md-header__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    <label class="md-header__button md-icon" for="__drawer">
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
     </label>
@@ -130,7 +135,7 @@
     <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
     
       <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun-moon" viewBox="0 0 24 24"><path d="M12 2v2M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715M16 12a4 4 0 0 0-4-4M19 5l-1.256 1.256M20 12h2"/></svg>
       </label>
     
   
@@ -140,7 +145,7 @@
     <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
     
       <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
       </label>
     
   
@@ -150,7 +155,7 @@
     <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
     
       <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
       </label>
     
   
@@ -164,57 +169,30 @@
     
       
       
-        <label class="md-header__button md-icon" for="__search">
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
           
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
         </label>
-        <div class="md-search" data-md-component="search" role="dialog">
-  <label class="md-search__overlay" for="__search"></label>
-  <div class="md-search__inner" role="search">
-    <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
-      <label class="md-search__icon md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-      </label>
-      <nav class="md-search__options" aria-label="Search">
-        
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
-          
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>
-      </nav>
-      
-    </form>
-    <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="search-result">
-          <div class="md-search-result__meta">
-            Initializing search
-          </div>
-          <ol class="md-search-result__list" role="presentation"></ol>
-        </div>
-      </div>
-    </div>
-  </div>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
 </div>
       
     
-    
-      <div class="md-header__source">
+    <div class="md-header__source">
+      
         <a href="https://github.com/SamErde/TheCleaners" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
     SamErde/TheCleaners
   </div>
 </a>
-      </div>
-    
+      
+    </div>
   </nav>
   
     
@@ -229,11 +207,8 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="./.." class="md-tabs__link">
         
-  
-  
-    
   
   Home
 
@@ -251,9 +226,6 @@
       <a href="../safety-and-confirmation/" class="md-tabs__link">
         
   
-  
-    
-  
   Safety
 
       </a>
@@ -269,9 +241,6 @@
     <li class="md-tabs__item">
       <a href="../command-contracts/" class="md-tabs__link">
         
-  
-  
-    
   
   Contracts
 
@@ -289,9 +258,6 @@
       <a href="../support-matrix/" class="md-tabs__link">
         
   
-  
-    
-  
   Support
 
       </a>
@@ -307,9 +273,6 @@
     <li class="md-tabs__item">
       <a href="../migration-to-1.0/" class="md-tabs__link">
         
-  
-  
-    
   
   Migration to 1.0
 
@@ -327,9 +290,6 @@
       <a href="../releases/0.0.15-beta/" class="md-tabs__link">
         
   
-  
-    
-  
   0.0.15-beta release
 
       </a>
@@ -343,11 +303,13 @@
   
   
     
+      
+    
+    
     
       <li class="md-tabs__item">
         <a href="../TheCleaners/" class="md-tabs__link">
           
-  
   
   Functions
 
@@ -365,11 +327,13 @@
   
   
     
+      
+    
+    
     
       <li class="md-tabs__item md-tabs__item--active">
         <a href="../packaging/" class="md-tabs__link">
           
-  
   
   Development
 
@@ -409,7 +373,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="The Cleaners PowerShell Module" class="md-nav__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
+    <a href="./.." title="The Cleaners PowerShell Module" class="md-nav__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -422,7 +386,7 @@
       <a href="https://github.com/SamErde/TheCleaners" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
     SamErde/TheCleaners
@@ -439,15 +403,14 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="./.." class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Home
-  
+  Home
 
     
   </span>
@@ -473,8 +436,7 @@
   <span class="md-ellipsis">
     
   
-    Safety
-  
+  Safety
 
     
   </span>
@@ -500,8 +462,7 @@
   <span class="md-ellipsis">
     
   
-    Contracts
-  
+  Contracts
 
     
   </span>
@@ -527,8 +488,7 @@
   <span class="md-ellipsis">
     
   
-    Support
-  
+  Support
 
     
   </span>
@@ -554,8 +514,7 @@
   <span class="md-ellipsis">
     
   
-    Migration to 1.0
-  
+  Migration to 1.0
 
     
   </span>
@@ -581,8 +540,7 @@
   <span class="md-ellipsis">
     
   
-    0.0.15-beta release
-  
+  0.0.15-beta release
 
     
   </span>
@@ -624,8 +582,7 @@
   <span class="md-ellipsis">
     
   
-    Functions
-  
+  Functions
 
     
   </span>
@@ -640,8 +597,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Functions
-  
+  Functions
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
@@ -660,8 +616,7 @@
   <span class="md-ellipsis">
     
   
-    Module reference
-  
+  Module reference
 
     
   </span>
@@ -688,8 +643,7 @@
   <span class="md-ellipsis">
     
   
-    Get-TheCleaners
-  
+  Get-TheCleaners
 
     
   </span>
@@ -716,8 +670,7 @@
   <span class="md-ellipsis">
     
   
-    Clear-CurrentUserTemp
-  
+  Clear-CurrentUserTemp
 
     
   </span>
@@ -744,8 +697,7 @@
   <span class="md-ellipsis">
     
   
-    Clear-WindowsTemp
-  
+  Clear-WindowsTemp
 
     
   </span>
@@ -772,8 +724,7 @@
   <span class="md-ellipsis">
     
   
-    Clear-OldIISLog
-  
+  Clear-OldIISLog
 
     
   </span>
@@ -800,8 +751,7 @@
   <span class="md-ellipsis">
     
   
-    Clear-OldExchangeLog (preview)
-  
+  Clear-OldExchangeLog (preview)
 
     
   </span>
@@ -828,8 +778,7 @@
   <span class="md-ellipsis">
     
   
-    Get-StaleUserProfile
-  
+  Get-StaleUserProfile
 
     
   </span>
@@ -856,8 +805,7 @@
   <span class="md-ellipsis">
     
   
-    Start-Cleaning (alias)
-  
+  Start-Cleaning (alias)
 
     
   </span>
@@ -912,8 +860,7 @@
   <span class="md-ellipsis">
     
   
-    Development
-  
+  Development
 
     
   </span>
@@ -928,8 +875,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Development
-  
+  Development
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
@@ -948,8 +894,7 @@
   <span class="md-ellipsis">
     
   
-    Packaging and reproducibility
-  
+  Packaging and reproducibility
 
     
   </span>
@@ -976,8 +921,7 @@
   <span class="md-ellipsis">
     
   
-    Publishing controls
-  
+  Publishing controls
 
     
   </span>
@@ -1004,8 +948,7 @@
   <span class="md-ellipsis">
     
   
-    1.0 implementation plan
-  
+  1.0 implementation plan
 
     
   </span>
@@ -1032,8 +975,7 @@
   <span class="md-ellipsis">
     
   
-    Next-stage prompts
-  
+  Next-stage prompts
 
     
   </span>
@@ -1060,8 +1002,7 @@
   <span class="md-ellipsis">
     
   
-    Windows lab acceptance
-  
+  Windows lab acceptance
 
     
   </span>
@@ -1084,7 +1025,9 @@
   
     <li class="md-nav__item md-nav__item--active">
       
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+        <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
       
       
         
@@ -1097,8 +1040,7 @@
   <span class="md-ellipsis">
     
   
-    Documentation deployment gate
-  
+  Documentation deployment gate
 
     
   </span>
@@ -1108,15 +1050,14 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="./" class="md-nav__link md-nav__link--active">
+      <a href="././" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
     
   
-    Documentation deployment gate
-  
+  Documentation deployment gate
 
     
   </span>
@@ -1127,7 +1068,8 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -1136,16 +1078,16 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
   <a href="#workflow-contract" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Workflow contract
-      
+      </span>
     </span>
   </a>
   
@@ -1154,9 +1096,9 @@
         <li class="md-nav__item">
   <a href="#propagation-and-failure-behavior" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Propagation and failure behavior
-      
+      </span>
     </span>
   </a>
   
@@ -1165,20 +1107,20 @@
         <li class="md-nav__item">
   <a href="#local-validation" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Local validation
-      
+      </span>
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#current-verified-state" class="md-nav__link">
+  <a href="#verified-pre-migration-baseline" class="md-nav__link">
     <span class="md-ellipsis">
-      
-        Current verified state
-      
+      <span class="md-typeset">
+        Verified pre-migration baseline
+      </span>
     </span>
   </a>
   
@@ -1225,8 +1167,9 @@
   
   
     <li class="md-path__item">
-      <a href=".." class="md-path__link">
+      <a href="./.." class="md-path__link">
         
+  
   <span class="md-ellipsis">
     Home
   </span>
@@ -1242,9 +1185,13 @@
   
     
     
+    
+    
+    
       <li class="md-path__item">
         <a href="../packaging/" class="md-path__link">
           
+  
   <span class="md-ellipsis">
     Development
   </span>
@@ -1262,26 +1209,25 @@
               <article class="md-content__inner md-typeset">
                 
                   
-
-
   
   
 
 
 <h1 id="documentation-deployment-gate">Documentation deployment gate</h1>
-<p>The canonical documentation URL is <code>https://day3bits.com/TheCleaners/</code>, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links must use that casing. Support for the lowercase path remains deferred to <a href="https://github.com/SamErde/TheCleaners/issues/26">Zensical migration issue #26</a>.</p>
+<p>The canonical documentation URL is <code>https://day3bits.com/TheCleaners/</code>, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links must use that casing. The Zensical migration is open in <a href="https://github.com/SamErde/TheCleaners/pull/41">PR #41</a>; review, merge, fresh deployment, and lowercase-path acceptance remain open under <a href="https://github.com/SamErde/TheCleaners/issues/26">issue #26</a>.</p>
+<p>The lowercase project-prefix request is handled by the account-root Pages site before this project's generated files are selected. Zensical's native redirects map paths within the documentation output, so they cannot repair that missing project prefix. Case-only alias directories would also collide with canonical mixed-case directories on Windows. A companion account-root redirect is the remaining hosting-level option; this repository does not add ineffective redirect maps.</p>
 <p>A documentation deployment is accepted only when the workflow proves all of the following for one source commit:</p>
 <ol>
-<li>MkDocs completes one strict build.</li>
+<li>Zensical completes one strict, clean build into the configured <code>site</code> directory.</li>
 <li>An empty <code>.nojekyll</code> hosting marker is added to the built site before the retained manifest records every file's relative path, byte count, and SHA-256 digest, plus a digest for the complete file set and the source repository, commit, ref, workflow run, and attempt.</li>
 <li>The deployment consumes the retained site artifact and verifies it locally against that manifest before publishing.</li>
-<li>The <code>gh-pages</code> publisher copies that directory without asking MkDocs to build again or adding unrecorded files.</li>
+<li>The <code>gh-pages</code> publisher copies that directory without asking Zensical to build again or adding unrecorded files.</li>
 <li>Every public file returned by <code>https://day3bits.com/TheCleaners/</code> has the recorded byte count and SHA-256 digest. Directory index files are requested through their public trailing-slash routes.</li>
 <li>The home page retains its title-case canonical declaration and links to representative function, contract, support, migration, and release-plan pages.</li>
 </ol>
 <p>A local build, a <code>gh-pages</code> push, an HTTP 200 response, or a green Pages deployment does not establish this complete chain by itself.</p>
 <h2 id="workflow-contract">Workflow contract</h2>
-<p>The <code>Deploy MkDocs to GitHub Pages</code> workflow has three jobs with separate permissions:</p>
+<p>The <code>Deploy Zensical to GitHub Pages</code> workflow has three jobs with separate permissions:</p>
 <table>
 <thead>
 <tr>
@@ -1294,7 +1240,7 @@
 <tr>
 <td><code>build</code></td>
 <td><code>contents: read</code></td>
-<td>Test the delivery helpers, build once with <code>python -m mkdocs build --strict --site-dir site</code>, create the byte manifest, and retain the site plus manifest for 90 days.</td>
+<td>Test the delivery helpers and configuration, build once with <code>zensical build --strict --clean</code>, create the byte manifest, and retain the site plus manifest for 90 days. <code>site_dir = "site"</code> is fixed in <code>zensical.toml</code>.</td>
 </tr>
 <tr>
 <td><code>deploy</code></td>
@@ -1309,7 +1255,8 @@
 </tbody>
 </table>
 <p>The workflow uses the repository-scoped <code>GITHUB_TOKEN</code> through the checked-out remote. It does not require a separate deployment secret and does not change the repository's existing GitHub Pages hosting source. All third-party actions are pinned to full commit SHAs. Automatic and manual runs are restricted to <code>main</code> and share one <code>gh-pages</code> destination concurrency group. A newer request does not cancel an in-progress deployment/verification chain.</p>
-<p>The site artifact is named <code>mkdocs-site-&lt;source-commit&gt;</code>. It contains the complete <code>site</code> directory and <code>deployment-evidence/site-manifest.json</code>. The later <code>mkdocs-deployment-verification-&lt;source-commit&gt;</code> artifact contains that manifest and <code>deployment-report.json</code>. The report records the source identity, content-tree digest, <code>gh-pages</code> commit, canonical URL, required navigation routes, number of attempts used, and final pass or failure.</p>
+<p>Read the Docs runs a separate custom Zensical job and copies the generated HTML into its required output directory. The configuration sets <code>formats: []</code> because this repository has no offline-output generator. The removed <code>formats: all</code> setting did not produce a supported PDF, ePub, or HTMLZip for the prior MkDocs project; <a href="https://docs.readthedocs.com/platform/stable/config-file/v2.html#formats">Read the Docs documents those formats as unsupported with MkDocs</a>.</p>
+<p>The site artifact is named <code>zensical-site-&lt;source-commit&gt;</code>. It contains the complete <code>site</code> directory and <code>deployment-evidence/site-manifest.json</code>. The later <code>zensical-deployment-verification-&lt;source-commit&gt;</code> artifact contains that manifest and <code>deployment-report.json</code>. The report records the source identity, content-tree digest, <code>gh-pages</code> commit, canonical URL, required navigation routes, number of attempts used, and final pass or failure.</p>
 <h2 id="propagation-and-failure-behavior">Propagation and failure behavior</h2>
 <p>GitHub Pages and its cache can briefly serve the preceding deployment after the branch push. The verifier therefore retries the complete file set and passes only when one full attempt matches every file. It never combines successes from separate attempts. Each request asks for identity encoding and carries the source commit and attempt number as cache-busting query parameters. The production workflow permits six attempts with delays of 5, 10, 20, 30, and 30 seconds.</p>
 <p>Verification fails closed when any file remains missing, redirects to a differently cased path, has the wrong length or SHA-256 digest, or returns an unexpected status. It also fails when the exact home page omits its canonical path or any required navigation link. A stale deployment can pass only after every recorded file matches the retained build. The workflow does not update release-plan status automatically; merge-commit workflow evidence must be reviewed and recorded separately.</p>
@@ -1323,17 +1270,19 @@
 </ul>
 <p>The byte comparison includes every other generated page and asset as well. The navigation list is a focused structural check, not a limit on byte verification.</p>
 <h2 id="local-validation">Local validation</h2>
-<p>The helper tests use only Python's standard library, isolated temporary directories, and a local HTTP server. They cover exact binary content, downloaded-tree verification, duplicate and symbolic-link rejection, retry after stale content, permanent wrong-byte failure, and missing navigation.</p>
+<p>The helper tests use only Python's standard library, isolated temporary directories, and a local HTTP server. They cover the Zensical configuration and navigation, exact binary content, downloaded-tree verification, duplicate and symbolic-link rejection, retry after stale content, permanent wrong-byte failure, and missing navigation.</p>
 <p>From the repository root, run:</p>
-<div class="highlight"><pre><span></span><code><span class="n">python</span> <span class="n">-m</span> <span class="n">unittest</span> <span class="n">discover</span> <span class="n">-s</span> <span class="p">.</span><span class="n">github</span><span class="p">/</span><span class="n">scripts</span> <span class="n">-p</span> <span class="s1">'test_documentation_delivery.py'</span> <span class="n">-v</span>
-<span class="n">python</span> <span class="n">-m</span> <span class="n">mkdocs</span> <span class="n">build</span> <span class="p">-</span><span class="n">-strict</span> <span class="p">-</span><span class="n">-site-dir</span> <span class="n">site</span>
+<div class="highlight"><pre><span></span><code><span class="n">python</span> <span class="p">.</span><span class="n">github</span><span class="p">/</span><span class="n">scripts</span><span class="p">/</span><span class="n">validate_documentation_configuration</span><span class="p">.</span><span class="n">py</span>
+<span class="n">python</span> <span class="n">-m</span> <span class="n">unittest</span> <span class="n">discover</span> <span class="n">-s</span> <span class="p">.</span><span class="n">github</span><span class="p">/</span><span class="n">scripts</span> <span class="n">-p</span> <span class="s1">'test_documentation*.py'</span> <span class="n">-v</span>
+<span class="n">zensical</span> <span class="n">build</span> <span class="p">-</span><span class="n">-strict</span> <span class="p">-</span><span class="n">-clean</span>
 <span class="nb">New-Item</span> <span class="n">-Path</span> <span class="n">site</span><span class="p">/.</span><span class="n">nojekyll</span> <span class="n">-ItemType</span> <span class="n">File</span> <span class="n">-Force</span> <span class="p">|</span> <span class="nb">Out-Null</span>
 <span class="n">python</span> <span class="p">.</span><span class="n">github</span><span class="p">/</span><span class="n">scripts</span><span class="p">/</span><span class="n">build_documentation_manifest</span><span class="p">.</span><span class="n">py</span> <span class="n">create</span> <span class="p">-</span><span class="n">-site-dir</span> <span class="n">site</span> <span class="p">-</span><span class="n">-output</span> <span class="n">deployment-evidence</span><span class="p">/</span><span class="n">site-manifest</span><span class="p">.</span><span class="n">json</span> <span class="p">-</span><span class="n">-source-repository</span> <span class="s1">'SamErde/TheCleaners'</span> <span class="p">-</span><span class="n">-source-commit</span> <span class="p">(</span><span class="n">git</span> <span class="n">rev-parse</span> <span class="n">HEAD</span><span class="p">)</span> <span class="p">-</span><span class="n">-source-ref</span> <span class="p">(</span><span class="n">git</span> <span class="n">symbolic-ref</span> <span class="n">-q</span> <span class="n">HEAD</span><span class="p">)</span>
 <span class="n">python</span> <span class="p">.</span><span class="n">github</span><span class="p">/</span><span class="n">scripts</span><span class="p">/</span><span class="n">build_documentation_manifest</span><span class="p">.</span><span class="n">py</span> <span class="n">verify</span> <span class="p">-</span><span class="n">-site-dir</span> <span class="n">site</span> <span class="p">-</span><span class="n">-manifest</span> <span class="n">deployment-evidence</span><span class="p">/</span><span class="n">site-manifest</span><span class="p">.</span><span class="n">json</span>
 </code></pre></div>
+<p>Run <code>zensical serve</code> to preview the site locally. That development server is for navigation and rendering checks; it is not deployment evidence.</p>
 <p>Do not run the live verifier against a newly changed source tree before that exact tree has been deployed. It is designed to reject the current site as stale.</p>
-<h2 id="current-verified-state">Current verified state</h2>
-<p>The exact deployment gate is validated for PR #37 merge commit <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>. <a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555130">Run 35257555130</a> passed its build, deploy and verify jobs. Independent inspection verified both retained artifact wrappers, the manifest and report identities, the 71-file <code>gh-pages</code> Git tree and the live public site:</p>
+<h2 id="verified-pre-migration-baseline">Verified pre-migration baseline</h2>
+<p>The following retained baseline validates the exact deployment gate for PR #37 merge commit <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>; it is not a claim that this was the final pre-migration deployment. <a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555130">Run 35257555130</a> passed its build, deploy and verify jobs. Independent inspection verified both retained artifact wrappers, the manifest and report identities, the 71-file <code>gh-pages</code> Git tree and the live public site:</p>
 <table>
 <thead>
 <tr>
@@ -1364,7 +1313,7 @@
 </tr>
 </tbody>
 </table>
-<p>This closes exact deployed-byte and representative-navigation verification for that source commit. A later source change requires its own run and retained evidence. Support for lowercase <code>/thecleaners/</code> remains deferred to issue #26.</p>
+<p>This closes exact deployed-byte and representative-navigation verification for that source commit only. The Zensical migration changes the generated site and therefore requires a fresh merged-source deployment and retained evidence before it can replace this baseline. Lowercase <code>/thecleaners/</code> acceptance also remains open in issue #26.</p>
 <p>Before this gate was implemented, the September 17, 2026 live check found title-case <code>/TheCleaners/</code> HTTP 200 and lowercase <code>/thecleaners/</code> HTTP 404. GitHub Pages reported the title-case site URL, and the maintainer selected that working path as canonical.</p>
 <p>For merged commit <code>037c27a81234361620a633f68a33bfb370f0a03e</code>, <a href="https://github.com/SamErde/TheCleaners/actions/runs/35129434855">GitHub Actions run 35129434855</a> completed <code>mkdocs build --strict --site-dir site</code> and checked <code>site/index.html</code> and <code>site/sitemap.xml</code>. Its later <code>mkdocs gh-deploy --strict --force</code> command performed a second strict build and pushed <code>gh-pages</code> commit <code>2ea8bf4</code>; that historical workflow did not establish byte identity between the checked <code>site</code> directory and deployed output.</p>
 <p>The historical live check on September 16, 2026 found:</p>
@@ -1391,6 +1340,8 @@
 </tbody>
 </table>
 <p>The historical run above remains useful only as the pre-gate baseline. Run 35257555130 and its independently checked retained evidence establish the current exact-source deployment claim.</p>
+
+
 
 
 
@@ -1431,8 +1382,8 @@
   
   
     Made with
-    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-      Material for MkDocs
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
     </a>
   
 </div>
@@ -1450,10 +1401,14 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.tracking", "navigation.sections", "navigation.top", "toc.follow", "toc.integrate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["navigation.tabs","navigation.tabs.sticky","navigation.path","navigation.instant","navigation.instant.prefetch","navigation.tracking","navigation.sections","navigation.top","toc.follow","toc.integrate"],"redirect":null,"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.8dcc8e9c.min.js"></script>
       
     
   </body>
