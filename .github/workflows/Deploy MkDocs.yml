@@ -1,29 +1,28 @@
 name: 📖 Deploy MkDocs to GitHub Pages
 
 on:
-
-  # Run when changes are made to the contents of the docs folder, the MkDocs config, or this workflow.
   push:
     branches:
       - main
     paths:
       - 'docs/**'
+      - '.github/scripts/build_documentation_manifest.py'
+      - '.github/scripts/test_documentation_delivery.py'
+      - '.github/scripts/verify_documentation_deployment.py'
       - '.github/workflows/Deploy MkDocs.yml'
       - 'mkdocs.yml'
-
-  # Allow manual triggering of the workflow.
   workflow_dispatch:
 
-jobs:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
+jobs:
   build:
     permissions:
-      contents: write
+      contents: read
 
     runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
 
     steps:
       - name: ✅ Checkout Repository
@@ -32,16 +31,145 @@ jobs:
       - name: 🐍 Setup Python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
         with:
-          python-version: '3.x'  # specify the Python version
+          python-version: '3.x'
 
-      - name: ➕ Install Dependencies
+      - name: ➕ Install Documentation Dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r docs/requirements.txt
 
-      - name: 👷‍♂️ Build & Deploy MkDocs
+      - name: 🧪 Test Documentation Delivery Helpers
+        run: python -m unittest discover -s .github/scripts -p 'test_documentation_delivery.py' -v
+
+      - name: 👷 Build Documentation Once
         run: |
-          mkdocs build --strict --site-dir site
+          python -m mkdocs build --strict --site-dir site
           test -f site/index.html
           test -f site/sitemap.xml
-          mkdocs gh-deploy --strict --force
+
+      - name: 🧾 Record Exact Site Content
+        run: |
+          python .github/scripts/build_documentation_manifest.py create \
+            --site-dir site \
+            --output deployment-evidence/site-manifest.json \
+            --source-repository "$GITHUB_REPOSITORY" \
+            --source-commit "$GITHUB_SHA" \
+            --source-ref "$GITHUB_REF" \
+            --workflow-run-id "$GITHUB_RUN_ID" \
+            --workflow-run-attempt "$GITHUB_RUN_ATTEMPT"
+
+      - name: 📦 Retain Checked Site and Manifest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: mkdocs-site-${{ github.sha }}
+          path: |
+            site
+            deployment-evidence/site-manifest.json
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 90
+
+  deploy:
+    needs: build
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+    outputs:
+      deployment_commit: ${{ steps.publish.outputs.deployment_commit }}
+
+    steps:
+      - name: ✅ Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
+        with:
+          python-version: '3.x'
+
+      - name: 📥 Download Checked Site
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: mkdocs-site-${{ github.sha }}
+          path: deploy-input
+
+      - name: 🔎 Verify Downloaded Site
+        run: |
+          python .github/scripts/build_documentation_manifest.py verify \
+            --site-dir deploy-input/site \
+            --manifest deploy-input/deployment-evidence/site-manifest.json
+
+      - name: ➕ Install Deployment Tool
+        run: python -m pip install 'ghp-import==2.1.0'
+
+      - name: 🚀 Publish Exact Checked Site
+        id: publish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --no-tags origin gh-pages:refs/remotes/origin/gh-pages
+          python -m ghp_import \
+            --no-jekyll \
+            --push \
+            --force \
+            --branch gh-pages \
+            --message "Deploy documentation from $GITHUB_SHA" \
+            deploy-input/site
+          deployment_commit="$(git rev-parse gh-pages)"
+          echo "deployment_commit=$deployment_commit" >> "$GITHUB_OUTPUT"
+
+  verify:
+    needs: deploy
+    permissions:
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ✅ Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
+        with:
+          python-version: '3.x'
+
+      - name: 📥 Download Checked Site Manifest
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: mkdocs-site-${{ github.sha }}
+          path: deploy-input
+
+      - name: 🔬 Verify Deployed Bytes and Navigation
+        env:
+          DEPLOYMENT_COMMIT: ${{ needs.deploy.outputs.deployment_commit }}
+        run: |
+          python .github/scripts/verify_documentation_deployment.py \
+            --manifest deploy-input/deployment-evidence/site-manifest.json \
+            --base-url 'https://day3bits.com/TheCleaners/' \
+            --required-navigation 'Get-TheCleaners/' \
+            --required-navigation 'support-matrix/' \
+            --required-navigation 'command-contracts/' \
+            --required-navigation 'migration-to-1.0/' \
+            --required-navigation 'release-plan-1.0/' \
+            --attempts 6 \
+            --initial-delay 5 \
+            --backoff 2 \
+            --maximum-delay 30 \
+            --timeout 15 \
+            --workers 8 \
+            --deployment-commit "$DEPLOYMENT_COMMIT" \
+            --report deployment-evidence/deployment-report.json
+
+      - name: 📦 Retain Deployment Verification
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: mkdocs-deployment-verification-${{ github.sha }}
+          path: |
+            deploy-input/deployment-evidence/site-manifest.json
+            deployment-evidence/deployment-report.json
+          if-no-files-found: error
+          retention-days: 90
