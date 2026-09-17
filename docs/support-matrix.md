@@ -1,6 +1,6 @@
 # Support policy and validation matrix
 
-The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Evidence below is for merged commit `037c27a81234361620a633f68a33bfb370f0a03e`; it does not apply automatically to a later commit.
+The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Exact TC-008 runtime evidence below is for merged commit `fdadbee08f854b1af6fdc7654ae4532ebbf605df`; it does not apply automatically to a later commit.
 
 ## Historical runtime evidence
 
@@ -14,13 +14,20 @@ The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-
 
 Check Microsoft's [PowerShell support lifecycle](https://learn.microsoft.com/powershell/scripting/install/powershell-support-lifecycle) when this matrix is refreshed. As of this sweep, 7.4, 7.5, and 7.6 are all supported release lines. [Build run 35129434807](https://github.com/SamErde/TheCleaners/actions/runs/35129434807) supplies the exact historical evidence above, but it does not include 7.4 and its 7.5.9 lane is older than Microsoft's current 7.5.11 servicing update, so TC-008 remains open.
 
-## TC-008 matrix refresh (candidate implementation)
+## TC-008 merged runtime evidence
 
-Microsoft's lifecycle page and official release inventory were checked on September 16, 2026. The latest supported servicing releases are [7.4.20](https://github.com/PowerShell/PowerShell/releases/tag/v7.4.20), [7.5.11](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.11), and [7.6.6](https://github.com/PowerShell/PowerShell/releases/tag/v7.6.6), all published September 8. The hosted candidate matrix now includes all three and Windows PowerShell 5.1. No support-policy narrowing was approved.
+Microsoft's lifecycle page and official release inventory were checked on September 16, 2026. The latest supported servicing releases are [7.4.20](https://github.com/PowerShell/PowerShell/releases/tag/v7.4.20), [7.5.11](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.11), and [7.6.6](https://github.com/PowerShell/PowerShell/releases/tag/v7.6.6), all published September 8. No support-policy narrowing was approved. [Build run 35152376944](https://github.com/SamErde/TheCleaners/actions/runs/35152376944) identifies exact merged commit `fdadbee08f854b1af6fdc7654ae4532ebbf605df` and supplies the machine-readable evidence below.
 
-Each PS7 lane builds and tests its own exact artifact, then repeats ZIP generation. A dependent job downloads all three archives, checks every content record and sidecar, and requires identical archive bytes. Windows PowerShell 5.1 downloads the selected canonical 7.6.6 artifact and archive; it never rebuilds that package. Its source tests also exercise the archive helper's PS5.1 API compatibility on isolated fixtures, without making PS5.1 a canonical archive producer.
+| Runtime | Exact merged evidence |
+| --- | --- |
+| Windows PowerShell 5.1 | [Job 104984394144](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104984394144) used `5.1.26100.33296` Desktop on Windows Server 2025 Datacenter build `26100`. The combined report passed `226/226` tests with `0` failures, skips, inconclusive, invalid, or not-run tests. It downloaded and tested the canonical 7.6.6 artifact/ZIP; it did not produce coverage or a canonical PS5.1 archive. |
+| PowerShell 7.4 LTS | [Job 104983565483](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565483) used `7.4.20` Core on .NET `8.0.31` and Windows Server 2025 `10.0.26100`. Pester `5.7.1` passed `222/222` unit and `4/4` integration tests with `0` failures, skips, or not-run tests; source coverage was `83.48%` (`1,551/1,858` commands across 16 files). |
+| PowerShell 7.5 stable | [Job 104983565445](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565445) used `7.5.11` Core on .NET `9.0.20` and Windows Server 2025 `10.0.26100`. Pester `5.7.1` passed `222/222` unit and `4/4` integration tests with `0` failures, skips, or not-run tests; source coverage was `83.48%` (`1,551/1,858` commands across 16 files). |
+| PowerShell 7.6 LTS | [Job 104983565518](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565518) used `7.6.6` Core on .NET `10.0.12` and Windows Server 2025 `10.0.26100`. Pester `5.7.1` passed `222/222` unit and `4/4` integration tests with `0` failures, skips, or not-run tests; source coverage was `83.48%` (`1,551/1,858` commands across 16 files). |
 
-The historical table above remains evidence only for `037c27a81234361620a633f68a33bfb370f0a03e`. A green candidate PR run is not evidence for the eventual merge commit. Record the exact post-merge matrix, reports, hashes and review state before closing the TC-008 runtime/reproducibility subgates; publication and release acceptance remain separate. See [packaging](packaging.md).
+Each PS7 lane built and tested its own exact artifact, then repeated ZIP generation. The [dependent comparison job](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104984394111) downloaded all three archives, checked every content record and sidecar, and verified identical original/repeated and cross-runtime bytes. Windows PowerShell 5.1 downloaded the selected canonical 7.6.6 artifact and archive; it never rebuilt that package. Its source tests also exercised the archive helper's PS5.1 API compatibility on isolated fixtures, without making PS5.1 a canonical archive producer.
+
+The runtime-matrix subgate is validated only for `fdadbee08f854b1af6fdc7654ae4532ebbf605df`. The historical table above remains evidence only for `037c27a81234361620a633f68a33bfb370f0a03e`; candidate PR evidence retains its separate head identity. Publication, a clean install of the published version, uncovered-branch risk review, broader Windows/product acceptance, and maintainer release acceptance remain open. See [packaging](packaging.md).
 
 ## Windows product matrix
 
