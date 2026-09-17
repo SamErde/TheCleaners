@@ -8,6 +8,11 @@ BeforeDiscovery {
         @{ Scenario = 'FtpSuccess' }
         @{ Scenario = 'WebFormatUnknown' }
         @{ Scenario = 'WebRolloverUnknown' }
+        @{ Scenario = 'FtpMetadataMissingId' }
+        @{ Scenario = 'FtpMetadataInvalidId' }
+        @{ Scenario = 'FtpMetadataNoConfiguration' }
+        @{ Scenario = 'FtpMetadataMissingFormat' }
+        @{ Scenario = 'FtpMetadataMissingRollover' }
     )
 }
 
@@ -99,6 +104,7 @@ $ObservedError = $null
 $ObservedErrorId = $null
 $Results = @()
 $DiscoveryErrorAction = if ($Scenario -in @('FtpRootFailureWithExistingWeb', 'FtpRootFailureWithNoWebRoot', 'FtpRootFailureWithValidWeb', 'WebFormatUnknown', 'WebRolloverUnknown')) { 'SilentlyContinue' } else { 'Stop' }
+if ($Scenario.StartsWith('FtpMetadata')) { $DiscoveryErrorAction = 'SilentlyContinue' }
 try {
     $Results = @(Clear-OldIISLog -Days 60 -WhatIf -PassThru -WarningAction SilentlyContinue -ErrorAction $DiscoveryErrorAction)
 } catch {
@@ -161,6 +167,12 @@ if ($Scenario.EndsWith('Failure')) {
     }
     if ($WebResult[0].FileCandidateCount -ne 1 -or $WebResult[0].CandidatePaths.Count -ne 1 -or $WebResult[0].FilesRemoved -ne 0) {
         throw 'The preview duplicated candidates or claimed file removal.'
+    }
+    if ($Scenario.StartsWith('FtpMetadata')) {
+        $FailedFtp = @($Results | Where-Object { $_.DisplayName -eq 'Incomplete metadata FTP' })
+        if ($Results.Count -ne 2 -or $WebResult[0].Status -ne 'WhatIf' -or $FailedFtp.Count -ne 1 -or $FailedFtp[0].Status -ne 'DiscoveryFailed' -or $FailedFtp[0].ErrorIds -notcontains 'IISFtpDiscoveryFailed' -or $null -ne $FailedFtp[0].FileCandidateCount -or $FailedFtp[0].CandidatePaths.Count -ne 0 -or $FailedFtp[0].FilesRemoved -ne 0) {
+            throw 'Incomplete FTP metadata was not isolated from the valid web preview.'
+        }
     }
     if ($Scenario -eq 'FtpSuccess') {
         $ExpectedFtpRoot = [System.IO.Path]::GetFullPath((Join-Path -Path (Split-Path -Path $ExpectedRoot -Parent) -ChildPath 'FTPSVC2')).TrimEnd([char[]]@('\', '/'))
@@ -229,6 +241,17 @@ Describe 'IIS dependency state and site-root deduplication: <Scenario>' -ForEach
             $FtpLog = New-Item -Path (Join-Path -Path $FtpRoot -ChildPath 'inetsv01.log') -ItemType File
             $FtpLog.LastWriteTimeUtc = [DateTime]::UtcNow.AddDays(-61)
             $Sites += @{ Name = "FTP O'Brien site"; Id = 2; LogFile = @{ Directory = $LogBase; LogFormat = 'W3C'; LocalTimeRollover = $false }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'IIS'; LocalTimeRollover = $false } } }
+        }
+        if ($Scenario.StartsWith('FtpMetadata')) {
+            $FtpSite = @{ Name = 'Incomplete metadata'; Id = 2; LogFile = @{ Directory = $null }; Bindings = @(@{ Protocol = 'ftp' }); FtpServer = @{ LogFile = @{ Directory = $LogBase; LogFormat = 'IIS'; LocalTimeRollover = $false } } }
+            switch ($Scenario) {
+                'FtpMetadataMissingId' { $FtpSite.Remove('Id') }
+                'FtpMetadataInvalidId' { $FtpSite.Id = 'not-a-number' }
+                'FtpMetadataNoConfiguration' { $FtpSite.Remove('FtpServer') }
+                'FtpMetadataMissingFormat' { $FtpSite.FtpServer.LogFile.Remove('LogFormat') }
+                'FtpMetadataMissingRollover' { $FtpSite.FtpServer.LogFile.Remove('LocalTimeRollover') }
+            }
+            $Sites += $FtpSite
         }
         $Fixture = @{ FailDiscovery = $Scenario.EndsWith('Failure'); Sites = $Sites }
         $Fixture | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path -Path $DependencyRoot -ChildPath 'Sites.json') -Encoding UTF8

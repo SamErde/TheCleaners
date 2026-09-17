@@ -6,6 +6,7 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 
 ### Added
 
+- Bounded TC-008 review of all 307 baseline uncovered commands, with a source-line disposition inventory and 30 focused temp, profile, and IIS/Exchange preview regression cases. No runtime behavior or product-acceptance status changes.
 - Opt-in `-RemoveEmptyDirectory` for both temp cleaners, limited to directories emptied by the invocation and their ancestors.
 - Typed temp-cleanup summaries, planned directory counts under WhatIf, UTC retention boundaries, literal-path checks, and reparse-point exclusion before traversal.
 - Explicit IIS and Exchange preview guards, experimental preview summaries, and no-deletion regression checks.
