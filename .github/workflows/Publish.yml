@@ -68,6 +68,9 @@ jobs:
     needs: publish
     runs-on: windows-latest
     timeout-minutes: 20
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
     permissions:
       contents: read
     strategy:
@@ -97,7 +100,6 @@ jobs:
           name: zip-archive-pwsh-7.6.6
           path: ./src/Archive
       - name: Install the exact published Gallery version and verify its payload
-        shell: ${{ matrix.shell }}
         env:
           EXPECTED_RUNTIME: ${{ matrix.version }}
         run: |
