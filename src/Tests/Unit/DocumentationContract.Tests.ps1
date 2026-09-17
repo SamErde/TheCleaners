@@ -36,6 +36,6 @@ Describe 'Documentation and release-contract drift' -Tag Unit {
             $MkDocs | Should -Match ([regex]::Escape($PageName))
             (Join-Path -Path $RepositoryRoot -ChildPath ('docs/{0}' -f $PageName)) | Should -Exist
         }
-        $MkDocs | Should -Match 'https://day3bits\.com/thecleaners/'
+        $MkDocs | Should -MatchExactly 'https://day3bits\.com/TheCleaners/'
     }
 }
