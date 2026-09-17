@@ -1036,10 +1036,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#exact-merged-evidence" class="md-nav__link">
+  <a href="#current-exact-merged-evidence" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exact merged evidence
+        Current exact merged evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-exact-merged-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical exact merged evidence
       
     </span>
   </a>
@@ -1283,7 +1294,7 @@
 
 <h1 id="packaging-and-archive-reproducibility">Packaging and archive reproducibility</h1>
 <h2 id="contract">Contract</h2>
-<p>The merged TC-008 implementation requires identical ZIP bytes for identical staged file paths and contents across the pinned, supported PS7 Windows builders: 7.4.20, 7.5.11 and 7.6.6. This contract is validated for exact merge commit <code>fdadbee08f854b1af6fdc7654ae4532ebbf605df</code> on those Windows runtimes and dependency pins. It is not a promise about future runtimes or .NET writers, other operating systems, different source line endings, changed staged content, or changed help generators. Refreshing any input must pass the same comparison gate.</p>
+<p>The merged TC-008 implementation requires identical ZIP bytes for identical staged file paths and contents across the pinned, supported PS7 Windows builders: 7.4.20, 7.5.11 and 7.6.6. This contract is validated for exact merge commit <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code> on those Windows runtimes and dependency pins. It is not a promise about future runtimes or .NET writers, other operating systems, different source line endings, changed staged content, or changed help generators. Refreshing any input must pass the same comparison gate.</p>
 <p><code>src/New-DeterministicZipArchive.ps1</code> writes files in ordinal relative-path order with <code>/</code> separators, explicit UTF-8 entry names, a fixed 1980-01-01 ZIP timestamp and zero external attributes. PS7 uses stored entries (<code>NoCompression</code>), avoiding Deflate implementation differences. Stored archives are larger; content manifests and SHA-256 sidecars continue to verify every byte. Manifests are outside the ZIP and deliberately include runtime identity, so manifests themselves are not byte-identical between runtime lanes.</p>
 <p>Use the shared <code>Encoding.UTF8</code> instance for entry names: .NET Framework otherwise fails to mark a custom UTF-8 encoder correctly in ZIP bit 11. Name encoding uses bytes without a BOM. The Unicode fixture includes supplementary-plane and high-BMP names to verify UTF-16 ordinal ordering in both the producer and comparator.</p>
 <p>Windows PowerShell 5.1 remains supported for module use and tests the exact downloaded canonical 7.6.6 artifact and ZIP. The helper uses PS5.1-compatible syntax/APIs and has fixture tests there, but the .NET Framework ZIP writer is not included in the cross-producer byte contract. No separate PS5.1 package is built for validation or publication.</p>
@@ -1368,7 +1379,9 @@
 </ol>
 <p>Local source archives without Git retain <code>Commit: unavailable</code>; they cannot supply exact-commit release evidence. When CI sets <code>TC_BUILD_COMMIT</code>, unavailable or mismatched Git identity is fatal.</p>
 <p>Local build: <code>Invoke-Build -File ./src/TheCleaners.build.ps1</code>. Use a separate worktree when existing generated outputs need preservation: the build's Clean task removes its own Artifacts, Archive, Reports and GeneratedHelp directories. Never use real cleanup data as fixtures.</p>
-<h2 id="exact-merged-evidence">Exact merged evidence</h2>
+<h2 id="current-exact-merged-evidence">Current exact merged evidence</h2>
+<p><a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555108">Build run 35257555108</a> checked out exact merge commit <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>. PowerShell 7.4.20, 7.5.11 and 7.6.6 each produced an original and repeated <code>TheCleaners_0.0.15.zip</code> containing 19 files, 224,050 bytes, with SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code>. Independent inspection verified all eleven artifact wrappers, manifests, sidecars, complete content, canonical ZIP metadata, original/repeat identity and cross-runtime identity. Windows PowerShell 5.1 consumed the canonical 7.6.6 artifact. See the <a href="../release-plan-1.0/#september-17-delivery-checkpoints">release ledger</a> for the matching runtime, coverage, local-rehearsal and acceptance boundaries.</p>
+<h2 id="historical-exact-merged-evidence">Historical exact merged evidence</h2>
 <p><a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944">Build run 35152376944</a> checked out exact merge commit <code>fdadbee08f854b1af6fdc7654ae4532ebbf605df</code>. <a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565483">PowerShell 7.4.20</a>, <a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565445">7.5.11</a>, and <a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565518">7.6.6</a> each produced:</p>
 <ul>
 <li><code>TheCleaners_0.0.15.zip</code>: 19 files, <code>223,629</code> bytes, SHA-256 <code>2eae48784e4ba18f6aee28e3c22d8191be3e6d5bde2d59e26071430fe776f2d4</code>.</li>
@@ -1379,7 +1392,7 @@
 <p>These results close only the bounded PS7 Windows stored-ZIP reproducibility subgate. The bounded uncovered-branch review subsequently merged in PR #35. Protected publication, a clean install of the published version, and maintainer release acceptance remain open. Runtime-bearing manifests outside the ZIP intentionally differ.</p>
 <h2 id="artifact-action-and-acceptance-boundary">Artifact action and acceptance boundary</h2>
 <p>The historical Windows PowerShell job annotation identified <code>actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093</code> as targeting deprecated Node 20. GitHub's <a href="https://github.com/actions/download-artifact/releases/tag/v8.0.1">v8.0.1 release</a> resolves to <code>3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c</code>; its <a href="https://github.com/actions/download-artifact/blob/3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c/action.yml">immutable action manifest</a> declares <code>node24</code> and defaults digest mismatches to errors. The merged implementation updates both build and protected-publish downloads. The exact-commit comparison job verified all three expected upload digests, and the PS5.1 job verified both expected canonical 7.6.6 download digests; their annotation endpoints returned no warnings. Publication itself remains unexecuted.</p>
-<p>PR runs remain candidate evidence only. The exact merged results above do not automatically cover a later <code>main</code> commit. TC-008 as a whole remains open for protected publication, published clean installation, and maintainer release acceptance. The baseline risk review is complete; its remaining native/platform/product cases belong to deferred labs. Windows/IIS/Exchange/profile lab validation is future work, not underway; IIS and Exchange retain their explicit-WhatIf preview locks. Follow the <a href="../release-plan-1.0/#current-non-lab-delivery-sequence">non-lab release sequence</a> and <a href="../publishing/">publishing controls</a> for environment configuration, credential setup, local rehearsal and a separately approved prerelease.</p>
+<p>The current exact merged results do not automatically cover a later <code>main</code> commit. TC-008 as a whole remains open for protected publication, published clean installation, and maintainer release acceptance. The baseline risk review is complete; its remaining native/platform/product cases belong to deferred labs. Windows/IIS/Exchange/profile lab validation is future work, not underway; IIS and Exchange retain their explicit-WhatIf preview locks. Follow the <a href="../release-plan-1.0/#current-non-lab-delivery-sequence">non-lab release sequence</a> and <a href="../publishing/">publishing controls</a> for the separately approved prerelease.</p>
 
 
 
