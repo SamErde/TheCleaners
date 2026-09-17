@@ -61,7 +61,19 @@ Do not run the live verifier against a newly changed source tree before that exa
 
 ## Current verified state
 
-The September 17, 2026 live check found title-case `/TheCleaners/` HTTP 200 and lowercase `/thecleaners/` HTTP 404. GitHub Pages reports the title-case site URL. The maintainer selected that working path as canonical, superseding the earlier lowercase-hosting requirement. This does not prove the deployed bytes match this branch.
+The exact deployment gate is validated for PR #37 merge commit `345f06c861b6d4074e5896e0b27a19f869dfa7e3`. [Run 35257555130](https://github.com/SamErde/TheCleaners/actions/runs/35257555130) passed its build, deploy and verify jobs. Independent inspection verified both retained artifact wrappers, the manifest and report identities, the 71-file `gh-pages` Git tree and the live public site:
+
+| Evidence | Verified value |
+| --- | --- |
+| Retained site | 71 files, 3,550,003 bytes |
+| Content tree SHA-256 | `f05e2fdefd918136bf1ec215a9154499a6a5ef22b649c3bfc880831e585882d8` |
+| Deployment commit | `f75772870600c880cf4393ac635b5bdecf5b5c7b` |
+| Workflow verification | Passed after three complete attempts during propagation |
+| Independent live verification | Passed all 71 files and five navigation routes in one attempt |
+
+This closes exact deployed-byte and representative-navigation verification for that source commit. A later source change requires its own run and retained evidence. Support for lowercase `/thecleaners/` remains deferred to issue #26.
+
+Before this gate was implemented, the September 17, 2026 live check found title-case `/TheCleaners/` HTTP 200 and lowercase `/thecleaners/` HTTP 404. GitHub Pages reported the title-case site URL, and the maintainer selected that working path as canonical.
 
 For merged commit `037c27a81234361620a633f68a33bfb370f0a03e`, [GitHub Actions run 35129434855](https://github.com/SamErde/TheCleaners/actions/runs/35129434855) completed `mkdocs build --strict --site-dir site` and checked `site/index.html` and `site/sitemap.xml`. Its later `mkdocs gh-deploy --strict --force` command performed a second strict build and pushed `gh-pages` commit `2ea8bf4`; that historical workflow did not establish byte identity between the checked `site` directory and deployed output.
 
@@ -73,4 +85,4 @@ The historical live check on September 16, 2026 found:
 | `https://day3bits.com/TheCleaners/` | HTTP 200 with the deployed MkDocs site. |
 | `https://day3bits.com/TheCleaners` | HTTP 301 to `/TheCleaners/`. |
 
-No live deployment or external hosting change was performed while implementing this workflow. Exact deployed-byte and navigation evidence remains open until the workflow runs for the merged commit and its retained artifacts are reviewed.
+The historical run above remains useful only as the pre-gate baseline. Run 35257555130 and its independently checked retained evidence establish the current exact-source deployment claim.
