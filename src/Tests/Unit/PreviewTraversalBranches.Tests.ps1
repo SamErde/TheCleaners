@@ -113,4 +113,3 @@ Describe 'Exchange missing metadata branches' -Skip:(-not $WindowsHost) -Tag Uni
         Should -Invoke Get-ChildItem -Exactly 0
     }
 }
-

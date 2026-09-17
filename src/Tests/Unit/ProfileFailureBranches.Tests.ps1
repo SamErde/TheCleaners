@@ -63,4 +63,3 @@ Describe 'Profile failure branches' -Skip:(-not $WindowsHost) -Tag Unit {
         [System.IO.File]::ReadAllText($ProfilePath) | Should -Be 'preserved'
     }
 }
-

@@ -50,4 +50,3 @@ These are 30 additional test cases: 16 temp, three profile, six preview traversa
 - **Import and artifacts:** all missed instructions in this baseline are in runtime functions; loader/package and build correctness also rely on separate import, integration, deterministic archive, and Python comparator checks. Parent runtime coverage is not their acceptance measure.
 
 The review of the baseline gaps is complete without pursuing 100% coverage. Windows client/server, elevated/non-elevated, real-root, ReFS, adversarial/concurrency, IIS, Exchange, and profile product acceptance remain open. TC-008 still requires protected publication, published-version clean installation, and maintainer release acceptance. TC-009 retains canonical lowercase hosting, deployed-byte verification, final metadata/history, published installation, and authorization. See the [release ledger](release-plan-1.0.md) for all remaining gates. Zensical stays in issue #26.
-
