@@ -20,6 +20,8 @@ Read `docs/release-plan-1.0.md` before changing behavior. It is the implementati
 
 Parallelize only independent work with separate branches/worktrees and explicit file ownership. One integrator owns the loader, manifest, shared path helper, build/publish scripts, and current shared test files. IIS and Exchange contributors should add their own test files rather than editing the shared suite concurrently. Documentation navigation and generated references are integrated after command signatures settle. Run read-only analyses independently; serialize writes to a shared branch.
 
+Use cost-conscious model selection for delegated work: Luna at medium effort for bounded inventory/checks, Sol at medium or high effort for implementation and review, and Astra only when concrete complexity or unresolved risk warrants escalation. Keep successor model recommendations proportional to their scope instead of always selecting the most expensive model.
+
 ## Closing work
 
 For each packet, update its status, relevant help/docs, changelog, tests, and evidence links in the same PR. Use `implemented in draft`, `validated`, and `merged` distinctly. Do not mark a checkbox complete solely because code was generated or a workflow file exists. Record runtime version, tested commit, test totals/failures/skips, and lab limitations. Keep Zensical migration in issue #26.

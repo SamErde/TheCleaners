@@ -8,7 +8,7 @@ These prompts replace the previously proposed immediate concurrency/lab-preparat
 
 **Remaining:** integrate and validate the planning changes; exact docs deployment; environment credential setup and local publication rehearsal; prerelease metadata, approved publication and published installation. TC-003–007 labs and final TC-001/008/009 release acceptance remain deferred/open.
 
-Recommended model: GPT-6 Astra (`gpt-6-astra`), reasoning effort xhigh.
+Recommended model: GPT-5.6 Sol (`gpt-5.6-sol`), reasoning effort high. Delegate bounded inventory/checks to Luna at medium effort and independent implementation/review to Sol at medium or high effort. Escalate to Astra only for concrete unresolved risk or complexity.
 
 Continue TheCleaners with the non-lab delivery sequence in `docs/release-plan-1.0.md`. Read `AGENTS.md`, `.github/copilot-instructions.md`, the complete release plan, `docs/deployment-validation.md`, and `docs/publishing.md` before editing. Verify repository identity, remote, branch, worktrees, uncommitted changes and current main. The last completed packet at prompt preparation was PR #36, merge `1af73897b4534dbffb3f0aa647b2d3dc4f7f31a5`, with [build 35227963090](https://github.com/SamErde/TheCleaners/actions/runs/35227963090). That is historical fixture/package evidence only; refresh live state rather than assuming it remains HEAD.
 
@@ -34,7 +34,7 @@ Then save the next copy-ready prompt without executing it. Begin it with at most
 
 **Remaining:** delivery rehearsal and prerelease preparation, then concrete release approval, protected publication and published-install evidence. Labs remain future work; final 1.0 acceptance stays open.
 
-Recommended model: GPT-6 Astra (`gpt-6-astra`), reasoning effort xhigh.
+Recommended model: GPT-5.6 Sol (`gpt-5.6-sol`), reasoning effort high. Use Luna at medium effort for bounded evidence checks; reserve Astra for unresolved release-integrity issues that warrant deeper review.
 
 Use this prompt only after the non-lab readiness and metadata stages are verified. Read the current release plan, AGENTS.md and publishing runbook. Refresh both short summary paragraphs with actual completed/remaining items, and read the preceding completion report for the exact commit, version, proposed tag, artifact digest, reports and unresolved limits. Do not invent those values.
 
