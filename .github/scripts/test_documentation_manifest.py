@@ -2,6 +2,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import build_documentation_manifest as manifest_tool
 
@@ -68,19 +69,35 @@ class DocumentationManifestTests(unittest.TestCase):
             ):
                 manifest_tool.verify_site_directory(site, manifest)
 
+            walk_error = PermissionError("fixture traversal denied")
+
+            def fail_walk(*args, **kwargs):
+                kwargs["onerror"](walk_error)
+
+            with mock.patch.object(manifest_tool.os, "walk", side_effect=fail_walk):
+                with self.assertRaisesRegex(
+                    manifest_tool.ManifestError,
+                    "Cannot traverse site directory.*fixture traversal denied",
+                ):
+                    manifest_tool.collect_site_files(site)
+
     def test_manifest_rejects_symlinks_when_supported(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             site = Path(temporary_directory) / "site"
             site.mkdir()
             write_site(site)
             link = site / "linked-index.html"
+            root_link = Path(temporary_directory) / "linked-site"
             try:
                 link.symlink_to(site / "index.html")
+                root_link.symlink_to(site, target_is_directory=True)
             except OSError:
                 self.skipTest("The current host does not permit symbolic links.")
 
             with self.assertRaisesRegex(manifest_tool.ManifestError, "symbolic-link file"):
                 manifest_tool.collect_site_files(site)
+            with self.assertRaisesRegex(manifest_tool.ManifestError, "path is a symbolic link"):
+                manifest_tool.collect_site_files(root_link)
 
     def test_manifest_loader_rejects_duplicate_paths(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -89,9 +106,20 @@ class DocumentationManifestTests(unittest.TestCase):
             site.mkdir()
             write_site(site)
             manifest = build_manifest(site)
+            manifest_path = root / "manifest.json"
+
+            manifest_path.write_text("[]", encoding="utf-8")
+            with self.assertRaisesRegex(manifest_tool.ManifestError, "root must be a JSON object"):
+                manifest_tool.load_manifest(manifest_path)
+
+            non_string_path = build_manifest(site)
+            non_string_path["files"][0]["path"] = 123
+            manifest_path.write_text(json.dumps(non_string_path), encoding="utf-8")
+            with self.assertRaisesRegex(manifest_tool.ManifestError, "path has the wrong type"):
+                manifest_tool.load_manifest(manifest_path)
+
             manifest["files"].append(dict(manifest["files"][0]))
             manifest["content"]["file_count"] += 1
-            manifest_path = root / "manifest.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
             with self.assertRaisesRegex(manifest_tool.ManifestError, "duplicate path"):

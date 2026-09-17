@@ -56,13 +56,23 @@ def _site_file_record(root: Path, file_path: Path) -> dict[str, Any]:
     }
 
 
+def _raise_walk_error(error: OSError) -> None:
+    raise ManifestError(f"Cannot traverse site directory: {error}") from error
+
+
 def collect_site_files(site_dir: Path) -> list[dict[str, Any]]:
+    if site_dir.is_symlink():
+        raise ManifestError(f"Site path is a symbolic link: {site_dir}")
     root = site_dir.resolve(strict=True)
     if not root.is_dir():
         raise ManifestError(f"Site path is not a directory: {root}")
 
     records: list[dict[str, Any]] = []
-    for current, directory_names, file_names in os.walk(root, followlinks=False):
+    for current, directory_names, file_names in os.walk(
+        root,
+        followlinks=False,
+        onerror=_raise_walk_error,
+    ):
         directory_names.sort()
         file_names.sort()
         current_path = Path(current)
@@ -156,7 +166,9 @@ def _validate_file_digest(path: str, digest: Any) -> str:
 def _normalize_file_record(record: Any, paths: set[str]) -> dict[str, Any]:
     if not isinstance(record, dict):
         raise ManifestError("Manifest file record has the wrong type.")
-    path = str(record.get("path", ""))
+    path = record.get("path")
+    if not isinstance(path, str):
+        raise ManifestError("Manifest file path has the wrong type.")
     _validate_relative_path(path)
     if path in paths:
         raise ManifestError(f"Manifest contains a duplicate path: {path}")
@@ -197,6 +209,8 @@ def load_manifest(manifest_path: Path) -> dict[str, Any]:
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
         raise ManifestError(f"Cannot read manifest {manifest_path}: {error}") from error
 
+    if not isinstance(manifest, dict):
+        raise ManifestError("Manifest root must be a JSON object.")
     if manifest.get("schema_version") != SCHEMA_VERSION:
         raise ManifestError(
             f"Unsupported manifest schema: {manifest.get('schema_version')!r}"
