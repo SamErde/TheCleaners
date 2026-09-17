@@ -137,6 +137,46 @@ def write_manifest(manifest: dict[str, Any], output_path: Path, site_dir: Path) 
     )
 
 
+def _validate_file_records(
+    records: list[Any],
+) -> tuple[list[dict[str, Any]], set[str]]:
+    paths: set[str] = set()
+    normalized_records: list[dict[str, Any]] = []
+    for record in records:
+        if not isinstance(record, dict):
+            raise ManifestError("Manifest file record has the wrong type.")
+        path = str(record.get("path", ""))
+        _validate_relative_path(path)
+        if path in paths:
+            raise ManifestError(f"Manifest contains a duplicate path: {path}")
+        paths.add(path)
+        size = record.get("size")
+        digest = record.get("sha256")
+        if isinstance(size, bool) or not isinstance(size, int) or size < 0:
+            raise ManifestError(f"Manifest size is invalid for {path}.")
+        if not isinstance(digest, str) or not SHA256_PATTERN.fullmatch(digest):
+            raise ManifestError(f"Manifest SHA-256 is invalid for {path}.")
+        normalized_records.append({"path": path, "size": size, "sha256": digest})
+    return normalized_records, paths
+
+
+def _validate_manifest_aggregates(
+    content: dict[str, Any],
+    records: list[dict[str, Any]],
+    paths: set[str],
+) -> None:
+    if records != sorted(records, key=lambda item: item["path"]):
+        raise ManifestError("Manifest file records are not sorted by path.")
+    if content.get("file_count") != len(records):
+        raise ManifestError("Manifest file count does not match its records.")
+    if content.get("total_bytes") != sum(record["size"] for record in records):
+        raise ManifestError("Manifest byte count does not match its records.")
+    if content.get("tree_sha256") != calculate_tree_sha256(records):
+        raise ManifestError("Manifest tree SHA-256 does not match its records.")
+    if not {"index.html", "sitemap.xml"}.issubset(paths):
+        raise ManifestError("Manifest is missing index.html or sitemap.xml.")
+
+
 def load_manifest(manifest_path: Path) -> dict[str, Any]:
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -159,34 +199,8 @@ def load_manifest(manifest_path: Path) -> dict[str, Any]:
     if not COMMIT_PATTERN.fullmatch(str(source.get("commit", ""))):
         raise ManifestError("Manifest source commit is not a full lowercase Git SHA.")
 
-    paths: set[str] = set()
-    normalized_records: list[dict[str, Any]] = []
-    for record in records:
-        if not isinstance(record, dict):
-            raise ManifestError("Manifest file record has the wrong type.")
-        path = str(record.get("path", ""))
-        _validate_relative_path(path)
-        if path in paths:
-            raise ManifestError(f"Manifest contains a duplicate path: {path}")
-        paths.add(path)
-        size = record.get("size")
-        digest = record.get("sha256")
-        if isinstance(size, bool) or not isinstance(size, int) or size < 0:
-            raise ManifestError(f"Manifest size is invalid for {path}.")
-        if not isinstance(digest, str) or not SHA256_PATTERN.fullmatch(digest):
-            raise ManifestError(f"Manifest SHA-256 is invalid for {path}.")
-        normalized_records.append({"path": path, "size": size, "sha256": digest})
-
-    if normalized_records != sorted(normalized_records, key=lambda item: item["path"]):
-        raise ManifestError("Manifest file records are not sorted by path.")
-    if content.get("file_count") != len(normalized_records):
-        raise ManifestError("Manifest file count does not match its records.")
-    if content.get("total_bytes") != sum(record["size"] for record in normalized_records):
-        raise ManifestError("Manifest byte count does not match its records.")
-    if content.get("tree_sha256") != calculate_tree_sha256(normalized_records):
-        raise ManifestError("Manifest tree SHA-256 does not match its records.")
-    if not {"index.html", "sitemap.xml"}.issubset(paths):
-        raise ManifestError("Manifest is missing index.html or sitemap.xml.")
+    normalized_records, paths = _validate_file_records(records)
+    _validate_manifest_aggregates(content, normalized_records, paths)
     return manifest
 
 
