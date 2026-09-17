@@ -16,4 +16,4 @@ The temp cleaners preserve directories unless `-RemoveEmptyDirectory` is supplie
 
 Read [safety and confirmation](safety-and-confirmation.md), [migration notes](migration-to-1.0.md), and the [1.0 implementation ledger](release-plan-1.0.md) before using this development version. The ledger distinguishes merged implementation, exact-commit CI evidence, product/lab acceptance, and release authorization. The [repository README](https://github.com/SamErde/TheCleaners#readme) distinguishes the published Gallery prerelease from a source checkout.
 
-Canonical documentation: <https://day3bits.com/thecleaners/>. The [Zensical migration](https://github.com/SamErde/TheCleaners/issues/26) remains a separate follow-up.
+Canonical documentation: <https://day3bits.com/TheCleaners/>. The [Zensical migration](https://github.com/SamErde/TheCleaners/issues/26) remains a separate follow-up.

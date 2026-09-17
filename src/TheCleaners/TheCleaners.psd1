@@ -34,7 +34,7 @@
             Prerelease                 = 'beta'
             ExternalModuleDependencies = @()
         }
-        DocumentationUri = 'https://day3bits.com/thecleaners/'
+        DocumentationUri = 'https://day3bits.com/TheCleaners/'
     }
 }
 

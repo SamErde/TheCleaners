@@ -32,7 +32,7 @@ function Clear-WindowsTemp {
     .OUTPUTS
         TheCleaners.CleanupResult
     .LINK
-        https://day3bits.com/thecleaners/Clear-WindowsTemp/
+        https://day3bits.com/TheCleaners/Clear-WindowsTemp/
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Alias('Clean-WindowsTemp')]

@@ -1,5 +1,7 @@
 # Support policy and validation matrix
 
+**Windows client/server, IIS, Exchange, and profile lab validation is deferred future work, not underway.** Hosted fixture/package results below remain scoped to their exact tested commits and do not establish product acceptance.
+
 The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Exact TC-008 runtime evidence below is for merged commit `fdadbee08f854b1af6fdc7654ae4532ebbf605df`; it does not apply automatically to a later commit.
 
 ## Historical runtime evidence

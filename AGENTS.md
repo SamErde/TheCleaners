@@ -24,4 +24,6 @@ Parallelize only independent work with separate branches/worktrees and explicit 
 
 For each packet, update its status, relevant help/docs, changelog, tests, and evidence links in the same PR. Use `implemented in draft`, `validated`, and `merged` distinctly. Do not mark a checkbox complete solely because code was generated or a workflow file exists. Record runtime version, tested commit, test totals/failures/skips, and lab limitations. Keep Zensical migration in issue #26.
 
-Canonical documentation URL: `https://day3bits.com/thecleaners/`.
+Every next-stage prompt must begin with a very succinct **Completed / Remaining** summary, refreshed from `docs/release-plan-1.0.md`. Include the next bounded objective and carry this same summary requirement into future prompts. Lab validation is deferred future work, not underway; prioritize the non-lab delivery sequence in the plan until the maintainer resumes labs. Save the successor without executing it automatically.
+
+Canonical documentation URL: `https://day3bits.com/TheCleaners/`.

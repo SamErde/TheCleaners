@@ -1,5 +1,7 @@
 # Windows lab acceptance
 
+**Status: deferred future work; lab validation is not underway.** The current priority is non-lab documentation, delivery readiness, and an optional approved prerelease. The matrix below is retained for a later resumption; fixture and harness evidence does not imply lab execution.
+
 These checks prepare a disposable Windows client/server lab. They are not acceptance results or permission to provision or execute that lab. Development uses isolated fixtures or mocks only. Actual Windows/user roots require a separately approved disposable host and snapshot; IIS and Exchange additionally require named product/build prerequisites and remain preview-only.
 
 ## Entry conditions and capability boundary

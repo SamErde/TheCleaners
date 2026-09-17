@@ -1,5 +1,5 @@
 site_name: "The Cleaners PowerShell Module"
-site_url: "https://day3bits.com/thecleaners/"
+site_url: "https://day3bits.com/TheCleaners/"
 repo_url: "https://github.com/SamErde/TheCleaners"
 repo_name: "SamErde/TheCleaners"
 site_description: "Windows maintenance commands with explicit cleanup safety controls. IIS and Exchange log discovery commands are preview-only."
@@ -58,7 +58,9 @@ nav:
       - "Start-Cleaning (alias)": "Start-Cleaning.md"
   - Development:
       - "Packaging and reproducibility": "packaging.md"
+      - "Publishing controls": "publishing.md"
       - "1.0 implementation plan": "release-plan-1.0.md"
+      - "Next-stage prompts": "next-stage-prompts.md"
       - "Windows lab acceptance": "lab-acceptance.md"
       - "Documentation deployment gate": "deployment-validation.md"
 

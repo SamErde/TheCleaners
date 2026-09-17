@@ -18,7 +18,7 @@ function Get-TheCleaners {
     .OUTPUTS
         TheCleaners.CommandInfo
     .LINK
-        https://day3bits.com/thecleaners/Get-TheCleaners/
+        https://day3bits.com/TheCleaners/Get-TheCleaners/
     #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Opt-in dedication, not pipeline data.')]
     [CmdletBinding()]

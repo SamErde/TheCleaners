@@ -30,7 +30,7 @@ function Clear-CurrentUserTemp {
     .OUTPUTS
         TheCleaners.CleanupResult
     .LINK
-        https://day3bits.com/thecleaners/Clear-CurrentUserTemp/
+        https://day3bits.com/TheCleaners/Clear-CurrentUserTemp/
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Alias('Clean-CurrentUserTemp')]

@@ -9,7 +9,6 @@ jobs:
   release-gates:
     name: Run the full supported release matrix
     uses: ./.github/workflows/Build Module.yml
-    secrets: inherit
 
   publish:
     needs: release-gates
@@ -39,7 +38,10 @@ jobs:
     - name: Verify and publish the exact artifact
       shell: pwsh
       run: |
+        if ([string]::IsNullOrWhiteSpace($env:PSGALLERY_API_KEY)) {
+          throw 'Configure the PSGALLERY_PUBLISH_API_KEY secret in the powershell-gallery environment before publishing.'
+        }
         $PSVersionTable | Format-List
         ./.github/workflows/publish.ps1 -PSGalleryApiKey $env:PSGALLERY_API_KEY -ArtifactPath ./src/Artifacts -ArchiveDirectory ./src/Archive
       env:
-        PSGALLERY_API_KEY: ${{ secrets.POWERSHELLGALLERY_KEY }}
+        PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_PUBLISH_API_KEY }}

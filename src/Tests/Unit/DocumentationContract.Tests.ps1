@@ -19,7 +19,7 @@ Describe 'Documentation and release-contract drift' -Tag Unit {
             $Source = Get-Content -LiteralPath $FunctionPath -Raw
             $Source | Should -Match '\.SYNOPSIS'
             $Source | Should -Match '\.EXAMPLE'
-            $Source | Should -Match 'https://day3bits\.com/thecleaners/'
+            $Source | Should -MatchExactly 'https://day3bits\.com/TheCleaners/'
         }
     }
 
@@ -36,6 +36,6 @@ Describe 'Documentation and release-contract drift' -Tag Unit {
             $MkDocs | Should -Match ([regex]::Escape($PageName))
             (Join-Path -Path $RepositoryRoot -ChildPath ('docs/{0}' -f $PageName)) | Should -Exist
         }
-        $MkDocs | Should -Match 'https://day3bits\.com/thecleaners/'
+        $MkDocs | Should -MatchExactly 'https://day3bits\.com/TheCleaners/'
     }
 }
