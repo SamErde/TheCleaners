@@ -6,7 +6,7 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 
 ### Added
 
-- TC-003/004 disposable Windows acceptance matrix, operator prerequisites, and versioned evidence schema separating implemented fixtures from unexecuted lab acceptance. Harden the isolated ACL harness with canonical-parent/reparse checks, retained identity handles, preview preservation, source/candidate evidence, explicit failure residue, and post-recovery reporting; remove recursive ACL reset/deletion and retain the fixture for inspection.
+- TC-003/004 disposable Windows acceptance matrix, operator prerequisites, and versioned evidence schema separating implemented fixtures from unexecuted lab acceptance. Harden the isolated ACL harness with canonical-parent/reparse checks, retained identity handles, preview/removal inventory reconciliation, fresh source-module import, required OS metadata, source/candidate evidence, explicit failure residue, and post-recovery reporting; remove recursive ACL reset/deletion and retain the fixture for inspection.
 - Bounded TC-008 review of all 307 baseline uncovered commands, with a source-line disposition inventory and 30 focused temp, profile, and IIS/Exchange preview regression cases. No runtime behavior or product-acceptance status changes.
 - Opt-in `-RemoveEmptyDirectory` for both temp cleaners, limited to directories emptied by the invocation and their ancestors.
 - Typed temp-cleanup summaries, planned directory counts under WhatIf, UTC retention boundaries, literal-path checks, and reparse-point exclusion before traversal.

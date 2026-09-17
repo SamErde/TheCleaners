@@ -73,6 +73,7 @@ Describe 'Disposable ACL harness boundaries and evidence' -Skip:(-not $WindowsHo
         @($Evidence.AfterIdentities) | Should -HaveCount 0
         $Evidence.PreviewPreserved | Should -BeTrue
         $Evidence.PreviewInventoryMatches | Should -BeTrue
+        $Evidence.RemovalInventoryMatches | Should -BeTrue
         @($Evidence.BeforeIdentities | Where-Object { $_.ContentEvidence -eq 'Hashed' -and $_.SHA256 -match '^[0-9A-F]{64}$' }) | Should -HaveCount 1
         $Evidence.PreviewResult.Status | Should -Be 'WhatIf'
         $Evidence.Result.FilesRemoved | Should -Be 2
@@ -113,6 +114,39 @@ Describe 'Disposable ACL harness boundaries and evidence' -Skip:(-not $WindowsHo
         [IO.Directory]::Move($Renamed, $FixtureParent)
     }
 
+    It 'reloads the checkout instead of executing a stale imported command' {
+        $ModulePath = Join-Path $RepositoryRoot 'src/TheCleaners/TheCleaners.psd1'
+        $Module = Import-Module $ModulePath -Force -PassThru
+        & $Module { function script:Clear-CurrentUserTemp { throw 'Stale imported command' } }
+        try {
+            $Evidence = & $Harness -FixtureParent $FixtureParent -Confirm:$false | ConvertFrom-Json
+            $Evidence.RunFailure | Should -BeNullOrEmpty
+            $Evidence.FixturePassed | Should -BeTrue
+        } finally {
+            Import-Module $ModulePath -Force
+        }
+    }
+
+    It 'refuses an imported module from a different source before creating the fixture' {
+        Mock Import-Module { [pscustomobject]@{ ModuleBase = 'C:\wrong-source' } }
+        $Evidence = & $Harness -FixtureParent $FixtureParent -Confirm:$false | ConvertFrom-Json
+        $Evidence.Acceptance | Should -BeFalse
+        $Evidence.RunFailure.Message | Should -Match 'hashed source directory'
+        @(Get-ChildItem -LiteralPath $FixtureParent -Force) | Should -HaveCount 0
+        $Evidence.Recovery.EnvironmentRestored | Should -BeTrue
+        $Evidence.Recovery.HandlesClosed | Should -BeTrue
+    }
+
+    It 'rejects missing OS identity before cleanup' {
+        Mock Get-CimInstance { $null }
+        $Evidence = & $Harness -FixtureParent $FixtureParent -Confirm:$false | ConvertFrom-Json
+        $Evidence.Acceptance | Should -BeFalse
+        $Evidence.RunFailure.Message | Should -Match 'Required OS caption, version and build'
+        @($Evidence.Recovery.RemainingEntries) | Should -HaveCount 2
+        $Evidence.Recovery.EnvironmentRestored | Should -BeTrue
+        $Evidence.Recovery.HandlesClosed | Should -BeTrue
+    }
+
     It 'fails before cleanup when the filesystem cannot be established' {
         Mock Get-Volume { throw 'Injected volume probe failure' }
         $Evidence = & $Harness -FixtureParent $FixtureParent -Confirm:$false | ConvertFrom-Json
@@ -149,6 +183,8 @@ Describe 'Disposable ACL harness boundaries and evidence' -Skip:(-not $WindowsHo
         param($Fault, $Count, $Paths)
         $PreviewFault = [pscustomobject]@{ Name = $Fault; Count = $Count; Paths = $Paths }
         $Module = Import-Module (Join-Path $RepositoryRoot 'src/TheCleaners/TheCleaners.psd1') -PassThru
+        # Keep the intentionally injected command when the harness reloads.
+        Mock Import-Module { $Module }
         Mock Clear-CurrentUserTemp { [pscustomobject]@{ Status = 'WhatIf'; FileCandidateCount = $PreviewFault.Count; CandidatePaths = $PreviewFault.Paths; FilesRemoved = 0; BytesReclaimed = 0 } } -ModuleName TheCleaners
         $Evidence = & $Harness -FixtureParent $FixtureParent -Confirm:$false | ConvertFrom-Json
         $Evidence.Acceptance | Should -BeFalse
@@ -160,12 +196,40 @@ Describe 'Disposable ACL harness boundaries and evidence' -Skip:(-not $WindowsHo
         Should -Invoke Clear-CurrentUserTemp -ModuleName TheCleaners -Times 0 -Exactly -ParameterFilter { -not $WhatIf }
     }
 
+    It 'rejects a removal result whose candidate paths differ from the preserved preview' {
+        $Module = Import-Module (Join-Path $RepositoryRoot 'src/TheCleaners/TheCleaners.psd1') -PassThru
+        $RealCleaner = & $Module { (Get-Command Clear-CurrentUserTemp).ScriptBlock }
+        Mock Import-Module { $Module }
+        Mock Clear-CurrentUserTemp {
+            $Result = & $RealCleaner -Days 30 -WhatIf:$false -Confirm:$false -PassThru -ErrorAction Stop
+            $Result.CandidatePaths = @('C:\wrong-a.tmp', 'C:\wrong-b.tmp')
+            $Result
+        } -ModuleName TheCleaners
+        Mock Clear-CurrentUserTemp {
+            & $RealCleaner -Days 30 -WhatIf -Confirm:$false -PassThru -ErrorAction Stop
+        } -ModuleName TheCleaners -ParameterFilter { $WhatIf }
+        $Evidence = & $Harness -FixtureParent $FixtureParent -Confirm:$false | ConvertFrom-Json
+        $Evidence.RunFailure | Should -BeNullOrEmpty
+        $Evidence.PreviewInventoryMatches | Should -BeTrue
+        $Evidence.Result.FilesRemoved | Should -Be 2
+        $Evidence.RemovalInventoryMatches | Should -BeFalse
+        $Evidence.OutcomeReconciles | Should -BeFalse
+        $Evidence.Acceptance | Should -BeFalse
+        $Evidence.Recovery.HandlesClosed | Should -BeTrue
+        @($Evidence.Recovery.RemainingEntries) | Should -HaveCount 0
+    }
+
     It 'parses the harness and keeps destructive recovery absent' {
         $Tokens = $null
         $ParseErrors = $null
         $Ast = [Management.Automation.Language.Parser]::ParseFile($Harness, [ref]$Tokens, [ref]$ParseErrors)
         $ParseErrors | Should -BeNullOrEmpty
         $Commands = $Ast.FindAll({ param($Node) $Node -is [Management.Automation.Language.CommandAst] }, $true)
-        @($Commands | Where-Object { $_.GetCommandName() -in @('Remove-Item', 'icacls.exe', 'Clear-WindowsTemp', 'Clear-OldIISLog', 'Clear-OldExchangeLog') }) | Should -HaveCount 0
+        $Destructive = @(
+            'Remove-Item', 'ri', 'rm', 'del', 'erase', 'rd', 'rmdir',
+            'icacls', 'icacls.exe',
+            'Clear-WindowsTemp', 'Clear-OldIISLog', 'Clear-OldExchangeLog'
+        )
+        @($Commands | Where-Object { $_.GetCommandName() -in $Destructive }) | Should -HaveCount 0
     }
 }

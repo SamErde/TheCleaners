@@ -98,6 +98,12 @@ try {
     $TreeStatus = @(& git -C $RepositoryRoot status --porcelain --untracked-files=normal)
     if ($LASTEXITCODE -ne 0) { throw 'Cannot establish source working-tree state.' }
     $Evidence.WorkingTreeDirty = $TreeStatus.Count -gt 0
+    # Reload the hashed checkout even when this process previously imported it.
+    $ModulePath = Join-Path $RepositoryRoot 'src/TheCleaners/TheCleaners.psd1'
+    $Module = Import-Module -Name $ModulePath -Scope Local -Force -PassThru -ErrorAction Stop
+    if ($Module.ModuleBase -ne (Split-Path -Path $ModulePath -Parent)) {
+        throw 'The imported module does not match the hashed source directory.'
+    }
     . (Join-Path $RepositoryRoot 'src/TheCleaners/Private/Initialize-TheCleanersNativeFileInterop.ps1')
     Initialize-TheCleanersNativeFileInterop
     foreach ($AncestorPath in $AncestorPaths) {
@@ -161,6 +167,12 @@ try {
     }
 
     $OperatingSystem = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+    if ($null -eq $OperatingSystem -or
+        [string]::IsNullOrWhiteSpace([string]$OperatingSystem.Caption) -or
+        [string]::IsNullOrWhiteSpace([string]$OperatingSystem.Version) -or
+        [string]::IsNullOrWhiteSpace([string]$OperatingSystem.BuildNumber)) {
+        throw 'Required OS caption, version and build evidence is unavailable; cleanup was not attempted.'
+    }
     $DriveQualifier = Split-Path -Path $FixtureRoot -Qualifier
     $DriveLetter = $DriveQualifier.TrimEnd([char[]]@(':', '\'))
     $Volume = $null
@@ -171,6 +183,8 @@ try {
             $VolumeProbeError = "No volume was returned for drive '$DriveLetter'."
         } elseif ([string]::IsNullOrWhiteSpace([string]$Volume.FileSystem)) {
             $VolumeProbeError = "The volume for drive '$DriveLetter' did not report a filesystem."
+        } elseif ([string]$Volume.FileSystem -notin @('NTFS', 'ReFS')) {
+            $VolumeProbeError = "Unsupported filesystem '$($Volume.FileSystem)' on drive '$DriveLetter'."
         }
     } catch {
         $VolumeProbeError = $_.Exception.Message
@@ -211,9 +225,6 @@ try {
 
     $env:TEMP = $FixtureRoot
     $env:TMP = $FixtureRoot
-    # Local scope and no -Force preserve any caller's existing module instance.
-    $Module = Import-Module -Name (Join-Path $RepositoryRoot 'src/TheCleaners/TheCleaners.psd1') -Scope Local -PassThru -ErrorAction Stop
-
     $Evidence.PreviewResult = & $Module { Clear-CurrentUserTemp -Days 30 -WhatIf -Confirm:$false -PassThru -ErrorAction Stop }
     $PreviewIdentities = @(& $Snapshot)
     $Evidence.PreviewPreserved = ($Evidence.BeforeIdentities | ConvertTo-Json -Depth 5 -Compress) -ceq ($PreviewIdentities | ConvertTo-Json -Depth 5 -Compress)
@@ -240,7 +251,11 @@ try {
             [System.IO.File]::Exists($_) -or [System.IO.Directory]::Exists($_)
         })
     $ResultErrorCount = if ($null -eq $Result) { $null } else { @($Result.ErrorIds).Count }
+    $ActualPaths = @($Result.CandidatePaths | Sort-Object)
+    $Evidence.RemovalInventoryMatches = ($ActualPaths.Count -eq $ExpectedPaths.Count -and
+        [string]::Join("`n", $ActualPaths) -eq [string]::Join("`n", $ExpectedPaths))
     $OutcomeReconciles = $null -ne $Result -and
+        $Evidence.RemovalInventoryMatches -and
         $Result.Status -eq 'Completed' -and
         $Result.DiscoveryStatus -eq 'Validated' -and
         $Result.FileCandidateCount -eq $ExpectedFileCount -and
