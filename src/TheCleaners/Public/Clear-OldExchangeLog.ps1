@@ -24,7 +24,7 @@ function Clear-OldExchangeLog {
     .OUTPUTS
         TheCleaners.CleanupResult
     .LINK
-        https://day3bits.com/thecleaners/Clear-OldExchangeLog/
+        https://day3bits.com/TheCleaners/Clear-OldExchangeLog/
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Alias('Clean-ExchangeLog')]

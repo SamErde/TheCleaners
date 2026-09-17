@@ -45,4 +45,4 @@ No removal or persistent activation is available. `Clean-ExchangeLog` has the sa
 
 ## Documentation
 
-The intended canonical URL is [day3bits.com/thecleaners](https://day3bits.com/thecleaners/). The old Start-Cleaning documentation page is retained as a compatibility pointer. The exact PR #31 deployment workflow succeeded, but the lowercase path still returns HTTP 404 while `/TheCleaners/` returns HTTP 200; that site-owner correction remains open. Zensical migration remains a separate follow-up in issue #26.
+The canonical URL is [day3bits.com/TheCleaners](https://day3bits.com/TheCleaners/), matching the working title-case GitHub Pages path. The old Start-Cleaning documentation page is retained as a compatibility pointer. Exact deployed-byte and navigation verification remain delivery work. Support for both `/TheCleaners/` and `/thecleaners/` is tracked with the Zensical migration in [issue #26](https://github.com/SamErde/TheCleaners/issues/26), outside the 1.0 critical path.

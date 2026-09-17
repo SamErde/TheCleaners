@@ -6,7 +6,7 @@
     Author               = 'Sam Erde'
     CompanyName          = 'Sam Erde'
     Copyright            = '(c) 2026 Sam Erde. All rights reserved.'
-    Description          = 'Windows maintenance commands for temporary files, IIS logs, and stale-profile discovery. Exchange log discovery is preview-only; Exchange deletion is unavailable.'
+    Description          = 'Windows temporary-file maintenance and stale-profile discovery. IIS and Exchange log discovery are preview-only and cannot delete files. Product lab validation is deferred.'
     PowerShellVersion    = '5.1'
     FunctionsToExport    = @(
         'Clear-OldExchangeLog'
@@ -32,9 +32,10 @@
             ProjectUri                 = 'https://github.com/SamErde/TheCleaners'
             IconUri                    = 'https://raw.githubusercontent.com/SamErde/TheCleaners/main/media/TheCleaners-Icon.png'
             Prerelease                 = 'beta'
+            ReleaseNotes               = '0.0.15-beta prepares 1.0 safety, typed results, quiet imports, compatibility aliases, and deterministic packaging. Windows, IIS, Exchange, and profile lab validation is future work and is not underway. IIS and Exchange require explicit WhatIf and remain deletion-disabled. See https://day3bits.com/TheCleaners/releases/0.0.15-beta/ for release notes and limitations.'
             ExternalModuleDependencies = @()
         }
-        DocumentationUri = 'https://day3bits.com/thecleaners/'
+        DocumentationUri = 'https://day3bits.com/TheCleaners/'
     }
 }
 

@@ -1,7 +1,7 @@
 ---
 external help file: TheCleaners-help.xml
 Module Name: TheCleaners
-online version: https://day3bits.com/thecleaners/Get-StaleUserProfile/
+online version: https://day3bits.com/TheCleaners/Get-StaleUserProfile/
 schema: 2.0.0
 ---
 

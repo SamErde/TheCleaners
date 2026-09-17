@@ -19,7 +19,7 @@ Describe 'Documentation and release-contract drift' -Tag Unit {
             $Source = Get-Content -LiteralPath $FunctionPath -Raw
             $Source | Should -Match '\.SYNOPSIS'
             $Source | Should -Match '\.EXAMPLE'
-            $Source | Should -Match 'https://day3bits\.com/thecleaners/'
+            $Source | Should -MatchExactly 'https://day3bits\.com/TheCleaners/'
         }
     }
 

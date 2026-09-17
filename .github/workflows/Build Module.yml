@@ -50,6 +50,10 @@ jobs:
               throw "The job is running PowerShell $($PSVersionTable.PSVersion), not the requested ${{ matrix.version }}."
           }
           Invoke-Build -File .\src\TheCleaners.build.ps1
+      - name: Rehearse exact-artifact publication through an isolated local repository
+        if: matrix.version == '7.6.6'
+        shell: pwsh
+        run: ./.github/scripts/Invoke-LocalPublicationRehearsal.ps1 -ArtifactPath ./src/Artifacts -ArchiveDirectory ./src/Archive -OutputPath ./src/Reports/LocalPublicationRehearsal.json
       - name: Upload Pester results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

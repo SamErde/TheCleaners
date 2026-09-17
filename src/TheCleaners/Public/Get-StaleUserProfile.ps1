@@ -33,7 +33,7 @@ function Get-StaleUserProfile {
     .OUTPUTS
         TheCleaners.StaleUserProfile
     .LINK
-        https://day3bits.com/thecleaners/Get-StaleUserProfile/
+        https://day3bits.com/TheCleaners/Get-StaleUserProfile/
     #>
     [CmdletBinding()]
     [OutputType('TheCleaners.StaleUserProfile')]

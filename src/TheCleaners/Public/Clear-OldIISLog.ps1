@@ -26,7 +26,7 @@ function Clear-OldIISLog {
     .OUTPUTS
         TheCleaners.CleanupResult
     .LINK
-        https://day3bits.com/thecleaners/Clear-OldIISLog/
+        https://day3bits.com/TheCleaners/Clear-OldIISLog/
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Alias('Clean-IISLog')]

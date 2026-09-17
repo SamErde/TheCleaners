@@ -12,12 +12,18 @@
     Exact source-layout module directory produced by the build.
 .PARAMETER ArchiveDirectory
     Directory containing the content manifest produced beside the tested archive.
+.PARAMETER LocalRehearsal
+    Exercise the same publication checks against a registered local filesystem
+    repository with an internal placeholder key. Never connects to PSGallery.
+.PARAMETER LocalRepository
+    Registered rehearsal repository whose source and publish locations are the
+    same existing local directory. Network locations and reparse paths are refused.
 .EXAMPLE
     ./.github/workflows/publish.ps1 -PSGalleryApiKey $env:PSGALLERY_API_KEY
 #>
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Gallery')]
 param (
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, ParameterSetName = 'Gallery')]
     [ValidateNotNullOrEmpty()]
     [string]
     $PSGalleryApiKey,
@@ -30,10 +36,55 @@ param (
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]
-    $ArchiveDirectory = './src/Archive'
+    $ArchiveDirectory = './src/Archive',
+
+    [Parameter(Mandatory, ParameterSetName = 'LocalRehearsal')]
+    [switch]
+    $LocalRehearsal,
+
+    [Parameter(Mandatory, ParameterSetName = 'LocalRehearsal')]
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $LocalRepository
 )
 
 $ErrorActionPreference = 'Stop'
+$RepositoryName = 'PSGallery'
+if ($PSCmdlet.ParameterSetName -eq 'LocalRehearsal') {
+    if (-not $LocalRehearsal -or $LocalRepository -eq 'PSGallery') {
+        throw 'Local rehearsal requires an explicit switch and a separate local repository.'
+    }
+    $RepositoryInfo = Get-PSRepository -Name $LocalRepository -ErrorAction Stop
+    $RepositoryPaths = @()
+    foreach ($Location in @($RepositoryInfo.SourceLocation, $RepositoryInfo.PublishLocation)) {
+        if ([string]$Location -notmatch '^[A-Za-z]:[\\/]') {
+            throw 'Local rehearsal refuses network, URI, and relative repository locations.'
+        }
+        $Directory = Get-Item -LiteralPath $Location -Force -ErrorAction Stop
+        if ($Directory.PSProvider.Name -ne 'FileSystem' -or -not $Directory.PSIsContainer) {
+            throw 'Local rehearsal requires filesystem directories.'
+        }
+        if ([System.IO.DriveInfo]::new([System.IO.Path]::GetPathRoot($Directory.FullName)).DriveType -eq [System.IO.DriveType]::Network) {
+            throw 'Local rehearsal refuses mapped network drives.'
+        }
+        $Ancestor = $Directory
+        while ($null -ne $Ancestor) {
+            if (($Ancestor.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                throw 'Local rehearsal refuses reparse-point repository ancestry.'
+            }
+            $Ancestor = $Ancestor.Parent
+        }
+        $RepositoryPaths += $Directory.FullName.TrimEnd([char[]]@('\', '/'))
+    }
+    if ($RepositoryPaths.Count -ne 2 -or $RepositoryPaths[0] -ne $RepositoryPaths[1]) {
+        throw 'Local rehearsal requires identical source and publish directories.'
+    }
+    $RepositoryName = $LocalRepository
+    $PSGalleryApiKey = 'TheCleaners-Local-Rehearsal'
+} elseif ([string]::IsNullOrWhiteSpace($PSGalleryApiKey)) {
+    throw 'Publishing to PSGallery requires a nonblank API key.'
+}
+
 $ResolvedArtifactPath = (Resolve-Path -LiteralPath $ArtifactPath).Path
 if ([System.IO.Path]::GetFileName($ResolvedArtifactPath) -eq 'TheCleaners' -and $ResolvedArtifactPath -like '*\src\TheCleaners') {
     throw 'Refusing to publish the source directory. Pass the exact built artifact directory.'
@@ -64,7 +115,10 @@ $ArchiveManifest = Get-Content -LiteralPath $ArchiveManifests[0].FullName -Raw |
 if ($ArchiveManifest.ModuleName -ne 'TheCleaners' -or [string]$ArchiveManifest.ModuleVersion -ne [string]$ModuleManifest.Version) {
     throw 'The archive manifest does not describe the artifact manifest.'
 }
-if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_SHA) -and $ArchiveManifest.Commit -ne $env:GITHUB_SHA) {
+if ($env:GITHUB_SHA -notmatch '^[a-fA-F0-9]{40}$') {
+    throw 'Publishing requires the exact workflow commit in GITHUB_SHA.'
+}
+if ($ArchiveManifest.Commit -ne $env:GITHUB_SHA) {
     throw 'The archive manifest commit does not match the workflow commit.'
 }
 
@@ -151,16 +205,16 @@ if (-not [string]::IsNullOrWhiteSpace($ManifestPrerelease)) {
     $GalleryVersion = '{0}-{1}' -f $GalleryVersion, $ManifestPrerelease
 }
 try {
-    $Existing = @(Find-Module -Name TheCleaners -RequiredVersion $GalleryVersion -AllowPrerelease -Repository PSGallery -ErrorAction Stop)
+    $Existing = @(Find-Module -Name TheCleaners -RequiredVersion $GalleryVersion -AllowPrerelease -Repository $RepositoryName -ErrorAction Stop)
 } catch {
     if ([string]$_.FullyQualifiedErrorId -like 'NoMatchFoundForCriteria*') {
         $Existing = @()
     } else {
-        throw "Could not verify whether TheCleaners version '$GalleryVersion' already exists in PSGallery: $($_.Exception.Message)"
+        throw "Could not verify whether TheCleaners version '$GalleryVersion' already exists in '$RepositoryName': $($_.Exception.Message)"
     }
 }
 if ($Existing.Count -gt 0) {
-    throw "TheCleaners version '$GalleryVersion' already exists in PSGallery."
+    throw "TheCleaners version '$GalleryVersion' already exists in '$RepositoryName'."
 }
 
 $PublishRoot = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ('TheCleaners-Publish-{0}' -f ([guid]::NewGuid().Guid))
@@ -192,7 +246,7 @@ try {
         }
     }
 
-    Publish-Module -Path $PublishPath -NuGetApiKey $PSGalleryApiKey -Repository PSGallery -ErrorAction Stop
+    Publish-Module -Path $PublishPath -NuGetApiKey $PSGalleryApiKey -Repository $RepositoryName -ErrorAction Stop
 } finally {
     if (Test-Path -LiteralPath $PublishRoot) {
         Remove-Item -LiteralPath $PublishRoot -Recurse -Force -ErrorAction SilentlyContinue

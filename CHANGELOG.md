@@ -2,7 +2,9 @@
 
 ## Unreleased - 1.0 preparation
 
-This entry describes unreleased work, not a released 1.0 package. Historical changes preceding this work still need reconciliation against the repository and Gallery history.
+This entry describes unreleased work, not a released 1.0 package. The prepared beta notes reconcile the observed repository and Gallery history without inventing source identities for old packages.
+
+The next prepared prerelease is **0.0.15-beta**, proposed tag `v0.0.15-beta`. The [release notes and history reconciliation](docs/releases/0.0.15-beta.md) map the changes below to that candidate. Publication remains pending; the old unpublished `0.0.11-alpha` GitHub draft is preserved as historical metadata and is not reused for this beta.
 
 ### Added
 
@@ -21,6 +23,13 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 
 ### Changed
 
+- Prioritize non-lab documentation/delivery readiness and an optional approved prerelease; Windows, IIS, Exchange, and profile lab validation is deferred future work, not underway. Require succinct Completed / Remaining summaries in every successor prompt.
+- Use the working title-case `https://day3bits.com/TheCleaners/` URL consistently in configuration, manifest, source help, and documentation. Track support for both URL cases in Zensical issue #26.
+- Configure the GitHub `powershell-gallery` environment with SamErde review, disabled administrator bypass and `v*` tag restrictions. Update the publishing workflow to use the dedicated `PSGALLERY_PUBLISH_API_KEY` environment secret, fail clearly when absent, and stop passing repository secrets to the build matrix. Credential presence is verified; Gallery validity and actual publication remain pending.
+- Add a closed local-rehearsal publisher mode that uses an existing local filesystem repository and an internal placeholder key. Preserve the exact-artifact guards shared with the fixed PSGallery production path and require an explicit valid source commit in both modes.
+- Bind publication to the maintainer-approved archive digest and verify the published version's installed payload, metadata, import, help, aliases and preview locks on fresh supported-runtime runners.
+- Build documentation once, retain a source-bound manifest, deploy that exact output and verify every public file's bytes and representative navigation with bounded propagation retries.
+
 - TC-008 merged implementation: add current PowerShell 7.4.20 and 7.5.11 hosted lanes; preserve 7.6.6 and canonical-artifact PS5.1 testing.
 - Replace runtime-dependent ZIP compression with stored entries, ordinal ordering, UTF-8 names and fixed metadata; require repeated and cross-runtime byte equality, exact commit identity, complete extracted file verification and hidden-file uploads.
 - Pin download-artifact v8.0.1 to its immutable Node 24 commit; add strict documentation validation to the PR/reusable build gate.
@@ -28,7 +37,7 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 - Renamed `Start-Cleaning` to `Get-TheCleaners`; retained `Start-Cleaning` as a deprecated alias through 1.x.
 - Renamed private `Show-TCLogo` to `Show-TheCleanersLogo`.
 - Made module loading explicit and import quiet.
-- Standardized the canonical documentation URL to `https://day3bits.com/thecleaners/`.
+- Standardized the canonical documentation URL to `https://day3bits.com/TheCleaners/`.
 - Temp failures now use the error stream; unknown discovery totals are not reported as zero candidates.
 - Temp file removal now uses a same-handle native operation requesting `DELETE` and `FILE_READ_ATTRIBUTES`, without `FILE_READ_DATA`. Missing candidates and identity substitutions are skipped, and a directory substituted at a candidate path cannot be removed or counted as a file deletion.
 - IIS now requires explicit `-WhatIf`, reports `PreviewOnly`, and cannot remove files until its product-specific gates pass. The generic deletion wrapper has been retired.
@@ -49,4 +58,4 @@ PR #33 merged at `fdadbee08f854b1af6fdc7654ae4532ebbf605df`. Exact-commit hosted
 
 ### Still pending
 
-Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; Windows profile-inventory acceptance; lowercase canonical hosting and deployed-byte verification; protected exact-artifact publication; clean installation of the published version; final version/tag/metadata and history alignment; and maintainer release authorization remain open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. Acceptance preparation does not close them. The source manifest is `0.0.15-beta`, while the last recorded Gallery version is `0.0.13-alpha`. Zensical migration is tracked separately in issue #26.
+Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; and Windows profile-inventory acceptance are deferred future work, not underway. Active non-lab work covers exact deployed-byte/navigation verification at the title-case URL, publishing credentials and local rehearsal, prerelease metadata/history alignment, approved exact-artifact publication, and clean installation of the published version. Final 1.0 release acceptance remains open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. Acceptance preparation does not close them. The source manifest stays `0.0.15-beta`; the last recorded Gallery version is `0.0.13-alpha`. Zensical migration and support for both URL cases are tracked separately in issue #26.
