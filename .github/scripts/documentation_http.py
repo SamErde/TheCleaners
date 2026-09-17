@@ -32,7 +32,7 @@ def parse_http_url(url: str) -> urllib.parse.SplitResult:
     try:
         parsed = urllib.parse.urlsplit(url)
         hostname = parsed.hostname
-        parsed.port
+        _ = parsed.port  # Validate port syntax before opening a connection.
     except ValueError as error:
         raise HttpTransportError(f"Invalid HTTP URL: {url!r}.") from error
 
@@ -56,6 +56,8 @@ def read_http_response(
     timeout: float,
 ) -> tuple[int, bytes]:
     """Issue one non-redirecting GET and return a size-bounded response body."""
+    if type(maximum_body_bytes) is not int or maximum_body_bytes < 0:
+        raise HttpTransportError("Maximum body bytes must be a non-negative integer.")
     parsed = parse_http_url(request_url)
     connection_type = (
         http.client.HTTPSConnection
