@@ -6,6 +6,7 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from unittest import mock
 from urllib.parse import urlparse
 
 
@@ -77,10 +78,12 @@ class SiteServer:
         files: dict[str, bytes],
         stale_once: set[str] | None = None,
         stale_on_requests: dict[str, set[int]] | None = None,
+        redirects: dict[str, str] | None = None,
     ):
         self.files = files
         self.stale_once = set(stale_once or set())
         self.stale_on_requests = stale_on_requests or {}
+        self.redirects = redirects or {}
         self.request_counts: dict[str, int] = {}
 
         owner = self
@@ -89,6 +92,12 @@ class SiteServer:
             def do_GET(self):
                 path = urlparse(self.path).path
                 owner.request_counts[path] = owner.request_counts.get(path, 0) + 1
+                if path in owner.redirects:
+                    self.send_response(302)
+                    self.send_header("Location", owner.redirects[path])
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return
                 if (
                     path in owner.stale_once and owner.request_counts[path] == 1
                 ) or owner.request_counts[path] in owner.stale_on_requests.get(path, set()):
@@ -208,6 +217,28 @@ class DocumentationDeploymentTests(unittest.TestCase):
         "release-plan-1.0/",
     ]
 
+    def test_non_http_schemes_are_rejected_before_transport(self):
+        manifest = {"source": {"commit": COMMIT}, "files": []}
+        for base_url in ("file://localhost/", "ftp://localhost/"):
+            with self.subTest(base_url=base_url):
+                with mock.patch.object(deployment_tool, "_read_http_response") as transport:
+                    with self.assertRaisesRegex(
+                        deployment_tool.DeploymentVerificationError,
+                        "URL must use HTTPS",
+                    ):
+                        deployment_tool.verify_deployment(
+                            manifest,
+                            base_url,
+                            self.required_routes,
+                            attempts=1,
+                            initial_delay=0,
+                            backoff=1,
+                            maximum_delay=0,
+                            timeout=2,
+                            workers=1,
+                        )
+                    transport.assert_not_called()
+
     def test_exact_deployment_and_navigation_pass(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             site = Path(temporary_directory) / "site"
@@ -256,6 +287,37 @@ class DocumentationDeploymentTests(unittest.TestCase):
             self.assertEqual(attempts, 2)
             self.assertEqual(server.request_counts[stale_path], 2)
             self.assertTrue(all(count == 2 for count in server.request_counts.values()))
+
+    def test_redirect_is_rejected_without_following_location(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            site = Path(temporary_directory) / "site"
+            site.mkdir()
+            write_site(site)
+            manifest = build_manifest(site)
+            redirect_target = BASE_PATH + "redirect-target/"
+            server = SiteServer(
+                public_files(site, manifest),
+                redirects={BASE_PATH: redirect_target},
+            )
+
+            with server as base_url:
+                with self.assertRaisesRegex(
+                    deployment_tool.DeploymentVerificationError,
+                    "index.html: HTTP 302",
+                ):
+                    deployment_tool.verify_deployment(
+                        manifest,
+                        base_url,
+                        self.required_routes,
+                        attempts=1,
+                        initial_delay=0,
+                        backoff=1,
+                        maximum_delay=0,
+                        timeout=2,
+                        workers=2,
+                    )
+
+            self.assertEqual(server.request_counts.get(redirect_target, 0), 0)
 
     def test_alternating_generations_never_form_a_complete_passing_attempt(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

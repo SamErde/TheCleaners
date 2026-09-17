@@ -5,12 +5,11 @@ from __future__ import annotations
 
 import argparse
 import html.parser
+import http.client
 import json
 import sys
 import time
-import urllib.error
 import urllib.parse
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -20,6 +19,9 @@ from build_documentation_manifest import ManifestError, load_manifest, sha256_by
 
 class DeploymentVerificationError(RuntimeError):
     """Raised when deployed content does not match the retained build."""
+
+
+LOCAL_HTTP_HOSTS = {"127.0.0.1", "localhost"}
 
 
 class LinkCollector(html.parser.HTMLParser):
@@ -60,6 +62,67 @@ def _file_url(base_url: str, relative_path: str, source_commit: str, attempt: in
     return urllib.parse.urljoin(base_url, quoted_path) + "?" + query
 
 
+def _parse_http_url(url: str) -> urllib.parse.SplitResult:
+    try:
+        parsed = urllib.parse.urlsplit(url)
+        hostname = parsed.hostname
+        parsed.port
+    except ValueError as error:
+        raise DeploymentVerificationError(f"Invalid HTTP URL: {url!r}.") from error
+
+    if parsed.scheme == "http":
+        if hostname not in LOCAL_HTTP_HOSTS:
+            raise DeploymentVerificationError(
+                "URL must use HTTPS, except HTTP is allowed for localhost tests."
+            )
+    elif parsed.scheme != "https":
+        raise DeploymentVerificationError(
+            "URL must use HTTPS, except HTTP is allowed for localhost tests."
+        )
+    if not hostname:
+        raise DeploymentVerificationError("HTTP URL must include a hostname.")
+    if parsed.username is not None or parsed.password is not None:
+        raise DeploymentVerificationError("HTTP URL must not include user information.")
+    if parsed.fragment:
+        raise DeploymentVerificationError("HTTP URL must not include a fragment.")
+    return parsed
+
+
+def _request_target(parsed: urllib.parse.SplitResult) -> str:
+    return urllib.parse.urlunsplit(("", "", parsed.path or "/", parsed.query, ""))
+
+
+def _read_http_response(
+    request_url: str,
+    maximum_body_bytes: int,
+    timeout: float,
+) -> tuple[int, bytes]:
+    parsed = _parse_http_url(request_url)
+    connection_type = (
+        http.client.HTTPSConnection
+        if parsed.scheme == "https"
+        else http.client.HTTPConnection
+    )
+    connection = connection_type(parsed.hostname, parsed.port, timeout=timeout)
+    try:
+        connection.request(
+            "GET",
+            _request_target(parsed),
+            headers={
+                "Accept-Encoding": "identity",
+                "Cache-Control": "no-cache",
+                "User-Agent": "TheCleaners-documentation-verifier/1",
+            },
+        )
+        response = connection.getresponse()
+        try:
+            return response.status, response.read(maximum_body_bytes + 1)
+        finally:
+            response.close()
+    finally:
+        connection.close()
+
+
 def _fetch_file(
     base_url: str,
     record: dict[str, Any],
@@ -69,46 +132,19 @@ def _fetch_file(
 ) -> tuple[str, bytes | None, str | None]:
     relative_path = record["path"]
     request_url = _file_url(base_url, relative_path, source_commit, attempt)
-    request = urllib.request.Request(
-        request_url,
-        headers={
-            "Accept-Encoding": "identity",
-            "Cache-Control": "no-cache",
-            "User-Agent": "TheCleaners-documentation-verifier/1",
-        },
-    )
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            status = response.status
-            body = response.read()
-            final_url = response.geturl()
-    except urllib.error.HTTPError as error:
-        try:
-            status = error.code
-            body = error.read()
-            final_url = error.geturl()
-        finally:
-            error.close()
-    except (OSError, urllib.error.URLError) as error:
+        status, body = _read_http_response(
+            request_url,
+            record["size"],
+            timeout,
+        )
+    except (OSError, http.client.HTTPException) as error:
         return relative_path, None, f"request failed: {error}"
 
     allowed_statuses = {200, 404} if relative_path == "404.html" else {200}
     if status not in allowed_statuses:
         return relative_path, body, f"HTTP {status}"
 
-    expected_path = urllib.parse.urlparse(
-        urllib.parse.urljoin(base_url, _public_path(relative_path))
-    ).path
-    expected_origin = urllib.parse.urlparse(base_url)
-    actual_url = urllib.parse.urlparse(final_url)
-    actual_path = actual_url.path
-    if (actual_url.scheme, actual_url.netloc) != (
-        expected_origin.scheme,
-        expected_origin.netloc,
-    ):
-        return relative_path, body, f"redirected to unexpected origin {actual_url.netloc!r}"
-    if actual_path != expected_path:
-        return relative_path, body, f"redirected to unexpected path {actual_path!r}"
     if len(body) != record["size"]:
         return relative_path, body, f"size {len(body)} != {record['size']}"
     actual_digest = sha256_bytes(body)
@@ -199,9 +235,9 @@ def verify_deployment(
     timeout: float,
     workers: int,
 ) -> tuple[int, dict[str, bytes]]:
-    parsed_base = urllib.parse.urlparse(base_url)
-    if parsed_base.scheme != "https" and parsed_base.hostname not in {"127.0.0.1", "localhost"}:
-        raise DeploymentVerificationError("Base URL must use HTTPS outside local tests.")
+    parsed_base = _parse_http_url(base_url)
+    if parsed_base.query:
+        raise DeploymentVerificationError("Base URL must not include a query string.")
     if not base_url.endswith("/"):
         raise DeploymentVerificationError("Base URL must end with '/'.")
     if attempts < 1 or workers < 1:
