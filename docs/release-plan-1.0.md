@@ -1,12 +1,18 @@
 # TheCleaners 1.0 implementation plan
 
-Updated September 16, 2026. The TC-008 runtime and archive implementation from [PR #33](https://github.com/SamErde/TheCleaners/pull/33) is merged into `main` as `fdadbee08f854b1af6fdc7654ae4532ebbf605df`. Its exact-commit runtime-matrix and bounded PS7 Windows archive-reproducibility subgates are validated below. This does not validate TC-008 as a whole, complete product acceptance, or authorize a release.
+Updated September 17, 2026. Non-lab delivery preparation is the current priority. Windows client/server, IIS, Exchange and profile lab validation is deferred future work, not underway. The TC-008 runtime and archive implementation from [PR #33](https://github.com/SamErde/TheCleaners/pull/33) is merged into `main` as `fdadbee08f854b1af6fdc7654ae4532ebbf605df`. Its exact-commit runtime-matrix and bounded PS7 Windows archive-reproducibility subgates are validated below. This does not validate TC-008 as a whole, complete product acceptance, or authorize a release.
 
 ## Status conventions
 
 **Open** means work has not been completed. **Implemented in draft** is reserved for code in an unmerged branch or pull request. **Merged implementation** means the code is on `main`, but applicable validation may still be open. **Validated** requires passing evidence for the exact referenced commit and scope. **Release accepted** additionally requires every applicable product, artifact, deployment, metadata, and maintainer gate.
 
 The manifest stays on the current prerelease version during this packet. No command is advertised as stable merely because it is exported. The plan is milestone/gate-driven, not a promised calendar deadline.
+
+## Documentation verification foundations
+
+**Implemented in draft:** reusable site-content manifests, restricted HTTP transport and isolated regression tests are being integrated as a prerequisite to [PR #37](https://github.com/SamErde/TheCleaners/pull/37). The manifest binds every retained file's path, length and SHA-256 to the source commit and workflow run. It rejects unsafe paths, symbolic links and changed, missing or unexpected site contents. Transport permits HTTPS with a loopback-only HTTP test exception, bounds response bodies and never follows redirects.
+
+**Remaining:** integrate exact-build deployment and public-byte/navigation verification, local publication rehearsal, protected prerelease preparation and approved publication/install verification. These foundations alone do not deploy a site, establish hosting acceptance, create a release tag or publish a package. Deferred lab acceptance and final 1.0 acceptance remain open.
 
 ## Accepted decisions
 
