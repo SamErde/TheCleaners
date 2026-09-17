@@ -1,6 +1,11 @@
 name: Publish to PowerShell Gallery
 on:
   workflow_dispatch:
+    inputs:
+      approved_archive_sha256:
+        description: SHA-256 of the exact archive approved for this release tag
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -45,10 +50,18 @@ jobs:
         if ([string]::IsNullOrWhiteSpace($env:PSGALLERY_API_KEY)) {
           throw 'Configure the PSGALLERY_PUBLISH_API_KEY secret in the powershell-gallery environment before publishing.'
         }
+        if ($env:APPROVED_ARCHIVE_SHA256 -notmatch '^[a-fA-F0-9]{64}$') {
+          throw 'An approved archive SHA-256 is required for publication.'
+        }
+        $Archives = @(Get-ChildItem -LiteralPath ./src/Archive -Filter '*.zip' -File | Where-Object Name -NotLike '*.repeat.zip')
+        if ($Archives.Count -ne 1 -or (Get-FileHash -LiteralPath $Archives[0].FullName -Algorithm SHA256).Hash -ne $env:APPROVED_ARCHIVE_SHA256) {
+          throw 'The tested archive does not match the approved release digest.'
+        }
         $PSVersionTable | Format-List
         ./.github/workflows/publish.ps1 -PSGalleryApiKey $env:PSGALLERY_API_KEY -ArtifactPath ./src/Artifacts -ArchiveDirectory ./src/Archive
       env:
         PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_PUBLISH_API_KEY }}
+        APPROVED_ARCHIVE_SHA256: ${{ inputs.approved_archive_sha256 }}
 
   verify-published:
     name: Verify published install - PowerShell ${{ matrix.version }}
