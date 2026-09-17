@@ -1,0 +1,1746 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Windows maintenance commands with explicit cleanup safety controls. IIS and Exchange log discovery commands are preview-only.">
+      
+      
+        <meta name="author" content="Sam Erde">
+      
+      
+        <link rel="canonical" href="https://day3bits.com/TheCleaners/release-plan-1.0/">
+      
+      
+        <link rel="prev" href="../packaging/">
+      
+      
+        <link rel="next" href="../lab-acceptance/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>1.0 implementation plan - The Cleaners PowerShell Module</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#thecleaners-10-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="The Cleaners PowerShell Module" class="md-header__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            The Cleaners PowerShell Module
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              1.0 implementation plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SamErde/TheCleaners" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    SamErde/TheCleaners
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../safety-and-confirmation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Safety
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../command-contracts/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contracts
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../support-matrix/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Support
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../migration-to-1.0/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Migration to 1.0
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../TheCleaners/" class="md-tabs__link">
+          
+  
+  
+  Functions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../packaging/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="The Cleaners PowerShell Module" class="md-nav__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    The Cleaners PowerShell Module
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SamErde/TheCleaners" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    SamErde/TheCleaners
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../safety-and-confirmation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../command-contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../support-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration-to-1.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration to 1.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Functions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TheCleaners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Get-TheCleaners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get-TheCleaners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-CurrentUserTemp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-CurrentUserTemp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-WindowsTemp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-WindowsTemp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-OldIISLog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-OldIISLog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-OldExchangeLog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-OldExchangeLog (preview)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Get-StaleUserProfile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get-StaleUserProfile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Start-Cleaning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start-Cleaning (alias)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../packaging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packaging and reproducibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1.0 implementation plan
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1.0 implementation plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#status-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-verification-foundations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation verification foundations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accepted-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepted decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release sequence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-evidence-recorded-september-16-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical evidence recorded September 16, 2026
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tc-008-merged-runtime-and-archive-evidence-after-pr-33" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-008 merged runtime and archive evidence after PR #33
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tc-008-uncovered-command-review-after-pr-34" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-008 uncovered-command review after PR #34
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tc-003004-disposable-acceptance-preparation-after-pr-35" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-003/004 disposable acceptance preparation after PR #35
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#work-packets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Work packets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Work packets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tc-003004-completion-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-003/004 completion checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tc-005006-completion-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-005/006 completion checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tc-007-completion-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-007 completion checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tc-008009-completion-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-008/009 completion checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parallel-work-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel work boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#out-of-scope-for-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Out of scope for 1.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lab-acceptance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows lab acceptance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Documentation deployment gate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href=".." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../packaging/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Development
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="thecleaners-10-implementation-plan">TheCleaners 1.0 implementation plan</h1>
+<p>Updated September 17, 2026. Non-lab delivery preparation is the current priority. Windows client/server, IIS, Exchange and profile lab validation is deferred future work, not underway. The TC-008 runtime and archive implementation from <a href="https://github.com/SamErde/TheCleaners/pull/33">PR #33</a> is merged into <code>main</code> as <code>fdadbee08f854b1af6fdc7654ae4532ebbf605df</code>. Its exact-commit runtime-matrix and bounded PS7 Windows archive-reproducibility subgates are validated below. This does not validate TC-008 as a whole, complete product acceptance, or authorize a release.</p>
+<h2 id="status-conventions">Status conventions</h2>
+<p><strong>Open</strong> means work has not been completed. <strong>Implemented in draft</strong> is reserved for code in an unmerged branch or pull request. <strong>Merged implementation</strong> means the code is on <code>main</code>, but applicable validation may still be open. <strong>Validated</strong> requires passing evidence for the exact referenced commit and scope. <strong>Release accepted</strong> additionally requires every applicable product, artifact, deployment, metadata, and maintainer gate.</p>
+<p>The manifest stays on the current prerelease version during this packet. No command is advertised as stable merely because it is exported. The plan is milestone/gate-driven, not a promised calendar deadline.</p>
+<h2 id="documentation-verification-foundations">Documentation verification foundations</h2>
+<p><strong>Implemented in draft:</strong> reusable site-content manifests, restricted HTTP transport and isolated regression tests are being integrated as a prerequisite to <a href="https://github.com/SamErde/TheCleaners/pull/37">PR #37</a>. The manifest binds every retained file's path, length and SHA-256 to the source commit and workflow run. It rejects unsafe paths, symbolic links and changed, missing or unexpected site contents. Transport permits HTTPS with a loopback-only HTTP test exception, bounds response bodies and never follows redirects.</p>
+<p><strong>Remaining:</strong> integrate exact-build deployment and public-byte/navigation verification, local publication rehearsal, protected prerelease preparation and approved publication/install verification. These foundations alone do not deploy a site, establish hosting acceptance, create a release tag or publish a package. Deferred lab acceptance and final 1.0 acceptance remain open.</p>
+<h2 id="accepted-decisions">Accepted decisions</h2>
+<ul>
+<li>Windows only. Minimum Windows PowerShell 5.1; include Microsoft-supported PowerShell 7 release lines on Windows. Before RC, CI must cover 5.1 and every 7.x line still in support, unless the maintainer explicitly narrows the contract. Do not promise retired, preview, or future 7.x versions.</li>
+<li>Add <code>-RemoveEmptyDirectory</code> to <code>Clear-CurrentUserTemp</code> and <code>Clear-WindowsTemp</code>. Without it, directories are untouched. With it, prune only directories emptied by this invocation and their now-empty ancestors, deepest-first. Preserve cleanup roots, unrelated pre-existing empty branches, reparse points, and paths outside the approved root.</li>
+<li>Rename private <code>Show-TCLogo</code> to <code>Show-TheCleanersLogo</code>; rename public <code>Start-Cleaning</code> to <code>Get-TheCleaners</code>. Retain <code>Start-Cleaning</code> as a deprecated alias through 1.x.</li>
+<li>Canonical documentation is <code>https://day3bits.com/TheCleaners/</code>, matching the maintainer's September 17 decision and MkDocs configuration. This supersedes the earlier lowercase requirement; both-case compatibility belongs to Zensical issue #26. Keep the source repository as the manifest's <code>ProjectUri</code>. Do not use a documentation URL as an Updatable Help endpoint unless the required HelpInfo artifacts actually exist.</li>
+<li>Keep Exchange discoverable in 1.0, but structurally incapable of deletion. Require explicit <code>-WhatIf</code>, fail before discovery when it is absent/false, and do not silently force a preference or run IIS cleanup.</li>
+<li>A later minor release may add a per-invocation Exchange <code>-AllowRemoval</code> switch after acceptance. This is <strong>provisional</strong>: the maintainer accepted it for now, not as an irreversible permanent design. There is no persistent unlock and no removal flag in the 1.0 implementation.</li>
+<li>IIS may ship as stable only after its gates pass. Until then, keep it structurally preview-only rather than delaying ready commands.</li>
+<li>Zensical migration is <a href="https://github.com/SamErde/TheCleaners/issues/26">issue #26</a>, outside the 1.0 critical path unless the documentation stack blocks publication.</li>
+</ul>
+<h2 id="release-sequence">Release sequence</h2>
+<table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Entry/exit criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0 preview</td>
+<td>Implement the new safety boundaries, naming, output contracts, quiet imports, and repeatable tests; permit necessary API corrections.</td>
+</tr>
+<tr>
+<td>1.0 beta</td>
+<td>Temp cleaners and non-destructive commands pass fixture behavior tests; freeze most signatures; disclose that lab validation is deferred future work and not underway; IIS and Exchange remain preview-only. A beta label does not establish product acceptance.</td>
+</tr>
+<tr>
+<td>1.0 RC</td>
+<td>Every stable command has evidence for its supported configurations; incomplete IIS remains preview-locked; exact packaged module passes all required runtimes, help, and installation checks. Accept only defect, safety, documentation, and packaging corrections.</td>
+</tr>
+<tr>
+<td>1.0 stable</td>
+<td>Publish the tested artifact with aligned version/tag/metadata and a successful clean-install check. No feature can become destructive merely by changing a maturity label.</td>
+</tr>
+<tr>
+<td>Later Exchange minor</td>
+<td>First release an Exchange-enabled prerelease; validate paths, file patterns, custom drives, locks, access failures, protected database/transaction-log locations, and post-cleanup service health. Reconfirm the provisional per-invocation opt-in before activation.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="historical-evidence-recorded-september-16-2026">Historical evidence recorded September 16, 2026</h2>
+<p>This section uses only post-merge evidence for exact commit <code>037c27a81234361620a633f68a33bfb370f0a03e</code>. Earlier local results and PR-head hashes are not carried forward as merged-commit evidence. No IIS or Exchange deletion was enabled, no live cleanup was run, no release tag was created, and nothing was published to the PowerShell Gallery.</p>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Exact merged-commit evidence</th>
+<th>Boundary that remains open</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source and release identity</td>
+<td>PR #31 merged to <code>main</code> as <code>037c27a81234361620a633f68a33bfb370f0a03e</code>. The manifest is <code>0.0.15</code> with prerelease label <code>beta</code>, PowerShell minimum <code>5.1</code>, project URI <code>https://github.com/SamErde/TheCleaners</code>, and documentation URI <code>https://day3bits.com/thecleaners/</code>. The repository has no Git tags; the Gallery still serves <code>0.0.13-alpha</code>; the authenticated GitHub release inventory includes an unpublished private draft named <code>Testing and Workflow Updates</code> with draft tag <code>0.0.11-alpha</code>.</td>
+<td>Final 1.0 version/tag/prerelease metadata, release notes, published artifact, and maintainer acceptance are open.</td>
+</tr>
+<tr>
+<td>Hosted PowerShell 7.6 LTS</td>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35129434807/job/104906463700">Build run 35129434807, job 104906463700</a> used PowerShell <code>7.6.6</code> Core on hosted Windows Server 2025 <code>10.0.26100</code>. Pester <code>5.7.1</code> reported <code>215/215</code> unit tests and <code>4/4</code> integration tests passed, with <code>0</code> failed, skipped, or not run. Coverage was <code>83.48%</code> of <code>1,858</code> analyzed commands across 16 files.</td>
+<td>This is hosted fixture/package evidence, not complete Windows client/server, broader elevated/non-elevated, real-system-root, ReFS, IIS, or Exchange acceptance.</td>
+</tr>
+<tr>
+<td>Hosted PowerShell 7.5 stable</td>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35129434807/job/104906463466">Build run 35129434807, job 104906463466</a> used PowerShell <code>7.5.9</code> Core on the same hosted Windows Server 2025 image. Pester <code>5.7.1</code> reported <code>215/215</code> unit tests and <code>4/4</code> integration tests passed, with <code>0</code> failed, skipped, or not run. Coverage was <code>83.48%</code> of <code>1,858</code> analyzed commands across 16 files.</td>
+<td>Microsoft supports only the latest servicing update and now lists <code>7.5.11</code> as current. Refresh the 7.5 lane before RC. Microsoft also supports 7.4 LTS through November 10, 2026, but the workflow has no 7.4 lane; add its latest supported patch or obtain explicit approval to narrow the policy.</td>
+</tr>
+<tr>
+<td>Hosted Windows PowerShell 5.1</td>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35129434807/job/104907172823">Build run 35129434807, job 104907172823</a> used Windows PowerShell <code>5.1.26100.33296</code> Desktop on hosted Windows Server 2025 Datacenter build <code>26100</code>. The combined source/package run reported <code>219/219</code> tests passed (<code>215</code> unit plus <code>4</code> integration), with <code>0</code> failures, skips, inconclusive, invalid, or not-run tests. This lane downloaded and tested the exact PowerShell 7.6.6 artifact; it did not create a separate PS5.1 archive or coverage report.</td>
+<td>PS5.1 parser/API/package compatibility is evidenced; PS5.1 coverage and broader OS/product acceptance are not.</td>
+</tr>
+<tr>
+<td>ACL and native deletion fixture</td>
+<td>The PS5.1 job created elevated NTFS fixture <code>TheCleaners-Acl-1879c90d-b555-4f71-851d-824e8cfa5211</code>. Exact candidates were <code>old-readable.tmp</code> and <code>old-delete-without-read.tmp</code>; before/after counts were <code>2 -&gt; 0</code>; <code>ReadWasDenied=true</code>; delete/read masks were <code>65536</code>/<code>1</code>; <code>FilesRemoved=2</code>; <code>BytesReclaimed=6</code>; status <code>Completed</code>; skips, failures, cleanup errors, and result error IDs were <code>0</code>; reconciliation and <code>Acceptance</code> were <code>true</code>.</td>
+<td>This is one isolated elevated NTFS fixture. It does not establish complete Windows client/server, broader elevated/non-elevated, real-system-root, or ReFS acceptance.</td>
+</tr>
+<tr>
+<td>Exact artifacts and clean install</td>
+<td>Both PS7 lanes produced a 19-file <code>TheCleaners_0.0.15.zip</code> manifest whose commit is <code>037c27a81234361620a633f68a33bfb370f0a03e</code>; every packaged file hash is identical between lanes. The 7.6.6 ZIP is <code>43,141</code> bytes with SHA-256 <code>adf7d3fb6e693a0e559ce560fc5c83ee8254d7ecad9115061c836d293a6705f4</code>. The 7.5.9 ZIP is <code>43,051</code> bytes with SHA-256 <code>31f710cd62fd04d4b0e41261054158df7527b9bc84a425755fd436044d89164d</code>. Each lane verified its manifest/sidecar, packaged help, quiet import, aliases, preview locks, extraction, and isolated module-name clean install. The PS5.1 lane repeated the integration checks against the downloaded 7.6.6 artifact.</td>
+<td>The different ZIP bytes/hashes show that cross-runtime archive reproducibility is not established even though the 19-file content set is identical. Publication remains protected and unexecuted; published clean-install evidence is open.</td>
+</tr>
+<tr>
+<td>Static analysis</td>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35129435005">PSScriptAnalyzer run 35129435005</a> succeeded for the exact merged commit and uploaded SARIF.</td>
+<td>Static analysis is not runtime, product, lab, or release acceptance.</td>
+</tr>
+<tr>
+<td>Documentation and deployment</td>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35129434855">MkDocs run 35129434855</a> checked out the exact merged commit, completed <code>mkdocs build --strict --site-dir site</code>, and verified <code>site/index.html</code> and <code>site/sitemap.xml</code>. Its later <code>mkdocs gh-deploy --strict --force</code> command performed a second strict build and pushed <code>gh-pages</code> commit <code>2ea8bf4</code>; the workflow does not establish byte identity between the checked <code>site</code> directory and deployed output. A live check then found uppercase <code>/TheCleaners/</code> HTTP 200, uppercase without slash HTTP 301 to <code>/TheCleaners/</code>, and canonical lowercase <code>/thecleaners/</code> HTTP 404.</td>
+<td>Strict build and deployment workflow succeeded, but exact deployed-byte verification and canonical lowercase deployment did not. The site-owner correction remains open; this sweep did not modify external deployment.</td>
+</tr>
+<tr>
+<td>IIS and Exchange product labs</td>
+<td>No exact-merged-commit product/build lab evidence exists. Unit tests use fixtures/mocks; they verify fail-closed preview behavior but are not product acceptance.</td>
+<td>Disposable IIS and Exchange labs must record exact product/build, complete candidate lists, before/after counts, protected paths, and service health. Both commands remain preview-only and deletion-disabled.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tc-008-merged-runtime-and-archive-evidence-after-pr-33">TC-008 merged runtime and archive evidence after PR #33</h2>
+<p>Baseline verified: PR #32 merged as <code>d9ba8783d844f8ad2458817c967a5cf79a676658</code>; stage-entry <code>main</code> was <code>49154d6b130fc8bc8f6c47122db991a261c0b29d</code>. PR #33's final green head was <code>2d6724b2f4c13b8a65f555d1161e45bb9ca07084</code>; it merged as <code>fdadbee08f854b1af6fdc7654ae4532ebbf605df</code>. Candidate and historical failure evidence retain their original commit labels and are not relabeled as merged evidence.</p>
+<p><strong>Merged implementation; runtime-matrix and bounded PS7 Windows archive-reproducibility subgates validated for exact commit <code>fdadbee08f854b1af6fdc7654ae4532ebbf605df</code>. TC-008 as a whole remains open.</strong> <a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944">Build run 35152376944</a> and <a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376977">PSScriptAnalyzer run 35152376977</a> both identify that exact merge commit. Fresh downloads of all retained reports, manifests, sidecars, original ZIPs, and repeated ZIPs matched the preserved evidence bundle byte-for-byte.</p>
+<table>
+<thead>
+<tr>
+<th>Exact merged job</th>
+<th>Runtime and hosted result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565483">PowerShell 7.4 LTS</a></td>
+<td>PowerShell <code>7.4.20</code> Core, .NET <code>8.0.31</code>, Pester <code>5.7.1</code>, Windows Server 2025 <code>10.0.26100</code>: <code>222/222</code> unit and <code>4/4</code> integration tests passed; <code>0</code> failed, skipped, or not run. Coverage was <code>83.48%</code> (<code>1,551/1,858</code> commands across 16 files).</td>
+</tr>
+<tr>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565445">PowerShell 7.5 stable</a></td>
+<td>PowerShell <code>7.5.11</code> Core, .NET <code>9.0.20</code>, Pester <code>5.7.1</code>, Windows Server 2025 <code>10.0.26100</code>: <code>222/222</code> unit and <code>4/4</code> integration tests passed; <code>0</code> failed, skipped, or not run. Coverage was <code>83.48%</code> (<code>1,551/1,858</code> commands across 16 files).</td>
+</tr>
+<tr>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565518">PowerShell 7.6 LTS</a></td>
+<td>PowerShell <code>7.6.6</code> Core, .NET <code>10.0.12</code>, Pester <code>5.7.1</code>, Windows Server 2025 <code>10.0.26100</code>: <code>222/222</code> unit and <code>4/4</code> integration tests passed; <code>0</code> failed, skipped, or not run. Coverage was <code>83.48%</code> (<code>1,551/1,858</code> commands across 16 files).</td>
+</tr>
+<tr>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104984394144">Windows PowerShell 5.1</a></td>
+<td>Windows PowerShell <code>5.1.26100.33296</code> Desktop on Windows Server 2025 Datacenter build <code>26100</code>: <code>226/226</code> combined tests passed; <code>0</code> failures, skips, inconclusive, invalid, or not-run tests. No coverage report was produced. This lane downloaded and tested the canonical 7.6.6 artifact and ZIP; it did not produce a canonical PS5.1 archive.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104984394111">Archive comparison</a></td>
+<td>Each 7.4.20, 7.5.11, and 7.6.6 <code>TheCleaners_0.0.15.zip</code> and <code>TheCleaners_0.0.15.zip.repeat.zip</code> contains 19 files, is <code>223,629</code> bytes, and has SHA-256 <code>2eae48784e4ba18f6aee28e3c22d8191be3e6d5bde2d59e26071430fe776f2d4</code>. Every manifest records the exact merge commit; original/repeated and cross-runtime bytes match.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104983565273">Strict documentation</a> and <a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376977/job/104983564981">PSScriptAnalyzer</a></td>
+<td>Comparator regressions, strict MkDocs build, change-range whitespace validation, and the separate analyzer/SARIF job passed. All seven build/analyzer check annotation endpoints returned zero annotations.</td>
+</tr>
+</tbody>
+</table>
+<p>The pinned download action is <code>actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c</code> (v8.0.1). Its immutable manifest declares Node 24 and defaults digest mismatches to errors. The merged comparison job verified all three expected artifact digests, and the PS5.1 job verified both canonical 7.6.6 download digests. The protected publisher was not run.</p>
+<p>The stored-ZIP contract is intentionally bounded to identical staged paths and contents on the tested, pinned PS7 Windows builders and dependencies. It does not promise byte identity for future runtimes, other operating systems, different line endings, or changed help generators. Runtime-bearing manifests outside the ZIP intentionally differ. PS5.1 is a supported consumer, but its .NET Framework ZIP writer is not a canonical producer. The historical ZIP investigation and earlier PR-head failures remain documented in <a href="../packaging/">packaging</a> and the retained evidence report under their original identities.</p>
+<p>PR #33 had three review threads; all were addressed and resolved, and post-merge pagination found zero unresolved threads. CodeRabbit's green status was quota-skipped and is not counted as a completed review or approval. The automatic <a href="https://github.com/SamErde/TheCleaners/actions/runs/35152376955/job/104983565793">MkDocs deployment run 35152376955</a> passed for the merge commit, but its unchanged deployment workflow does not establish lowercase canonical hosting or deployed-byte identity.</p>
+<p>No Windows/IIS/Exchange product acceptance, live cleanup, Gallery publication, version/tag change, canonical-host correction, or release acceptance was performed. The source remains <code>0.0.15-beta</code>. Protected publication, clean installation of a published version, uncovered-branch risk review, and maintainer release acceptance remain open.</p>
+<h2 id="tc-008-uncovered-command-review-after-pr-34">TC-008 uncovered-command review after PR #34</h2>
+<p>The <a href="../tc008-uncovered-branch-review/">bounded risk review</a> maps every missed instruction in PR #34's exact merged-commit coverage (<code>3cb0293487c6f08e7fdea6bff30e29cf1169d766</code>, <a href="https://github.com/SamErde/TheCleaners/actions/runs/35168283878">run 35168283878</a>): 307 commands across 254 source lines. It records new regressions, existing direct/subprocess coverage, defensive-only guards, and platform/product/concurrency lab cases. The source review is complete and found no confirmed runtime defect. Thirty focused test cases are added; their validation must be tied to their own tested head and merge commit, not borrowed from PR #34. The implementation is draft until its PR merges. No runtime/API/workflow/release metadata changes are made.</p>
+<p>This closes only the bounded analysis of that coverage baseline. It does not close TC-008 as a whole or any Windows/IIS/Exchange/profile product acceptance gate. The remaining lab variants are explicitly assigned to TC-003 through TC-007 in the review; protected publication, published clean installation, hosting, and maintainer release acceptance remain open.</p>
+<h2 id="tc-003004-disposable-acceptance-preparation-after-pr-35">TC-003/004 disposable acceptance preparation after PR #35</h2>
+<p>PR #35's exact merge is <code>66119785413b8cd3b2004f1b9fc7f49bed504a6a</code>. Its <a href="https://github.com/SamErde/TheCleaners/actions/runs/35218687207">build 35218687207</a> passed 252 unit plus four integration tests in each PS7.4.20/7.5.11/7.6.6 lane and 256 combined tests in PS5.1.26100.33296, with zero failures/skips/not-run. PS7 coverage was <code>1,626/1,858</code> commands (<code>87.51%</code>); PS5.1 emitted no coverage. The baseline review is merged and complete; its 232 remaining misses retain their dispositions and native/platform lab ownership. This supersedes the earlier review packet's conditional draft wording, not its acceptance limits.</p>
+<p>The next preparation packet is <strong>implemented in draft until its PR merges</strong>. The <a href="../lab-acceptance/">lab runbook and acceptance matrix</a> now distinguish implemented fixtures from unexecuted client/server, token, filesystem, actual-root and concurrency cases. A versioned evidence envelope records exact source/host/root identity, inventories, outcomes, missing prerequisites and recovery; it cannot itself confer acceptance. The ACL harness rejects out-of-boundary/reparse parents, holds ordinary ancestry and root identities, checks WhatIf before cleanup, reloads and verifies the hashed source module, requires OS metadata, reconciles preview/removal paths, records native candidate identities and source hashes, and emits acceptance only after restoring environment and closing handles. Recursive ACL reset/deletion is removed; its generated child remains available for inspection. Dedicated <code>LabAclHarness.Tests.ps1</code> regressions cover these safeguards; their results must be tied to this packet's own tested head/merge, never borrowed from PR #35.</p>
+<p>No disposable host, snapshot/restore proof, ReFS volume, alternate token, product installation, or actual-root execution approval was established. No product/actual-root acceptance was executed and no TC-003/004 acceptance checkbox is closed. A later lab stage requires named approved hosts and scenario drivers, per-case evidence and successful recovery. Exact PR-head and post-merge reports belong to the preparation PR and its completion report; generated capability alone is not validation. TC-005/006 preview labs, TC-007 profile acceptance, TC-008 publication/published installation/maintainer acceptance, and TC-009 hosting/metadata/release gates remain open.</p>
+<h2 id="work-packets">Work packets</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Work</th>
+<th>Current state</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-001</td>
+<td>Behavioral contracts, support matrix, maturity policy, migration notes, and release ledger</td>
+<td>Merged implementation in PR #31. Exact merged-commit runtime evidence is recorded above; product/OS acceptance and release acceptance remain open.</td>
+</tr>
+<tr>
+<td>TC-002</td>
+<td>Naming, compatibility aliases, deterministic loader, quiet import, removal of initialization scaffolding</td>
+<td>Merged implementation in PR #31. Exact hosted package-import tests cover the loader and aliases.</td>
+</tr>
+<tr>
+<td>TC-003</td>
+<td>Public mutation ownership, shared result/error contracts, UTC semantics, path safety, removal of generic deletion wrapper</td>
+<td>Merged implementation includes shared result/error contracts, owning-command mutation, native temp deletion, and wrapper/helper retirement. Exact hosted cross-edition fixtures passed; Windows client/server, broader elevated/non-elevated, ReFS, and adversarial acceptance remain open.</td>
+</tr>
+<tr>
+<td>TC-004</td>
+<td>Temp cleaners, opt-in directory pruning, WhatIf/Confirm, locked-file/race handling, privilege/root preflight</td>
+<td>Merged implementation includes same-handle identity checks, validated root identity carried into planning, candidate-ancestor and planned-directory handles retained through mutation, pruning disqualification after vanished/skipped/failed/recent/reparse candidates, root preflight, lock/race/hard-link/reparse fixtures, actual-root/privilege checks, queued-directory replacement fail-closed handling, ACL evidence, serialized native initialization, and fresh-process confirmation probes. Exact hosted lanes passed; Windows client/server, broader elevated/non-elevated, ReFS, and real system-root acceptance remain open.</td>
+</tr>
+<tr>
+<td>TC-005</td>
+<td>IIS path discovery, environment expansion, per-format allowlist, deduplication, preview-only discovery, and server validation</td>
+<td>Merged preview-only implementation covers separate web/FTP discovery, configured format and rollover metadata, calendar-valid W3C monthly/daily/hourly and size-rollover families, bounded sequences, IIS/NCSA families, unknown/custom-format failure, normalized/deduplicated roots, protected paths, service metadata, and dependency restoration. No exact-commit IIS product/build lab exists; removal stays disabled.</td>
+</tr>
+<tr>
+<td>TC-006</td>
+<td>Exchange preview guard, experimental discovery, validated per-directory patterns, protected locations, and lab fixtures</td>
+<td>Merged preview-only implementation covers the guard, IIS decoupling, fixed-root validation, per-directory filename/ETL patterns, and database/transaction-log protection. No exact-commit Exchange product/build lab or service-health evidence exists; removal stays disabled.</td>
+</tr>
+<tr>
+<td>TC-007</td>
+<td>Typed stale-profile output, unknown LastUseTime, optional size, SID resolution, and command inventory</td>
+<td>Merged read-only implementation covers typed output, unknown-date handling, optional reparse-safe size with retained identity-checked handles, best-effort SID resolution, and orphan-helper retirement. Exact hosted fixtures passed; Windows client/server acceptance remains open.</td>
+</tr>
+<tr>
+<td>TC-008</td>
+<td>One source-layout package, exact-artifact tests/publication, reproducible build, complete runtime matrix, and CI gates</td>
+<td>Merged implementation covers source-layout artifacts, machine-readable reports, fixed-encoding staging, content manifests/hashes, protected publisher, exact-artifact clean-install probes, artifact download, analyzer gates, the complete supported runtime matrix, and stored-ZIP comparison gates. Exact merge-commit evidence validates the runtime-matrix and bounded PS7 Windows archive-reproducibility subgates. The bounded PR #34 uncovered-command review is recorded above; remaining native/platform/product lab variants are assigned to TC-003 through TC-007. Protected publication, published-version clean installation, and maintainer release acceptance remain open; TC-008 as a whole is not validated.</td>
+</tr>
+<tr>
+<td>TC-009</td>
+<td>Complete help/docs, canonical deployment verification, changelog/history, contributor/security policy, RC and release checks</td>
+<td>Merged implementation covers command/help/docs, strict MkDocs, drift tests, contributor/security/PR guidance, release hash metadata, and protected module-named staging. The title-case <code>/TheCleaners/</code> path is canonical; exact deployed-byte/navigation verification remains open. Both-case compatibility belongs to issue #26. Published clean-install evidence, final version/tag/metadata alignment, and maintainer acceptance remain open.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tc-003004-completion-checklist">TC-003/004 completion checklist</h3>
+<ul>
+<li>[x] Standardize documented result fields and stable error IDs/categories across every applicable command in the merged implementation.</li>
+<li>[x] Remove the now-unused generic private deletion wrapper and its legacy tests; do not add another generic mutation layer.</li>
+<li>[x] Verify every discovery error fails closed and cannot be mistaken for zero candidates in the unit and coverage-edge fixtures; hosted product acceptance remains open.</li>
+<li>[x] Verify <code>-WhatIf</code> leaves fixture files/directories, preferences, and module/native state unchanged; real product/registry/process acceptance remains open.</li>
+<li>[x] Verify <code>-Confirm</code> approval/decline and noninteractive behavior without nested prompts; the exact-commit hosted PS7 and PS5.1 suites passed the fresh-process <code>Y</code>/<code>N</code> and explicit <code>-Confirm:$false</code> fixtures.</li>
+<li>[x] Add fixture coverage for hard links, junctions, symbolic links/reparse points, roots, prefix-confusable siblings, long-path syntax, access/lock failures, and files changing after discovery; skipped child handles are retained through ancestor pruning and lab validation remains open.</li>
+<li>[x] Cover actual-system-root resolution and privilege reporting in fixtures rather than trusting an environment variable alone; disposable Windows client/server, elevated/non-elevated, and real system-root acceptance remains open.</li>
+<li>[x] Reconcile proposed versus removed/skipped/failed files and directories; bytes are logical lengths of successfully removed files, not a guarantee of physical free-space change.</li>
+<li>[ ] Complete actual Windows client/server acceptance on supported OS versions.</li>
+</ul>
+<h3 id="tc-005006-completion-checklist">TC-005/006 completion checklist</h3>
+<ul>
+<li>[x] Explicitly import or qualify IIS discovery commands; handle missing optional dependencies and uninstalled products clearly in the merged implementation.</li>
+<li>[x] Expand environment variables in all discovered IIS roots; normalize and deduplicate roots in the merged implementation. Product/lab evidence remains open.</li>
+<li>[x] Document and unit-test merged product-root, filename-format, configured FTP-format, and retention-boundary rules; exact supported product versions and lab evidence remain open.</li>
+<li>[x] Never treat every old file in an arbitrary logging tree as a safe log candidate in the merged preview implementation.</li>
+<li>[x] Add merged protection for mailbox database and transaction-log paths, including overlap exclusion; live Exchange validation remains open.</li>
+<li>[x] Keep IIS and Exchange deletion absent while their current preview locks apply, including legacy aliases and all parameter combinations.</li>
+<li>[ ] Capture disposable product/build preview-lab candidate lists, before/after counts, protected paths, and service health before any later removal design.</li>
+</ul>
+<h3 id="tc-007-completion-checklist">TC-007 completion checklist</h3>
+<ul>
+<li>[x] Keep profile discovery read-only; remove presentation-only <code>Out-Host</code> behavior.</li>
+<li>[x] Introduce a stable profile object with SID/account, path, last use, age, optional size, loaded/special flags, and unknown-date status.</li>
+<li>[x] Treat missing LastUseTime as unknown, not automatically stale; expose it only with <code>-IncludeUnknownLastUseTime</code>.</li>
+<li>[x] Confirm default/public/system/service profile exclusions and size-enumeration safety in fixture tests.</li>
+<li>[x] Remove orphaned SID helpers unless deliberately used by profile output.</li>
+<li>[ ] Complete Windows client/server acceptance for profile inventory and optional sizing.</li>
+</ul>
+<h3 id="tc-008009-completion-checklist">TC-008/009 completion checklist</h3>
+<ul>
+<li>[x] Replace recursive source merging with the explicit source-layout package; preserve useful stack traces and external help in the merged build.</li>
+<li>[x] Build once, record a content manifest/digest, test that artifact, and make the protected workflow publish that exact artifact without rebuilding or publishing <code>src</code> directly. No publish run has occurred.</li>
+<li>[x] Add a protected publishing environment and version/tag/prerelease checks; refuse duplicate Gallery versions in the publisher script.</li>
+<li>[x] Complete the supported runtime matrix on exact merged commit <code>fdadbee08f854b1af6fdc7654ae4532ebbf605df</code>: 7.4.20, 7.5.11, 7.6.6, and Windows PowerShell 5.1 passed the hosted matrix. Historical 7.5.9 evidence remains labeled to its original commit.</li>
+<li>[x] Re-enable the ShouldProcess analyzer rule; no broad suppression is used in the merged source.</li>
+<li>[x] Meet at least 80% overall coverage in the covered hosted lanes: PS7.4.20, PS7.5.11, and PS7.6.6 each measured <code>83.48%</code> (<code>1,551/1,858</code> analyzed commands across 16 files) with no failed, skipped, or not-run tests at exact merged commit <code>fdadbee08f854b1af6fdc7654ae4532ebbf605df</code>. PS5.1 passed <code>226/226</code> combined tests but does not emit coverage; the 307 uncovered commands are dispositioned in the bounded review below, with lab-dependent cases retained as open acceptance work.</li>
+<li>[x] Retain machine-readable unit and integration reports, with failed/skipped counts and exact runtime versions in the merged build.</li>
+<li>[x] Generate command references and external help from the source of truth; add drift checks and validate the documentation build strictly in CI.</li>
+<li>[x] Update README, migration guide, changelog, support/security policy, contributing instructions, PR template, and agent instructions.</li>
+<li>[x] Review template leftovers, remove the duplicate <code>.github/LICENSE</code>, move editor settings to the repository-root <code>.vscode</code>, and retain the existing spell-check/pre-commit configuration; analyzer roles remain explicit rather than silently removed.</li>
+<li>[ ] Verify exact deployed bytes and navigation at canonical <code>https://day3bits.com/TheCleaners/</code>. Historical deployment runs and HTTP 200 alone do not close this gate; support for both URL cases belongs to Zensical issue #26.</li>
+<li>[x] Attach manifests and hashes to both exact hosted archive outputs and verify isolated clean installs of the tested artifacts.</li>
+<li>[x] Verify the bounded stored-ZIP reproducibility contract on exact merged commit <code>fdadbee08f854b1af6fdc7654ae4532ebbf605df</code>: original/repeated and cross-runtime bytes match for all three supported PS7 Windows builders; PS5.1 consumed the canonical 7.6.6 archive. Historical compressed archives remain labeled to their original commit and differ despite identical file contents.</li>
+<li>[ ] Verify a clean install of the published version after the hosted release artifact and maintainer acceptance exist.</li>
+</ul>
+<h2 id="validation-evidence">Validation evidence</h2>
+<p>PR #31 adds parameterized filesystem tests for both temp commands, inclusive cutoff, literal names, junction exclusion, directory scope, WhatIf, partial failure, ErrorAction Stop, failed enumeration, a candidate replaced by a directory, a candidate disappearing before deletion, and skipped/failed candidate disqualification before ancestor pruning. It adds IIS and Exchange no-mutation/guard/root-type tests, configured FTP-format propagation, mixed-separator namespace rejection, export/help/alias tests, source import checks, and a fresh-process built-package probe.</p>
+<p>The following references identify the exact regression tests behind review-thread decisions, rather than claiming coverage from implementation alone:</p>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Test source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local-kind clock converted to UTC for both temp commands</td>
+<td><code>src/Tests/Unit/TempCandidateSafety.Tests.ps1</code>: <code>converts a local Get-Date result to a UTC retention cutoff</code>; also asserts <code>DateTimeKind.Utc</code>, including on UTC-configured hosts.</td>
+</tr>
+<tr>
+<td>Candidate disappears between discovery and removal</td>
+<td><code>src/Tests/Unit/TempCandidateSafety.Tests.ps1</code>: <code>reconciles a discovered candidate that disappears before deletion</code>, parameterized for both temp commands.</td>
+</tr>
+<tr>
+<td>No Exchange removal-bypass parameters</td>
+<td><code>src/Tests/Unit/PreviewCommandSafety.Tests.ps1</code>: <code>does not expose a removal-bypass parameter</code>, using command metadata rather than a generic exception.</td>
+</tr>
+<tr>
+<td>Optional registry absence versus access failure</td>
+<td><code>src/Tests/Unit/PreviewCommandSafety.Tests.ps1</code>: IIS fixture uses an absent-value exception; <code>reports registry access failure instead of silently omitting a configured root</code> checks the error stream and <code>-ErrorAction Stop</code>.</td>
+</tr>
+<tr>
+<td>IIS dependency registrations restored on success/failure, existing module preserved</td>
+<td><code>src/Tests/Unit/IISDiscoverySafety.Tests.ps1</code>: four fresh-process fixture-module scenarios; also checks caller confirmation preferences and leaked commands. This does not claim to unload Windows assemblies.</td>
+</tr>
+<tr>
+<td>Equivalent site/default/registry roots previewed once</td>
+<td><code>src/Tests/Unit/IISDiscoverySafety.Tests.ps1</code>: site variants, registry dot/trailing/alternate-separator cases, and a distinct-custom-root control.</td>
+</tr>
+<tr>
+<td>IIS FTP logging is discovered separately from web logging</td>
+<td><code>src/Tests/Unit/IISDiscoverySafety.Tests.ps1</code>: fresh-process FTP scenario and in-process <code>FTPSVC7</code> fixture verify the separate <code>ftpServer.logFile</code> root; the fresh-process scenario uses configured <code>IIS</code> format and an <code>inetsv01.log</code> candidate to verify format propagation. <code>src/Tests/Unit/PreviewAllowlist.Tests.ps1</code> covers <code>FTPSVC</code> and legacy <code>MSFTPSVC</code> service labels and accepts the documented W3C monthly, daily, hourly, and size-rollover families plus bounded date sequences while rejecting the invented <code>u_ft</code> family.</td>
+</tr>
+<tr>
+<td>Profile ancestors remain stable through queued size traversal</td>
+<td><code>src/Tests/Unit/ProfileOutput.Tests.ps1</code>: <code>holds profile ancestors while traversing queued directories</code> attempts a queued-parent rename while a nested child is enumerated; every queued directory retains a stable/identity handle, and complete held ancestry is revalidated before and after path-based enumeration and before final sizing.</td>
+</tr>
+<tr>
+<td>Skipped temp children remain protected during ancestor pruning</td>
+<td><code>src/Tests/Unit/CleanupBehavior.Tests.ps1</code>: <code>does not prune ancestors after a child becomes non-empty</code>, parameterized for both temp commands, adds a recent child file after discovery, verifies the child handle blocks a concurrent rename, and keeps the directly touched ancestor.</td>
+</tr>
+<tr>
+<td>A concurrently disappeared planned candidate disqualifies pruning</td>
+<td><code>src/Tests/Unit/CleanupBehavior.Tests.ps1</code>: <code>does not prune a directory when another process removes a planned candidate</code>, parameterized for both temp commands, removes one planned sibling outside the cleaner after discovery, verifies the remaining candidate is removed, and keeps the now-empty parent and ancestors because not every planned child was removed by this invocation.</td>
+</tr>
+<tr>
+<td>Malformed IIS roots fail through the result contract</td>
+<td><code>src/Tests/Unit/PreviewCommandSafety.Tests.ps1</code>: <code>returns a structured failure for a malformed root before probing protection</code> verifies <code>\\?\GLOBALROOT\Device\...</code> returns <code>IISDiscoveryFailed</code> without invoking the protected-path probe.</td>
+</tr>
+<tr>
+<td>Fully qualified Windows path syntax enforced before resolution</td>
+<td><code>src/Tests/Unit/FullyQualifiedPathSafety.Tests.ps1</code>: drive-relative, root-relative, ordinary relative, provider, invalid <code>RootPath</code>, UNC, device, mixed-separator device, and extended-length syntax cases, plus valid drive/descendant and containment cases.</td>
+</tr>
+<tr>
+<td>Shared result and stable error contracts</td>
+<td><code>src/Tests/Unit/ResultContract.Tests.ps1</code>: documented cleanup fields, UTC normalization, stable fully qualified error ID, category, and target object.</td>
+</tr>
+<tr>
+<td>Hard-link, symlink, and recreated-directory identity behavior</td>
+<td><code>src/Tests/Unit/IdentitySafety.Tests.ps1</code>: native identity stability, hard-link fixture behavior for both temp commands when the host permits it, symbolic-link reparse detection, and recreated-directory identity mismatch. <code>src/Tests/Unit/CoverageEdges.Tests.ps1</code> also verifies that ancestor handles remain held after discovery until mutation completes.</td>
+</tr>
+<tr>
+<td>IIS/Exchange format and protected-path allowlists</td>
+<td><code>src/Tests/Unit/PreviewAllowlist.Tests.ps1</code>: built-in IIS format names, Exchange Message Tracking/ETL/log patterns, protected IIS locations, and Exchange database/transaction path normalization.</td>
+</tr>
+<tr>
+<td>Exchange protection metadata completeness</td>
+<td><code>src/Tests/Unit/PreviewAllowlist.Tests.ps1</code>: complete database metadata remains <code>Validated</code>, while missing management metadata or a blank database/log path returns <code>Unknown</code>; malformed path objects still fail closed.</td>
+</tr>
+<tr>
+<td>Typed stale-profile output</td>
+<td><code>src/Tests/Unit/ProfileOutput.Tests.ps1</code>: typed fields, unknown dates, optional size, exclusions, queued-directory reparse replacement fail-closed behavior, native directory identity lock during enumeration, ancestor-handle/revalidation behavior through queued traversal, no host output, and orphan-helper retirement.</td>
+</tr>
+<tr>
+<td>Fail-closed and runtime edge branches</td>
+<td><code>src/Tests/Unit/CoverageEdges.Tests.ps1</code>, <code>src/Tests/Unit/IISDiscoverySafety.Tests.ps1</code>, <code>src/Tests/Unit/PreviewCommandSafety.Tests.ps1</code>, <code>src/Tests/Unit/ProfileOutput.Tests.ps1</code>, and <code>src/Tests/Unit/RuntimeSafety.Tests.ps1</code>: malformed and partial discovery with unknown totals, source-specific IIS errors, isolated WebAdministration dependency/preference state, stable temp directory handles during enumeration, queued-directory replacement, reparse roots/descendants, extended UNC normalization, canonical current-user temp containment, actual Windows-root resolution, actual token privilege, long-path policy, WhatIf state, explicit Confirm-false state, and fresh-process interactive Confirm approval/decline.</td>
+</tr>
+<tr>
+<td>Review regressions closed in the final patch</td>
+<td><code>src/Tests/Unit/ExchangePreviewEdgeCases.Tests.ps1</code> and <code>src/Tests/Unit/IISDiscoverySafety.Tests.ps1</code>: extended-length namespaces remain on provider traversal paths while comparison/result paths are normalized, IIS FTP discovery uses the configuration provider with numeric site-id XPath selection (including apostrophe-named sites), discovery failures stay independent from valid web-root candidates and return per-FTP structured failures, unknown WebAdministration/registry logging formats and registry rollover modes fail closed, and the MkDocs deployment has a strict build followed by the supported <code>gh-deploy --strict --force</code> command. <code>src/Tests/Unit/CoverageEdges.Tests.ps1</code> verifies root identity stability, recent/vanished-candidate pruning blockers, calendar-validated local-time, monthly, daily, and hourly W3C names, and IIS/NCSA prefix boundaries; <code>src/Tests/Unit/RuntimeSafety.Tests.ps1</code> covers root-failure summaries, serialized native initialization, and one explicit <code>Y</code> plus one explicit <code>N</code> without nested prompts; profile sizing retains stable handles for every queued ancestor and revalidates the complete ancestry from those retained handles. <code>src/Tests/Unit/PreviewCommandSafety.Tests.ps1</code> covers surfaced IIS metadata errors and W3SVC-only fallback metadata; <code>src/Tests/Unit/PreviewAllowlist.Tests.ps1</code> covers Exchange command-probe errors.</td>
+</tr>
+<tr>
+<td>Concurrent writer, profile identity, and unavailable-product safety</td>
+<td><code>src/Tests/Unit/CleanupBehavior.Tests.ps1</code>: deletion without write sharing, candidate file and planned-directory verbose paths; <code>src/Tests/Unit/TempCandidateSafety.Tests.ps1</code>: opened-handle last-write metadata and file/directory replacement locks; <code>src/Tests/Unit/ProfileOutput.Tests.ps1</code>: complete service/application-pool SID exclusions, reparse-point ancestor rejection, queued-directory replacement fail-closed sizing, and native directory identity locking during enumeration; <code>src/Tests/Unit/PreviewCommandSafety.Tests.ps1</code> and <code>src/Tests/Unit/ExchangePreviewEdgeCases.Tests.ps1</code>: unavailable IIS/Exchange products and roots report structured failed results.</td>
+</tr>
+<tr>
+<td>Exact artifact and clean install</td>
+<td><code>src/Tests/Integration/PackageImport.Tests.ps1</code>: archive sidecar/hash, manifest file records including hidden files, extracted source-layout import, external help, aliases, and preview locks in each available host. Exact merged PS7.4.20, PS7.5.11, and PS7.6.6 builds use explicit fixed text encodings and produce 19-file manifests; each runtime's sidecar hash matches its tested archive, and each archive is checked without rebuilding in its integration lane. The PS5.1 lane downloads the canonical 7.6.6 artifact and archive and repeats the package/import/clean-install checks without creating a separate archive. Archive and publisher checks use the same hidden-file-inclusive artifact set.</td>
+</tr>
+<tr>
+<td>Full publication gate and module staging</td>
+<td><code>.github/workflows/Build Module.yml</code> is callable by <code>.github/workflows/Publish.yml</code>; the publish job waits for the full matrix and downloads the tested PS7.6.6 artifact/archive. <code>.github/workflows/publish.ps1</code> verifies the exact artifact, stages it beneath a temporary <code>TheCleaners</code> module directory, rechecks the staged manifest/file set and every staged-file SHA-256 against the archive manifest, and passes only that path to <code>Publish-Module</code>; no publication was performed.</td>
+</tr>
+<tr>
+<td>Host and ACL evidence</td>
+<td><code>lab/Invoke-TheCleanersAclFixture.ps1</code>: isolated read-denied/delete-allowed ACL, exact rule masks, candidate before/after lists, result counts, bytes, errors, and acceptance. <code>lab/Invoke-TheCleanersProductPreviewLab.ps1</code>: read-only product, build, service, protected-path, candidate, and preview evidence with deletion disabled.</td>
+</tr>
+</tbody>
+</table>
+<p>Adding tests is not evidence that they passed. The September 16 exact-commit hosted evidence is recorded above with exact runtimes, counts, failures/skips, coverage, hashes, job URLs, and scope limitations. Only the TC-008 runtime-matrix and bounded PS7 Windows archive-reproducibility subgates are closed by the PR #33 merge evidence. Windows/IIS/Exchange product acceptance is not replaced by CI with mocked fixtures; Windows client/server, broader elevated/non-elevated, real-system-root, ReFS, IIS, and Exchange acceptance remain explicit open gates.</p>
+<h2 id="parallel-work-boundaries">Parallel work boundaries</h2>
+<p>One integrator owns shared exports, loader, path helper, shared tests, and build/publishing files. IIS, Exchange, profile, and documentation work may proceed on separate branches with separate test files after interfaces are agreed. Merge serially, rebase, and rerun all cross-cutting tests. Do not run destructive acceptance tests concurrently against the same fixture or machine.</p>
+<h2 id="out-of-scope-for-10">Out of scope for 1.0</h2>
+<p>Profile deletion, arbitrary-path or remote cleanup, scheduling installation, automatic all-service orchestration, Linux/macOS support, additional cleanup targets, and complex UI. These should not displace safety or packaging validation.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      (c) 2026 Sam Erde
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.tracking", "navigation.sections", "navigation.top", "toc.follow", "toc.integrate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

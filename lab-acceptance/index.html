@@ -1,0 +1,1519 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Windows maintenance commands with explicit cleanup safety controls. IIS and Exchange log discovery commands are preview-only.">
+      
+      
+        <meta name="author" content="Sam Erde">
+      
+      
+        <link rel="canonical" href="https://day3bits.com/TheCleaners/lab-acceptance/">
+      
+      
+        <link rel="prev" href="../release-plan-1.0/">
+      
+      
+        <link rel="next" href="../deployment-validation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Windows lab acceptance - The Cleaners PowerShell Module</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#windows-lab-acceptance" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="The Cleaners PowerShell Module" class="md-header__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            The Cleaners PowerShell Module
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Windows lab acceptance
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SamErde/TheCleaners" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    SamErde/TheCleaners
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../safety-and-confirmation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Safety
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../command-contracts/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contracts
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../support-matrix/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Support
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../migration-to-1.0/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Migration to 1.0
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../TheCleaners/" class="md-tabs__link">
+          
+  
+  
+  Functions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../packaging/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="The Cleaners PowerShell Module" class="md-nav__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    The Cleaners PowerShell Module
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SamErde/TheCleaners" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    SamErde/TheCleaners
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../safety-and-confirmation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../command-contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../support-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration-to-1.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration to 1.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Functions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TheCleaners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Get-TheCleaners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get-TheCleaners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-CurrentUserTemp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-CurrentUserTemp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-WindowsTemp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-WindowsTemp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-OldIISLog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-OldIISLog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Clear-OldExchangeLog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clear-OldExchangeLog (preview)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Get-StaleUserProfile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get-StaleUserProfile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Start-Cleaning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start-Cleaning (alias)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../packaging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packaging and reproducibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-plan-1.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1.0 implementation plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows lab acceptance
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows lab acceptance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#entry-conditions-and-capability-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry conditions and capability boundary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operator-sequence-for-a-later-approved-lab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operator sequence for a later approved lab
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evidence-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidence contract
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tc-003004-acceptance-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TC-003/004 acceptance matrix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#temp-cleaners" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temp cleaners
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iis-and-exchange-preview-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IIS and Exchange preview gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Documentation deployment gate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href=".." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../packaging/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Development
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="windows-lab-acceptance">Windows lab acceptance</h1>
+<p>These checks prepare a disposable Windows client/server lab. They are not acceptance results or permission to provision or execute that lab. Development uses isolated fixtures or mocks only. Actual Windows/user roots require a separately approved disposable host and snapshot; IIS and Exchange additionally require named product/build prerequisites and remain preview-only.</p>
+<h2 id="entry-conditions-and-capability-boundary">Entry conditions and capability boundary</h2>
+<p>The preparation baseline is PR #35 merge <code>66119785413b8cd3b2004f1b9fc7f49bed504a6a</code>. Its <a href="../tc008-uncovered-branch-review/">bounded risk inventory</a> assigns native/platform gaps to TC-003/004; the <a href="../evidence/tc008-baseline-uncovered.csv">source-line inventory</a> retains the earlier immutable coverage baseline. The 232 remaining missed commands are not a percentage target.</p>
+<p>Implemented capabilities are the ACL fixture below, existing Pester fixtures for both temp commands, and the separate product preview probe. There is <strong>no general actual-root or adversarial lab runner</strong>. Manual matrix cases need an approved, reviewed scenario driver and timing barriers before execution; a mock or an attempted race that never reaches its intended boundary cannot pass a native-concurrency case.</p>
+<p>Read-only preparation observed a Windows 11 Enterprise <code>10.0.26200</code> workstation, non-elevated token, PowerShell <code>7.6.6</code>, and NTFS volumes. This is development-host context only. No disposable client/server host, snapshot/restore proof, ReFS volume, alternate token, credentials, or actual-root approval was established. An existing directory named like a lab is not proof of those prerequisites. No product probe or actual-root cleaner was run.</p>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Required acceptance lanes</th>
+<th>Missing prerequisites / stop condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OS</td>
+<td>Each maintainer-approved supported Windows client and server edition/build/architecture; record exact patch/build</td>
+<td>Named disposable hosts, support decision, isolation owner and reset procedure. A hosted Server 2025 fixture does not cover client builds.</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>Windows PowerShell 5.1 and supported PS7 lines; as verified September 17, 2026: <code>7.4.20</code>, <code>7.5.11</code>, <code>7.6.6</code></td>
+<td>Installations and hashes on each host; refresh against <a href="https://learn.microsoft.com/en-us/powershell/scripting/install/powershell-support-lifecycle">Microsoft's lifecycle</a> before execution. Do not replace a missing lane with a skip labeled pass.</td>
+</tr>
+<tr>
+<td>Token</td>
+<td>Elevated administrator and standard/non-elevated split token for both commands</td>
+<td>Named lab accounts, ACL control and UAC elevation evidence; never infer elevation from account membership or environment variables.</td>
+</tr>
+<tr>
+<td>Filesystem</td>
+<td>NTFS for every applicable lane; ReFS on a supported disposable data volume</td>
+<td>Verified volume identity, filesystem/driver/build and <code>FILE_ID_INFO</code> behavior. ReFS-inapplicable OS/boot/root combinations need an explicit reason and maintainer disposition. Do not relocate Windows roots to manufacture a lane.</td>
+</tr>
+<tr>
+<td>Roots</td>
+<td>Isolated fixtures first; actual current-user and Windows temp resolution in a restored, separately approved host</td>
+<td>Approved exact roots, candidate inventory, snapshot ID and successful restore rehearsal. Changing <code>TEMP</code> alone is not Windows-root acceptance.</td>
+</tr>
+<tr>
+<td>Concurrency</td>
+<td>Separate, bounded helper process with named synchronization points and captured exit state</td>
+<td>Reviewed fixture-only driver, deterministic barriers, deadlines, exclusive fixture ownership, and recovery. Do not start competing cleanup against a shared root.</td>
+</tr>
+</tbody>
+</table>
+<p>Expand each case below across the applicable OS/runtime/token/filesystem combinations. Allocate a separate record per combination and command. <code>Blocked</code>, <code>Failed</code>, and <code>NotRun</code> stay distinct; unsupported combinations carry their reason and approval. No lane is implicitly accepted by another lane's result.</p>
+<h2 id="operator-sequence-for-a-later-approved-lab">Operator sequence for a later approved lab</h2>
+<ol>
+<li>Name the host, owner, approval reference, supported OS/runtime/token/filesystem lanes, exact allowed roots, maximum duration, snapshot ID and restore procedure. Stop if any are unknown. Keep credentials out of evidence. Obtain execution approval only after this concrete plan and the scenario driver have been reviewed. This preparation stage grants none of those permissions.</li>
+<li>Revert the disposable host, prove recovery with a rehearsal, isolate it from production shares/data, and create an exclusive lab-account fixture parent. Record volume identities and all ancestor/reparse checks. Install only the reviewed commit/artifact; require a clean source tree, exact SHA and SHA-256 of scripts, module inputs, drivers, and evidence schema. Keep evidence outside cleanup roots.</li>
+<li>In a fresh <code>-NoProfile</code> process, record OS build, runtime/edition/architecture, token SID/elevation, privileges, filesystem/volume ID, root resolution sources, and initial module/preferences/process/service state. Run a single selected case; record its literal invocation, parameters, one UTC cutoff, and every candidate's native volume/file ID, size, attributes and timestamps. Capture errors as ID/category/target/message, never just console text.</li>
+<li>Run explicit <code>-WhatIf</code> and reconcile the complete preview inventory and unchanged state before a removal case. Capture actual <code>-Confirm</code> Y and N responses in the existing isolated child-host approach; use <code>-Confirm:$false</code> only for the reviewed fixture operation. A preview failure, changed identity/inventory, missing artifact or incomplete discovery stops the case.</li>
+<li>Execute only the approved case. For concurrency, save the barrier timeline, helper PID/exit/timeout and proof that the intended interleaving occurred. Run both continuing and <code>-ErrorAction Stop</code> variants where specified. Collect result object, error stream, post-state and an independent logical-byte/count reconciliation before recovery.</li>
+<li>Release all helper/native handles, restore process state, and record an exclusive rename/reopen probe in the disposable fixture to detect leaked handles. The ACL harness deliberately retains its child; never repair a failure using recursive <code>icacls</code> or deletion against an unverified path. Stop on residual or unknown state, preserve evidence, and use the approved snapshot reset. Record reset success and post-restore health separately from case success.</li>
+<li>Hash the evidence bundle, attach machine-readable records and raw artifacts to the packet, and obtain maintainer assessment. A harness <code>Acceptance=true</code> means only its isolated case passed; no product, complete TC packet or release gate closes automatically. A confirmed runtime defect becomes a reproduced successor blocker, not an unreviewed change during lab preparation.</li>
+</ol>
+<h2 id="evidence-contract">Evidence contract</h2>
+<p>Use <a href="https://github.com/SamErde/TheCleaners/blob/main/lab/acceptance-record.schema.json"><code>lab/acceptance-record.schema.json</code></a> for the outer record (JSON Schema draft 7). JSON validity is only structural; the reviewer must verify artifact hashes, source identity, case expectations, completed interleavings and recovery. Unknown counts are <code>null</code>, never zero. A <code>Failed</code> record requires explicit <code>failureReasons</code> and may retain null identity/host/root metadata when the failure prevented collection; never invent those values. Record intentional error cases as expected observations, separately from assertion failures.</p>
+<p>Every executed <code>Passed</code> or <code>Failed</code> case requires a recovery object. <code>Blocked</code>, <code>NotRun</code> and <code>NotApplicable</code> records can retain null metadata/recovery because no case was executed; <code>missingPrerequisites</code> must explain that state. Assertion evidence is a map from each planned assertion ID to <code>{ "status": "Passed", "detail": "observed evidence" }</code> (or <code>Failed</code>, <code>Skipped</code>, <code>NotRun</code>). Derive totals and status counts from those entries, never from independent counters. A passing record requires at least one entry and every entry must pass. The reviewer must also compare the IDs with the complete reviewed case plan: omitting an expected assertion does not pass acceptance. Preflight failures can have an empty assertion map with explicit failure reasons; uncollected execution counts remain unknown.</p>
+<table>
+<thead>
+<tr>
+<th>Artifact group</th>
+<th>Required content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>identity</code></td>
+<td>Exact commit and clean/dirty status, case/command, UTC start/end, literal invocation, script/module/driver SHA-256, approval reference and operator; no credentials.</td>
+</tr>
+<tr>
+<td><code>host</code></td>
+<td>Disposable host ID, OS edition/build/architecture, full runtime and edition, token SID/elevation/privileges, volume serial and filesystem, snapshot/reset IDs.</td>
+</tr>
+<tr>
+<td><code>root</code></td>
+<td>Approved fixture and actual requested/resolved roots, canonical/registry/native resolution sources, native identity, ancestor/reparse inventory, containment decision.</td>
+</tr>
+<tr>
+<td><code>before</code>, <code>preview</code>, <code>after</code></td>
+<td>Complete file/directory inventories with path, identity, length, UTC last-write, attributes, ACL/access masks where relevant; candidate and noncandidate counts, content hashes when readable, outside sentinels, stable handles and timestamps. A content-read denial needs native metadata and denial evidence rather than a invented hash.</td>
+</tr>
+<tr>
+<td><code>outcome</code></td>
+<td>Raw typed result, proposed/removed/skipped/failed files and directories, logical bytes, discovery status, stable errors with category/target, cutoff, expected versus observed assertions, unknown totals, explicit failure/skip/not-run counts.</td>
+</tr>
+<tr>
+<td><code>concurrency</code>, <code>recovery</code></td>
+<td>Barrier timeline and achieved interleaving, helper lifetime, retained/closed handles, rename/reopen proof, environment restoration, residual inventory or enumeration error, retained fixture path, reset/restore outcome and health.</td>
+</tr>
+</tbody>
+</table>
+<p>The ACL harness emits its own additive <code>SchemaVersion=1</code> <strong>raw artifact</strong>, not the outer schema record, for case <code>ACL-READ-DENIED</code>: exact <code>Commit</code>, <code>WorkingTreeDirty</code>, <code>Scope=IsolatedFixture</code>, approved parent/root, native root/candidate identities (including the volume serial in the native key), readable-file content hash, explicit read denial for the other file, unchanged preview metadata/content and exact candidate paths, ACL masks, runtime/edition, OS caption/version/build, filesystem/drive, token SID/elevation, and result/errors. Architecture, enabled token privileges, approved host/snapshot identity and the complete lane envelope require separate operator collection. This fixture does not substantiate those acceptance lanes by itself.</p>
+<p><code>Recovery</code> is emitted <strong>after</strong> TEMP/TMP restoration and owned-handle disposal. A DELETE-capable root reopen performs no deletion or rename: it verifies the same non-reparse native identity and closes its probe handle. This checks root sharing/identity, not every possible leaked ancestor handle; the separate Pester rename probe and later lab driver cover ancestry. Reopen failures may reflect ACL/sharing/identity errors and are recorded with native error details. <code>Acceptance</code> requires a clean tree, observed read denial, exact rules, valid OS and NTFS/ReFS evidence, a freshly imported source module, matching preview/removal paths, two removals/six logical bytes, zero command errors, preserved preview/inventory, closed owned handles/probe, successful root reopen, restored TEMP/TMP and an empty retained root. A run failure makes <code>Acceptance=false</code>, preserves available metadata and residue, and requires the caller to reject the artifact. Normal execution initializes a native type and reloads the hashed source module; <strong>exit the dedicated process</strong> to end that state. It does not promise to restore all caller session state. Preflight failures throw before fixture creation. <code>-WhatIf</code> on the harness itself returns without setup/import/native initialization and is not a case result.</p>
+<h2 id="tc-003004-acceptance-matrix">TC-003/004 acceptance matrix</h2>
+<p>All rows remain <strong>unexecuted acceptance</strong>. <code>Pester</code> below means an implemented isolated fixture; <code>manual</code> means the later lab still needs a reviewed driver. Common prerequisites and all artifact groups above apply to every row; the last column names additional requirements. Run both temp commands unless the row is explicitly command-specific. Baseline risk ownership comes from the inventory's <code>defensive-lab</code> and <code>platform-lab</code> dispositions and the risk review's native identity/post-delete section.</p>
+<table>
+<thead>
+<tr>
+<th>Case / capability</th>
+<th>Invariant and safe disposable setup</th>
+<th>Expected result</th>
+<th>Additional artifacts and missing prerequisites</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ROOT-RESOLUTION / Pester + manual</td>
+<td>In a snapshotted host compare <code>GetTempPath</code>, canonical LocalApplicationData temp, native Windows directory and registry fallback. Supply an environment-variable decoy only inside the lab.</td>
+<td>Current-user path must remain canonical/contained; Windows root follows actual OS resolution; malformed/unavailable roots fail before discovery with unknown totals.</td>
+<td>Resolution sources, <code>TempRootValidationFailed</code>, registry/native values, decoy sentinels. Actual-root host/approval and controlled failure driver missing.</td>
+</tr>
+<tr>
+<td>PATH-FORMS / Pester + manual</td>
+<td>Fixture names with literal brackets, prefix-confusable siblings; drive/root-relative, provider, device, UNC and extended/long-path forms. Never point rejection probes at valuable data.</td>
+<td>Literal names stay literal; forbidden forms fail closed; supported long paths require actual provider/policy success; no outside access/removal.</td>
+<td>Input versus comparison/traversal path, long-path policy, provider result, outside hashes. Isolated UNC share/credentials and per-host policy evidence missing.</td>
+</tr>
+<tr>
+<td>TOKEN-ACCESS / Pester + manual</td>
+<td>Same reviewed fixture in elevated and non-elevated sessions; Windows-temp actual root only in the approved host.</td>
+<td>Report actual token; allowed work reconciles, denied discovery/removal reports stable errors and honors Stop.</td>
+<td>Token SID/elevation/privileges, ACL and result <code>PrivilegeStatus</code>; alternate accounts/host approval missing.</td>
+</tr>
+<tr>
+<td>ACL-READ-DENIED / current-user ACL harness; Windows-temp manual</td>
+<td>For <code>Clear-CurrentUserTemp</code>, new child under exclusive canonical-temp parent, two old three-byte files; deny <code>ReadData</code> (1), allow <code>Delete</code> (65536) for one file.</td>
+<td>WhatIf preserves; actual content read is denied; both files removed without content-read permission; six logical bytes; retained empty root, state restored/handles closed.</td>
+<td>Effective ACL rules/masks, denied-read exception, both native IDs and metadata, recovery. Host/token/filesystem lanes and a Windows-temp ACL driver still missing; this harness covers only <code>Clear-CurrentUserTemp</code>. Dirty source cannot pass.</td>
+</tr>
+<tr>
+<td>ACL-DISCOVERY / Pester + manual</td>
+<td>Deny enumeration on a queued fixture child after partial discovery; separately deny attribute/identity access.</td>
+<td><code>TempDiscoveryFailed</code>, unknown candidate totals, no usable partial plan or mutation; Stop terminates; all handles close.</td>
+<td>Exact ACL masks and timing, error category/target, surviving sentinels, handle probe. ACL-capable driver/token lanes missing.</td>
+</tr>
+<tr>
+<td>UTC-BOUNDARY / Pester + manual</td>
+<td>Old/exact-cutoff/recent files, local clock result, literal names and known sizes.</td>
+<td>One inclusive UTC cutoff; only eligible files; logical bytes equal successful removals.</td>
+<td>Captured clock/timezone/cutoff/precision and before metadata. Per-filesystem timestamp granularity evidence missing.</td>
+</tr>
+<tr>
+<td>SHOULDPROCESS / Pester + manual</td>
+<td>Snapshot files, directories, preferences, module/native state and process/registry state; preview, interactive Y/N, explicit Confirm-false, noninteractive invocation.</td>
+<td>WhatIf/N preserve all state; Y has one owning-command prompt; noninteractive cannot silently approve; every mutation authorized.</td>
+<td>Transcript/prompt count/responses, state diffs, result status and preserved sentinels. Interactive/noninteractive drivers on named hosts missing.</td>
+</tr>
+<tr>
+<td>LOCK-SHARING / Pester + manual</td>
+<td>Helper holds fixture file with separate read/write/delete-share combinations; record opened rights.</td>
+<td>Unsupported sharing yields <code>TempFileRemovalFailed</code> with zero removal/bytes for that file; sibling result reconciles; no abandoned handle.</td>
+<td>Handle access/share masks, helper timeline/exit, continuing/Stop errors. Bounded helper per runtime/filesystem missing.</td>
+</tr>
+<tr>
+<td>DELETE-PENDING / manual</td>
+<td>Helper opens only fixture candidate with delete sharing and retains it across cleaner deletion request.</td>
+<td>Do not claim successful removal/bytes while the path still exists; reconcile post-delete failure conservatively and disqualify pruning.</td>
+<td>Existence/native identity before/after last handle close, error/result and pending interval. Deterministic native helper missing; attempted timing alone is not evidence.</td>
+</tr>
+<tr>
+<td>FILE-RACE / Pester + manual</td>
+<td>After discovery, move old candidate aside (prevent file-ID reuse), create a different file or directory; separately make candidate recent or change its length/last-write.</td>
+<td>Replacement/recent objects survive and count as skips; directory never counted as removed file; native identity/metadata bind deletion and bytes.</td>
+<td>Old/new IDs, held-handle write/rename outcomes, barrier timeline, sibling/outside hashes. Physical race drivers missing; injected-plan tests are not physical replacement proof.</td>
+</tr>
+<tr>
+<td>ROOT-RACE / Pester + manual</td>
+<td>Attempt root/ancestor rename, replacement or reparse substitution at planning/mutation barriers; no outside data.</td>
+<td>Held handles block replacement or identity revalidation fails closed (<code>TempRootChanged</code>); no outside mutation.</td>
+<td>Every ancestry ID/handle, actual operation errors and timeline, closed-handle probe including Stop. Reviewed hostile-timing driver missing; no claim of immunity to kernel filters.</td>
+</tr>
+<tr>
+<td>QUEUED-DIRECTORY / Pester + manual</td>
+<td>Replace/reparse a queued child before enumeration, or fail its identity capture in a controlled fixture.</td>
+<td>Fail discovery, discard partial totals, preserve data, release ancestors; no traversal into the substitute.</td>
+<td>Queue/barrier evidence, target sentinels, stable <code>TempDiscoveryFailed</code> and identity failure. Physical native-interleaving driver missing.</td>
+</tr>
+<tr>
+<td>REPARSE / Pester + manual</td>
+<td>Root/ancestor/descendant junctions and symlinks with target sentinel inside separate fixture; test attribute change while handles are held.</td>
+<td>Root/ancestry validation or traversal fails closed; links not traversed/removed; target unchanged.</td>
+<td>Reparse tag, IDs and target inventory, token privilege, native attribute-change outcome. Link rights and supported filesystem variants missing.</td>
+</tr>
+<tr>
+<td>HARDLINK / Pester + manual</td>
+<td>Two fixture names sharing one file identity, one outside approved cleanup child; use NTFS and only filesystems supporting hard links.</td>
+<td>Only approved name removed; outside name/content remains; reported bytes are logical, not physical free space.</td>
+<td>Link count, shared identity, both path inventories and content hashes. Unsupported ReFS variant is blocked/not-applicable with reason, never a silent pass.</td>
+</tr>
+<tr>
+<td>PRUNE-OPT-IN / Pester + manual</td>
+<td>Old-file leaf/ancestors plus unrelated empty branch, root and recent-file branch; run with/without <code>RemoveEmptyDirectory</code>.</td>
+<td>No directories without opt-in; with opt-in only invocation-emptied identity-matching directories/ancestors, deepest-first; preserve roots/unrelated/recent/reparse branches.</td>
+<td>Complete before/after directory graph, proposed/removed/skipped counts, parent IDs and mutation order. Host/filesystem lanes missing.</td>
+</tr>
+<tr>
+<td>PRUNE-DISQUALIFY / Pester + manual</td>
+<td>Per-run variants: vanished/skipped/locked/failed/recent/reparse child, child made nonempty, planned directory replaced, prune access/I/O failure.</td>
+<td>A disqualified descendant blocks ancestor pruning even if another actor empties it; replacement survives; <code>TempDirectoryRemovalFailed</code> where applicable; Stop releases handles.</td>
+<td>Who removed each child, old/new identities, errors/category/target, ancestor survival and timeline. Native timing/ACL driver missing.</td>
+</tr>
+<tr>
+<td>RECONCILE / Pester + manual</td>
+<td>Mix successes, missing files, preserved replacements, denied operations, and directory outcomes; separate empty versus failed discovery.</td>
+<td>Valid discovery: candidates = removed + skipped + failed for each kind; no bytes for failed/skipped files; discovery failure uses null totals, not empty success.</td>
+<td>Independent per-path outcome ledger, logical-length sum and raw result/error IDs. Delete-pending/native failure variants missing.</td>
+</tr>
+<tr>
+<td>HANDLE-RECOVERY / Pester + manual</td>
+<td>For success, declined/WhatIf, discovery failure, removal failure and Stop, inspect owned handles and helper lifetimes; bounded rename/reopen afterward.</td>
+<td>No leaked native/helper handles; environment restored; recovery failure is recorded and blocks acceptance; residue preserved for snapshot recovery.</td>
+<td>Handle counts/closed flags, rename/reopen result, original/final environment, helper exit, residue/reset/health. Snapshot and restore proof missing.</td>
+</tr>
+<tr>
+<td>REFS-IDENTITY / manual</td>
+<td>All applicable identity, locks, race, pruning and reconciliation rows on an approved ReFS fixture volume.</td>
+<td>Stable <code>FILE_ID_INFO</code> or explicit fail-closed error; no NTFS result substituted as ReFS acceptance.</td>
+<td>Volume serial, ReFS version/build, raw native error/identity behavior. Supported volume and canonical user-temp placement missing; no root-relocation automation exists.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="temp-cleaners">Temp cleaners</h2>
+<p>Use the ACL harness only with an already-created exclusive disposable parent <strong>beneath that lab user's canonical LocalApplicationData temp directory</strong>. A path like <code>C:\Disposable\TheCleanersLab</code> outside that boundary is rejected. The cleaner targets a new GUID child only; the parent and actual temp root are never cleanup targets. These commands are a later execution recipe, not permission to run a lab:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">$FixtureParent</span> <span class="p">=</span> <span class="nb">Join-Path</span> <span class="p">(</span><span class="no">[Environment]</span><span class="p">::</span><span class="n">GetFolderPath</span><span class="p">(</span><span class="s1">'LocalApplicationData'</span><span class="p">))</span> <span class="s1">'Temp\TheCleanersLab'</span>
+<span class="c"># The approved operator creates and reviews this parent and C:\LabEvidence (outside cleanup roots) before invoking the harness.</span>
+<span class="nv">$Evidence</span> <span class="p">=</span> <span class="p">.\</span><span class="n">lab</span><span class="p">\</span><span class="nb">Invoke-TheCleanersAclFixture</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-FixtureParent</span> <span class="nv">$FixtureParent</span> <span class="n">-Confirm</span><span class="p">:</span><span class="nv">$false</span> <span class="p">|</span> <span class="nb">ConvertFrom-Json</span>
+<span class="nv">$Evidence</span> <span class="p">|</span> <span class="nb">ConvertTo-Json</span> <span class="n">-Depth</span> <span class="n">10</span> <span class="p">|</span> <span class="nb">Set-Content</span> <span class="n">-LiteralPath</span> <span class="n">C</span><span class="p">:\</span><span class="n">LabEvidence</span><span class="p">\</span><span class="n">acl-raw</span><span class="p">.</span><span class="n">json</span> <span class="n">-Encoding</span> <span class="n">UTF8</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">-not</span> <span class="nv">$Evidence</span><span class="p">.</span><span class="n">Acceptance</span><span class="p">)</span> <span class="p">{</span> <span class="k">throw</span> <span class="s1">'ACL fixture failed; preserve the record and retained child.'</span> <span class="p">}</span>
+</code></pre></div>
+<p>Exit that process. Hash <code>acl-raw.json</code> and reference it from the appropriate artifact groups in a separate outer case record. Collect the missing host/token/snapshot, assertion and recovery/reset evidence; validate that record against the schema and verify its artifact hashes before proposing any lab acceptance.</p>
+<p>The <a href="https://github.com/SamErde/TheCleaners/actions/runs/35129434807/job/104907172823">exact PR #31 hosted PS5.1 job</a> for merged commit <code>037c27a81234361620a633f68a33bfb370f0a03e</code> used its isolated runner temp child and uploaded the machine-readable Windows PowerShell results. It recorded two candidates (<code>old-readable.tmp</code> and <code>old-delete-without-read.tmp</code>), <code>2 -&gt; 0</code>, <code>FilesRemoved = 2</code>, <code>BytesReclaimed = 6</code>, no failures/skips/error IDs, NTFS, elevation, and <code>Acceptance = true</code>. That fixture is not complete Windows client/server, broader elevated/non-elevated, ReFS, or real system-root acceptance.</p>
+<h2 id="iis-and-exchange-preview-gates">IIS and Exchange preview gates</h2>
+<p>Until the release-plan gates pass, these commands remain structurally preview-only. Lab work may validate discovery and service health, but must not add a deletion call or treat a preview candidate list as authorization.</p>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Required evidence before any later removal design</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IIS</td>
+<td>WebAdministration availability/missing-product behavior; Web/FTP/custom format allowlists; expanded and deduplicated default/custom roots; protected <code>inetsrv</code>/configuration/history paths; before/after candidate inventory; IIS service health.</td>
+</tr>
+<tr>
+<td>Exchange</td>
+<td>Exact v15 product/build and supported path matrix; MessageTracking/ETL/diagnostic patterns; mailbox database and transaction-log exclusions including custom paths; before/after candidate inventory; Exchange service health.</td>
+</tr>
+</tbody>
+</table>
+<p>No 1.0 release gate is satisfied by mocked fixtures alone. Attach the lab evidence to the packet/PR and keep the preview lock until a maintainer approves the product-specific transition.</p>
+<p>Run the read-only product probe only in a disposable product lab after recording the exact commit and product build:</p>
+<div class="highlight"><pre><span></span><code><span class="p">.\</span><span class="n">lab</span><span class="p">\</span><span class="nb">Invoke-TheCleanersProductPreviewLab</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Confirm</span><span class="p">:</span><span class="nv">$false</span>
+</code></pre></div>
+<p>The exact merged commit has no IIS or Exchange product/build lab record. Do not copy the earlier workstation absence probe forward as acceptance or exact-commit evidence.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      (c) 2026 Sam Erde
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.tracking", "navigation.sections", "navigation.top", "toc.follow", "toc.integrate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
