@@ -6,7 +6,7 @@ Following the `0.0.15-beta` prerelease, Windows client/server, IIS, Exchange, pr
 
 ## 0.0.15-beta - 2026-09-17
 
-Version `0.0.15-beta` was published from exact source `345f06c861b6d4074e5896e0b27a19f869dfa7e3` under tag `v0.0.15-beta`. The [release notes and history reconciliation](docs/releases/0.0.15-beta.md) map the changes below to that prerelease. The old unpublished `0.0.11-alpha` GitHub draft remains historical metadata and was not reused.
+Version `0.0.15-beta` was published from exact source `345f06c861b6d4074e5896e0b27a19f869dfa7e3` under tag `v0.0.15-beta`. The [release notes and history reconciliation](docs/releases/0.0.15-beta.md) map the changes below to that prerelease. An earlier inventory recorded an unpublished `0.0.11-alpha` GitHub draft; it was not reused for this release. The post-publication inventory no longer returned that draft, and its disappearance is not attributed to the beta release operation.
 
 ### Added
 
