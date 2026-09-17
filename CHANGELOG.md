@@ -4,6 +4,8 @@
 
 This entry describes unreleased work, not a released 1.0 package. Historical changes preceding this work still need reconciliation against the repository and Gallery history.
 
+The next prepared prerelease is **0.0.15-beta**, proposed tag `v0.0.15-beta`. The [release notes and history reconciliation](docs/releases/0.0.15-beta.md) map the changes below to that candidate. Publication remains pending; the old unpublished `0.0.11-alpha` GitHub draft is preserved as historical metadata and is not reused for this beta.
+
 ### Added
 
 - TC-003/004 disposable Windows acceptance matrix, operator prerequisites, and versioned evidence schema separating implemented fixtures from unexecuted lab acceptance. Harden the isolated ACL harness with canonical-parent/reparse checks, retained identity handles, preview/removal inventory reconciliation, fresh source-module import, required OS metadata, source/candidate evidence, explicit failure residue, and post-recovery reporting; remove recursive ACL reset/deletion and retain the fixture for inspection.
@@ -23,6 +25,7 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 - Prioritize non-lab documentation/delivery readiness and an optional approved prerelease; Windows, IIS, Exchange, and profile lab validation is deferred future work, not underway. Require succinct Completed / Remaining summaries in every successor prompt.
 - Use the working title-case `https://day3bits.com/TheCleaners/` URL consistently in configuration, manifest, source help, and documentation. Track support for both URL cases in Zensical issue #26.
 - Configure the GitHub `powershell-gallery` environment with SamErde review and `v*` tag restrictions. Update the publishing workflow to use the dedicated `PSGALLERY_PUBLISH_API_KEY` environment secret, fail clearly when absent, and stop passing repository secrets to the build matrix. Credential provisioning and publication remain pending.
+- Add a closed local-rehearsal publisher mode that uses an existing local filesystem repository and an internal placeholder key. Preserve the exact-artifact guards shared with the fixed PSGallery production path and require an explicit valid source commit in both modes.
 
 - TC-008 merged implementation: add current PowerShell 7.4.20 and 7.5.11 hosted lanes; preserve 7.6.6 and canonical-artifact PS5.1 testing.
 - Replace runtime-dependent ZIP compression with stored entries, ordinal ordering, UTF-8 names and fixed metadata; require repeated and cross-runtime byte equality, exact commit identity, complete extracted file verification and hidden-file uploads.

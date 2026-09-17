@@ -2,6 +2,8 @@
 
 Windows maintenance commands with explicit safety controls. PR #31 is merged, but this remains unreleased 1.0 preparation work rather than a production-ready release. The source manifest is `0.0.15-beta`; the PowerShell Gallery still serves `0.0.13-alpha`.
 
+The [prepared 0.0.15-beta release](releases/0.0.15-beta.md) is awaiting exact-artifact validation and publication approval. Windows, IIS, Exchange, and profile lab validation is deferred future work, not underway.
+
 Windows PowerShell 5.1 is the minimum; the target policy also includes Microsoft-supported PowerShell 7 releases on Windows. See [support and validation](support-matrix.md).
 
 ```powershell

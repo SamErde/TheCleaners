@@ -28,4 +28,6 @@ For each packet, update its status, relevant help/docs, changelog, tests, and ev
 
 Every next-stage prompt must begin with a very succinct **Completed / Remaining** summary, refreshed from `docs/release-plan-1.0.md`. Include the next bounded objective and carry this same summary requirement into future prompts. Lab validation is deferred future work, not underway; prioritize the non-lab delivery sequence in the plan until the maintainer resumes labs. Save the successor without executing it automatically.
 
+When the maintainer explicitly authorizes continuous execution of the non-deferred plan, continue through those stages without stopping at each handoff. Still save updated prompts for recovery, preserve final publication approval and credential boundaries, and leave deferred labs untouched.
+
 Canonical documentation URL: `https://day3bits.com/TheCleaners/`.

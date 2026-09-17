@@ -47,6 +47,7 @@ nav:
   - Contracts: "command-contracts.md"
   - Support: "support-matrix.md"
   - Migration to 1.0: "migration-to-1.0.md"
+  - "0.0.15-beta preparation": "releases/0.0.15-beta.md"
   - Functions:
       - "Module reference": "TheCleaners.md"
       - "Get-TheCleaners": "Get-TheCleaners.md"
