@@ -138,4 +138,3 @@ Describe 'Disposable ACL harness boundaries and evidence' -Skip:(-not $WindowsHo
         @($Commands | Where-Object { $_.GetCommandName() -in @('Remove-Item', 'icacls.exe', 'Clear-WindowsTemp', 'Clear-OldIISLog', 'Clear-OldExchangeLog') }) | Should -HaveCount 0
     }
 }
-
