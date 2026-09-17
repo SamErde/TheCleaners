@@ -151,7 +151,7 @@ try {
         $null = Get-Content -LiteralPath $OldNoContentReadPath -Raw -ErrorAction Stop
     } catch [System.UnauthorizedAccessException] {
         $ReadWasDenied = $true
-        $ReadDenialError = [ordered]@{ Id = $_.FullyQualifiedErrorId; Category = [string]$_.CategoryInfo.Category; Message = $_.Exception.Message }
+        $ReadDenialError = [ordered]@{ Id = $_.FullyQualifiedErrorId; Category = [string]$_.CategoryInfo.Category; Target = [string]$_.TargetObject; Message = $_.Exception.Message }
     }
 
     $EffectiveRules = @(Get-Acl -LiteralPath $OldNoContentReadPath).GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier]) | Where-Object {
@@ -303,7 +303,7 @@ try {
     }
     foreach ($Key in $OutcomeEvidence.Keys) { $Evidence[$Key] = $OutcomeEvidence[$Key] }
 } catch {
-    $Evidence.RunFailure = [ordered]@{ Id = $_.FullyQualifiedErrorId; Category = [string]$_.CategoryInfo.Category; Message = $_.Exception.Message }
+    $Evidence.RunFailure = [ordered]@{ Id = $_.FullyQualifiedErrorId; Category = [string]$_.CategoryInfo.Category; Target = [string]$_.TargetObject; Message = $_.Exception.Message }
 } finally {
     $env:TEMP = $PreviousTemp
     $env:TMP = $PreviousTmp
@@ -332,6 +332,8 @@ try {
     } catch {
         $RootReopenError = [ordered]@{
             Id = $_.FullyQualifiedErrorId
+            Category = [string]$_.CategoryInfo.Category
+            Target = [string]$_.TargetObject
             Message = $_.Exception.Message
             HResult = $_.Exception.HResult
             NativeErrorCode = if ($_.Exception.InnerException -is [ComponentModel.Win32Exception]) { $_.Exception.InnerException.NativeErrorCode } else { $null }

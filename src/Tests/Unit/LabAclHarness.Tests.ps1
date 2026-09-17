@@ -103,6 +103,7 @@ Describe 'Disposable ACL harness boundaries and evidence' -Skip:(-not $WindowsHo
         $Evidence = & $Harness -FixtureParent $FixtureParent -Confirm:$false | ConvertFrom-Json
         $Evidence.Acceptance | Should -BeFalse
         $Evidence.RunFailure.Message | Should -Match 'Injected host-evidence failure'
+        $Evidence.RunFailure.Target | Should -Match 'Injected host-evidence failure'
         $Evidence.Recovery.EnvironmentRestored | Should -BeTrue
         $Evidence.Recovery.HandlesClosed | Should -BeTrue
         @($Evidence.Recovery.RemainingEntries) | Should -HaveCount 2
