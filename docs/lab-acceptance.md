@@ -35,6 +35,8 @@ Expand each case below across the applicable OS/runtime/token/filesystem combina
 
 Use [`lab/acceptance-record.schema.json`](https://github.com/SamErde/TheCleaners/blob/main/lab/acceptance-record.schema.json) for the outer record (JSON Schema draft 7). JSON validity is only structural; the reviewer must verify artifact hashes, source identity, case expectations, completed interleavings and recovery. Unknown counts are `null`, never zero. A `Failed` record requires explicit `failureReasons` and may retain null identity/host/root metadata when the failure prevented collection; never invent those values. Record intentional error cases as expected observations, separately from assertion failures.
 
+Every executed `Passed` or `Failed` case requires a recovery object. `Blocked`, `NotRun` and `NotApplicable` records can retain null metadata/recovery because no case was executed; `missingPrerequisites` must explain that state. Assertion evidence is a map from each planned assertion ID to `{ "status": "Passed", "detail": "observed evidence" }` (or `Failed`, `Skipped`, `NotRun`). Derive totals and status counts from those entries, never from independent counters. A passing record requires at least one entry and every entry must pass. The reviewer must also compare the IDs with the complete reviewed case plan: omitting an expected assertion does not pass acceptance. Preflight failures can have an empty assertion map with explicit failure reasons; uncollected execution counts remain unknown.
+
 | Artifact group | Required content |
 | --- | --- |
 | `identity` | Exact commit and clean/dirty status, case/command, UTC start/end, literal invocation, script/module/driver SHA-256, approval reference and operator; no credentials. |

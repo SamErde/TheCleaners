@@ -130,15 +130,17 @@
     },
     "assertions": {
       "type": "object",
-      "required": ["total", "passed", "failed", "skipped", "notRun"],
-      "properties": {
-        "total": {"type": ["integer", "null"], "minimum": 0},
-        "passed": {"type": ["integer", "null"], "minimum": 0},
-        "failed": {"type": ["integer", "null"], "minimum": 0},
-        "skipped": {"type": ["integer", "null"], "minimum": 0},
-        "notRun": {"type": ["integer", "null"], "minimum": 0}
-      },
-      "additionalProperties": false
+      "description": "Map planned assertion IDs to observed outcomes. Derive all counts from these entries; never supply independent totals.",
+      "propertyNames": {"minLength": 1},
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status", "detail"],
+        "properties": {
+          "status": {"enum": ["Passed", "Failed", "Skipped", "NotRun"]},
+          "detail": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
     },
     "recovery": {
       "type": ["object", "null"],
@@ -167,6 +169,7 @@
       "then": {
         "properties": {
           "missingPrerequisites": {"maxItems": 0},
+          "failureReasons": {"maxItems": 0},
           "identity": {"properties": {"workingTreeDirty": {"const": false}}},
           "artifacts": {
             "properties": {
@@ -179,13 +182,8 @@
             }
           },
           "assertions": {
-            "properties": {
-              "total": {"type": "integer", "minimum": 1},
-              "passed": {"type": "integer", "minimum": 1},
-              "failed": {"const": 0},
-              "skipped": {"const": 0},
-              "notRun": {"const": 0}
-            }
+            "minProperties": 1,
+            "additionalProperties": {"properties": {"status": {"const": "Passed"}}}
           },
           "recovery": {
             "type": "object",
