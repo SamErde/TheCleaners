@@ -16,13 +16,11 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from build_documentation_manifest import ManifestError, load_manifest, sha256_bytes
+from documentation_http import HttpTransportError, parse_http_url, read_http_response
 
 
 class DeploymentVerificationError(RuntimeError):
     """Raised when deployed content does not match the retained build."""
-
-
-LOCAL_HTTP_HOSTS = {"127.0.0.1", "localhost"}
 
 
 @dataclass(frozen=True)
@@ -76,72 +74,6 @@ def _file_url(base_url: str, relative_path: str, source_commit: str, attempt: in
     return urllib.parse.urljoin(base_url, quoted_path) + "?" + query
 
 
-def _validate_transport_scheme(parsed: urllib.parse.SplitResult) -> None:
-    if parsed.scheme == "http":
-        if parsed.hostname not in LOCAL_HTTP_HOSTS:
-            raise DeploymentVerificationError(
-                "URL must use HTTPS, except HTTP is allowed for localhost tests."
-            )
-        return
-    if parsed.scheme != "https":
-        raise DeploymentVerificationError(
-            "URL must use HTTPS, except HTTP is allowed for localhost tests."
-        )
-
-
-def _parse_http_url(url: str) -> urllib.parse.SplitResult:
-    try:
-        parsed = urllib.parse.urlsplit(url)
-        hostname = parsed.hostname
-        parsed.port
-    except ValueError as error:
-        raise DeploymentVerificationError(f"Invalid HTTP URL: {url!r}.") from error
-
-    _validate_transport_scheme(parsed)
-    if not hostname:
-        raise DeploymentVerificationError("HTTP URL must include a hostname.")
-    if parsed.username is not None or parsed.password is not None:
-        raise DeploymentVerificationError("HTTP URL must not include user information.")
-    if parsed.fragment:
-        raise DeploymentVerificationError("HTTP URL must not include a fragment.")
-    return parsed
-
-
-def _request_target(parsed: urllib.parse.SplitResult) -> str:
-    return urllib.parse.urlunsplit(("", "", parsed.path or "/", parsed.query, ""))
-
-
-def _read_http_response(
-    request_url: str,
-    maximum_body_bytes: int,
-    timeout: float,
-) -> tuple[int, bytes]:
-    parsed = _parse_http_url(request_url)
-    connection_type = (
-        http.client.HTTPSConnection
-        if parsed.scheme == "https"
-        else http.client.HTTPConnection
-    )
-    connection = connection_type(parsed.hostname, parsed.port, timeout=timeout)
-    try:
-        connection.request(
-            "GET",
-            _request_target(parsed),
-            headers={
-                "Accept-Encoding": "identity",
-                "Cache-Control": "no-cache",
-                "User-Agent": "TheCleaners-documentation-verifier/1",
-            },
-        )
-        response = connection.getresponse()
-        try:
-            return response.status, response.read(maximum_body_bytes + 1)
-        finally:
-            response.close()
-    finally:
-        connection.close()
-
-
 def _fetch_file(
     base_url: str,
     record: dict[str, Any],
@@ -152,7 +84,7 @@ def _fetch_file(
     relative_path = record["path"]
     request_url = _file_url(base_url, relative_path, source_commit, attempt)
     try:
-        status, body = _read_http_response(
+        status, body = read_http_response(
             request_url,
             record["size"],
             timeout,
@@ -175,7 +107,7 @@ def _fetch_file(
 def _normalized_navigation_url(base_url: str, route: str) -> str:
     if not route or route.startswith("/") or ".." in PurePosixPath(route).parts:
         raise DeploymentVerificationError(f"Unsafe navigation route: {route!r}")
-    return urllib.parse.urljoin(base_url, route)
+    return _normalized_document_url(base_url, route)
 
 
 def _route_manifest_path(route: str) -> str:
@@ -184,16 +116,19 @@ def _route_manifest_path(route: str) -> str:
     return route
 
 
+def _normalized_document_url(base_url: str, href: str) -> str:
+    return urllib.parse.urlunparse(
+        urllib.parse.urlparse(urllib.parse.urljoin(base_url, href))._replace(
+            params="", query="", fragment=""
+        )
+    )
+
+
 def _validate_canonical_url(base_url: str, canonical_links: list[str]) -> None:
     base_path = urllib.parse.urlparse(base_url).path
     base_parts = urllib.parse.urlparse(base_url)
     canonical_urls = {
-        urllib.parse.urlunparse(
-            urllib.parse.urlparse(urllib.parse.urljoin(base_url, href))._replace(
-                params="", query="", fragment=""
-            )
-        )
-        for href in canonical_links
+        _normalized_document_url(base_url, href) for href in canonical_links
     }
     expected_canonical = urllib.parse.urlunparse(
         base_parts._replace(params="", query="", fragment="")
@@ -211,15 +146,14 @@ def _validate_canonical_url(base_url: str, canonical_links: list[str]) -> None:
 def _validate_required_navigation(
     base_url: str,
     required_routes: list[str],
-    linked_paths: set[str],
+    linked_urls: set[str],
     manifest_paths: set[str],
 ) -> None:
     missing_links: list[str] = []
     missing_files: list[str] = []
     for route in required_routes:
         expected_url = _normalized_navigation_url(base_url, route)
-        expected_path = urllib.parse.urlparse(expected_url).path
-        if expected_path not in linked_paths:
+        if expected_url not in linked_urls:
             missing_links.append(route)
         manifest_path = _route_manifest_path(route)
         if manifest_path not in manifest_paths:
@@ -248,14 +182,13 @@ def verify_navigation(
     collector = LinkCollector()
     collector.feed(document)
     _validate_canonical_url(base_url, collector.canonicals)
-    linked_paths = {
-        urllib.parse.urlparse(urllib.parse.urljoin(base_url, href)).path
-        for href in collector.links
+    linked_urls = {
+        _normalized_document_url(base_url, href) for href in collector.links
     }
     _validate_required_navigation(
         base_url,
         required_routes,
-        linked_paths,
+        linked_urls,
         manifest_paths,
     )
 
@@ -264,7 +197,10 @@ def _validate_verification_request(
     base_url: str,
     settings: VerificationSettings,
 ) -> None:
-    parsed_base = _parse_http_url(base_url)
+    try:
+        parsed_base = parse_http_url(base_url)
+    except HttpTransportError as error:
+        raise DeploymentVerificationError(str(error)) from error
     if parsed_base.query:
         raise DeploymentVerificationError("Base URL must not include a query string.")
     if not base_url.endswith("/"):

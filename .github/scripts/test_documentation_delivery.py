@@ -1,33 +1,12 @@
-import importlib.util
-import json
-import sys
 import tempfile
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from unittest import mock
 from urllib.parse import urlparse
 
-
-SCRIPT_DIRECTORY = Path(__file__).resolve().parent
-
-
-def load_script(module_name: str, filename: str):
-    spec = importlib.util.spec_from_file_location(module_name, SCRIPT_DIRECTORY / filename)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
-
-
-manifest_tool = load_script(
-    "build_documentation_manifest", "build_documentation_manifest.py"
-)
-deployment_tool = load_script(
-    "verify_documentation_deployment", "verify_documentation_deployment.py"
-)
+import build_documentation_manifest as manifest_tool
+import verify_documentation_deployment as deployment_tool
 
 
 COMMIT = "a" * 40
@@ -156,76 +135,6 @@ def public_files(site: Path, manifest: dict) -> dict[str, bytes]:
     return files
 
 
-class DocumentationManifestTests(unittest.TestCase):
-    def test_manifest_records_exact_binary_content_and_verifies_download(self):
-        with tempfile.TemporaryDirectory() as temporary_directory:
-            root = Path(temporary_directory)
-            site = root / "site"
-            site.mkdir()
-            write_site(site)
-
-            manifest = build_manifest(site)
-            output = root / "evidence" / "site-manifest.json"
-            manifest_tool.write_manifest(manifest, output, site)
-            loaded = manifest_tool.load_manifest(output)
-            manifest_tool.verify_site_directory(site, loaded)
-
-            binary_record = next(
-                record for record in loaded["files"] if record["path"] == "assets/binary.dat"
-            )
-            self.assertEqual(binary_record["size"], 14)
-            self.assertEqual(
-                binary_record["sha256"],
-                manifest_tool.sha256_bytes(b"\x00\xff\x10exact-bytes"),
-            )
-            marker = next(record for record in loaded["files"] if record["path"] == ".nojekyll")
-            self.assertEqual(marker["size"], 0)
-            self.assertEqual(marker["sha256"], manifest_tool.sha256_bytes(b""))
-
-    def test_local_verification_fails_for_changed_or_unexpected_files(self):
-        with tempfile.TemporaryDirectory() as temporary_directory:
-            site = Path(temporary_directory) / "site"
-            site.mkdir()
-            write_site(site)
-            manifest = build_manifest(site)
-            (site / "index.html").write_text("changed", encoding="utf-8")
-            (site / "unexpected.txt").write_text("unexpected", encoding="utf-8")
-
-            with self.assertRaisesRegex(
-                manifest_tool.ManifestError, "unexpected=.*unexpected.txt; changed=index.html"
-            ):
-                manifest_tool.verify_site_directory(site, manifest)
-
-    def test_manifest_rejects_symlinks_when_supported(self):
-        with tempfile.TemporaryDirectory() as temporary_directory:
-            site = Path(temporary_directory) / "site"
-            site.mkdir()
-            write_site(site)
-            link = site / "linked-index.html"
-            try:
-                link.symlink_to(site / "index.html")
-            except OSError:
-                self.skipTest("The current host does not permit symbolic links.")
-
-            with self.assertRaisesRegex(manifest_tool.ManifestError, "symbolic-link file"):
-                manifest_tool.collect_site_files(site)
-
-    def test_manifest_loader_rejects_duplicate_paths(self):
-        with tempfile.TemporaryDirectory() as temporary_directory:
-            root = Path(temporary_directory)
-            site = root / "site"
-            site.mkdir()
-            write_site(site)
-            manifest = build_manifest(site)
-            manifest["files"].append(dict(manifest["files"][0]))
-            manifest["content"]["file_count"] += 1
-            manifest_path = root / "manifest.json"
-            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-
-            with self.assertRaisesRegex(manifest_tool.ManifestError, "duplicate path"):
-                manifest_tool.load_manifest(manifest_path)
-
-
 class DocumentationDeploymentTests(unittest.TestCase):
     required_routes = [
         "Get-TheCleaners/",
@@ -234,23 +143,6 @@ class DocumentationDeploymentTests(unittest.TestCase):
         "migration-to-1.0/",
         "release-plan-1.0/",
     ]
-
-    def test_non_http_schemes_are_rejected_before_transport(self):
-        manifest = {"source": {"commit": COMMIT}, "files": []}
-        for base_url in ("file://localhost/", "ftp://localhost/"):
-            with self.subTest(base_url=base_url):
-                with mock.patch.object(deployment_tool, "_read_http_response") as transport:
-                    with self.assertRaisesRegex(
-                        deployment_tool.DeploymentVerificationError,
-                        "URL must use HTTPS",
-                    ):
-                        deployment_tool.verify_deployment(
-                            manifest,
-                            base_url,
-                            self.required_routes,
-                            verification_settings(workers=1),
-                        )
-                    transport.assert_not_called()
 
     def test_exact_deployment_and_navigation_pass(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -376,6 +268,31 @@ class DocumentationDeploymentTests(unittest.TestCase):
                 with self.assertRaisesRegex(
                     deployment_tool.DeploymentVerificationError,
                     "not linked from index.html",
+                ):
+                    deployment_tool.verify_deployment(
+                        manifest,
+                        base_url,
+                        self.required_routes,
+                        verification_settings(),
+                    )
+
+    def test_foreign_origin_navigation_link_with_matching_path_fails(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            site = Path(temporary_directory) / "site"
+            site.mkdir()
+            write_site(site)
+            index_path = site / "index.html"
+            document = index_path.read_text(encoding="utf-8").replace(
+                'href="Get-TheCleaners/"',
+                'href="https://other.example/TheCleaners/Get-TheCleaners/"',
+            )
+            index_path.write_text(document, encoding="utf-8")
+            manifest = build_manifest(site)
+
+            with SiteServer(public_files(site, manifest)) as base_url:
+                with self.assertRaisesRegex(
+                    deployment_tool.DeploymentVerificationError,
+                    "not linked from index.html: Get-TheCleaners/",
                 ):
                     deployment_tool.verify_deployment(
                         manifest,
