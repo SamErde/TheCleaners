@@ -2,7 +2,20 @@
 
 **Windows client/server, IIS, Exchange, and profile lab validation is deferred future work, not underway.** Hosted fixture/package results below remain scoped to their exact tested commits and do not establish product acceptance.
 
-The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Exact TC-008 runtime evidence below is for merged commit `fdadbee08f854b1af6fdc7654ae4532ebbf605df`; it does not apply automatically to a later commit.
+The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Current exact runtime evidence is for merged commit `345f06c861b6d4074e5896e0b27a19f869dfa7e3`; it does not apply automatically to a later commit.
+
+## Current exact merged runtime evidence
+
+[Build run 35257555108](https://github.com/SamErde/TheCleaners/actions/runs/35257555108) and independent artifact inspection validate the current candidate:
+
+| Runtime | Exact merged evidence |
+| --- | --- |
+| Windows PowerShell 5.1 | `5.1.26100.33296` Desktop passed 309 combined tests with zero failures, skips or not-run tests and consumed the canonical 7.6.6 artifact. |
+| PowerShell 7.4 LTS | `7.4.20` passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858). |
+| PowerShell 7.5 stable | `7.5.11` passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858). |
+| PowerShell 7.6 LTS | `7.6.6` passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858). |
+
+All three PS7 producers generated identical original and repeated 19-file archives: 224,050 bytes, SHA-256 `1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383`. The bounded PR #35 baseline uncovered-command review is complete; its remaining native, platform and product cases stay assigned to deferred labs. Protected publication, published-install evidence, broader product acceptance and final maintainer release acceptance remain open.
 
 ## Historical runtime evidence
 
@@ -16,7 +29,7 @@ The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-
 
 Check Microsoft's [PowerShell support lifecycle](https://learn.microsoft.com/powershell/scripting/install/powershell-support-lifecycle) when this matrix is refreshed. As of this sweep, 7.4, 7.5, and 7.6 are all supported release lines. [Build run 35129434807](https://github.com/SamErde/TheCleaners/actions/runs/35129434807) supplies the exact historical evidence above, but it does not include 7.4 and its 7.5.9 lane is older than Microsoft's current 7.5.11 servicing update, so TC-008 remains open.
 
-## TC-008 merged runtime evidence
+## Historical TC-008 merged runtime evidence
 
 Microsoft's lifecycle page and official release inventory were checked on September 16, 2026. The latest supported servicing releases are [7.4.20](https://github.com/PowerShell/PowerShell/releases/tag/v7.4.20), [7.5.11](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.11), and [7.6.6](https://github.com/PowerShell/PowerShell/releases/tag/v7.6.6), all published September 8. No support-policy narrowing was approved. [Build run 35152376944](https://github.com/SamErde/TheCleaners/actions/runs/35152376944) identifies exact merged commit `fdadbee08f854b1af6fdc7654ae4532ebbf605df` and supplies the machine-readable evidence below.
 
@@ -29,7 +42,7 @@ Microsoft's lifecycle page and official release inventory were checked on Septem
 
 Each PS7 lane built and tested its own exact artifact, then repeated ZIP generation. The [dependent comparison job](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104984394111) downloaded all three archives, checked every content record and sidecar, and verified identical original/repeated and cross-runtime bytes. Windows PowerShell 5.1 downloaded the selected canonical 7.6.6 artifact and archive; it never rebuilt that package. Its source tests also exercised the archive helper's PS5.1 API compatibility on isolated fixtures, without making PS5.1 a canonical archive producer.
 
-The runtime-matrix subgate is validated only for `fdadbee08f854b1af6fdc7654ae4532ebbf605df`. The historical table above remains evidence only for `037c27a81234361620a633f68a33bfb370f0a03e`; candidate PR evidence retains its separate head identity. Publication, a clean install of the published version, uncovered-branch risk review, broader Windows/product acceptance, and maintainer release acceptance remain open. See [packaging](packaging.md).
+This section is historical evidence for `fdadbee08f854b1af6fdc7654ae4532ebbf605df`; the earlier table is historical evidence for `037c27a81234361620a633f68a33bfb370f0a03e`. Current exact merged evidence appears above. The bounded PR #35 baseline uncovered-command review is complete; its remaining native/platform/product cases belong to deferred labs. Publication, published installation, broader Windows/product acceptance and final maintainer release acceptance remain open. See [packaging](packaging.md).
 
 ## Windows product matrix
 
