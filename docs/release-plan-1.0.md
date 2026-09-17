@@ -1,6 +1,6 @@
 # TheCleaners 1.0 implementation plan
 
-Updated September 17, 2026. Prioritize non-lab delivery readiness and an optional approved prerelease. Windows client/server, IIS, Exchange, and profile lab validation is **deferred future work, not underway**. The latest completed preparation packet is [PR #36](https://github.com/SamErde/TheCleaners/pull/36), merged as `1af73897b4534dbffb3f0aa647b2d3dc4f7f31a5`. Exact-commit fixture/runtime/package evidence is recorded below; it does not validate TC-008 as a whole, complete product acceptance, or authorize publication.
+Updated September 17, 2026. Prioritize non-lab delivery readiness and an optional approved prerelease. Windows client/server, IIS, Exchange, and profile lab validation is **deferred future work, not underway**. The documentation verification foundation merged in [PR #38](https://github.com/SamErde/TheCleaners/pull/38) as `aad712ac09cf97ef21f1ce05991f735bfdbe6d9d`, following the PR #36 lab-harness preparation. Its PR-head and merged-commit validation are separate evidence checkpoints. Exact-commit fixture/runtime/package evidence is recorded below; it does not validate TC-008 as a whole, complete product acceptance, or authorize publication.
 
 ## Status conventions
 
@@ -33,7 +33,7 @@ The manifest stays on the current prerelease version during this packet. No comm
 
 ## Current non-lab delivery sequence
 
-**Completed:** TC-002 loader/naming; supported runtime and deterministic archive subgates; bounded risk review (PR #35); lab harness/schema/runbook preparation (PR #36); title-case canonical URL decision; live publishing environment configuration and credential presence; prerelease version/history inventory.
+**Completed:** TC-002 loader/naming; supported runtime and deterministic archive subgates; bounded risk review (PR #35); lab harness/schema/runbook preparation (PR #36); title-case canonical URL decision; live publishing environment configuration and credential presence; prerelease version/history inventory; merged documentation manifest/HTTP foundation (PR #38).
 
 **Remaining:** merge and validate delivery changes; exact documentation deployment verification and local publication rehearsal; exact prerelease candidate validation, approval, publication and published installation; deferred TC-003 through TC-007 lab acceptance; final TC-001/008/009 release acceptance.
 
@@ -48,6 +48,12 @@ Plan for approximately 2–3 bundled sessions without publication, or 3–4 incl
 The previous next stage (DELETE-PENDING, ROOT-RACE, HANDLE-RECOVERY fixture drivers and evidence-schema regressions) is deferred with the lab work. Do not resume provisioning, actual-root acceptance, IIS/Exchange labs, or profile acceptance automatically. Preserve the runbook and case inventory for a later maintainer-directed resumption. TC-001 product acceptance, TC-003 through TC-007 acceptance, and final stable-release acceptance remain open. No IIS/Exchange removal or 1.0 Exchange `-AllowRemoval` is introduced.
 
 See [publishing controls](publishing.md) and the [copy-ready next-stage prompts](next-stage-prompts.md). Supporting both URL cases belongs to issue #26 and is not a prerequisite for these bundles.
+
+## September 17 delivery checkpoints
+
+The documentation foundation merged in PR #38 as `aad712ac09cf97ef21f1ce05991f735bfdbe6d9d`. Its reviewed PR head `e338c295f9b5378cb9ffd37c90318e7614f97fd9` passed [build 35253305417](https://github.com/SamErde/TheCleaners/actions/runs/35253305417) and [analysis 35253305364](https://github.com/SamErde/TheCleaners/actions/runs/35253305364): PowerShell 7.4.20, 7.5.11 and 7.6.6 each passed 267 unit and 4 integration tests; Windows PowerShell 5.1.26100.33296 passed 271 combined tests. All had zero failures/skips/not-run tests; PS7 coverage was 87.51% (1,626/1,858). All eleven retained artifact wrapper digests, package manifests, ACL evidence and repeat/cross-runtime archives were inspected. Its 19-file, 223,629-byte archive SHA-256 was `2eae48784e4ba18f6aee28e3c22d8191be3e6d5bde2d59e26071430fe776f2d4`. The foundation's own post-merge build, analyzer and older deployment workflow are separate checks; neither the foundation nor its previous deployment workflow establishes exact public-byte acceptance.
+
+Delivery PR #37 is implemented in draft. Its earlier checkpoint `be342ad2c7866668973efcb74f4a3bc145e284b9` passed [build 35248859925](https://github.com/SamErde/TheCleaners/actions/runs/35248859925): each supported PS7 lane passed 305 unit plus 4 integration tests, and PS5.1 passed 309 combined tests, with zero failures/skips/not-run tests and 87.51% PS7 coverage. Artifact inspection verified all eleven wrapper digests, 19 payload files, repeat/cross-runtime archive identity and the canonical lane's real local-feed publication/acquisition/duplicate-refusal rehearsal. That checkpoint's archive SHA-256 was `1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383`. This is prior-checkpoint evidence, not final-head or merged-commit acceptance. Review corrections to HTTP transport, navigation-origin verification and helper test discovery require fresh final-head checks. The final merged deployment and candidate artifact remain open before publication approval.
 
 ## Historical evidence recorded September 16, 2026
 
