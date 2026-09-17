@@ -107,7 +107,7 @@ class SiteServer:
                 self.end_headers()
                 self.wfile.write(content)
 
-            def log_message(self, format, *args):
+            def log_message(self, *args, **kwargs):
                 """Discard test-server request logging."""
                 return
 
