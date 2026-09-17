@@ -6,6 +6,7 @@ This entry describes unreleased work, not a released 1.0 package. Historical cha
 
 ### Added
 
+- TC-003/004 disposable Windows acceptance matrix, operator prerequisites, and versioned evidence schema separating implemented fixtures from unexecuted lab acceptance. Harden the isolated ACL harness with canonical-parent/reparse checks, retained identity handles, preview/removal inventory reconciliation, fresh source-module import, required OS metadata, source/candidate evidence, explicit failure residue, and post-recovery reporting; remove recursive ACL reset/deletion and retain the fixture for inspection.
 - Bounded TC-008 review of all 307 baseline uncovered commands, with a source-line disposition inventory and 30 focused temp, profile, and IIS/Exchange preview regression cases. No runtime behavior or product-acceptance status changes.
 - Opt-in `-RemoveEmptyDirectory` for both temp cleaners, limited to directories emptied by the invocation and their ancestors.
 - Typed temp-cleanup summaries, planned directory counts under WhatIf, UTC retention boundaries, literal-path checks, and reparse-point exclusion before traversal.
@@ -47,4 +48,4 @@ PR #33 merged at `fdadbee08f854b1af6fdc7654ae4532ebbf605df`. Exact-commit hosted
 
 ### Still pending
 
-Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; Windows profile-inventory acceptance; uncovered-branch risk review; lowercase canonical hosting and deployed-byte verification; protected exact-artifact publication; clean installation of the published version; final version/tag/metadata and history alignment; and maintainer release authorization remain open. The source manifest is `0.0.15-beta`, while the Gallery still serves `0.0.13-alpha`. Zensical migration is tracked separately in issue #26.
+Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; Windows profile-inventory acceptance; lowercase canonical hosting and deployed-byte verification; protected exact-artifact publication; clean installation of the published version; final version/tag/metadata and history alignment; and maintainer release authorization remain open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. Acceptance preparation does not close them. The source manifest is `0.0.15-beta`, while the last recorded Gallery version is `0.0.13-alpha`. Zensical migration is tracked separately in issue #26.

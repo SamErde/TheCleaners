@@ -1,0 +1,220 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TheCleaners TC-003/TC-004 acceptance case record",
+  "type": "object",
+  "description": "Structural evidence envelope. Passing validation does not verify artifact content, expectations, permissions or acceptance.",
+  "required": [
+    "schemaVersion",
+    "caseId",
+    "scope",
+    "status",
+    "missingPrerequisites",
+    "identity",
+    "host",
+    "root",
+    "artifacts",
+    "assertions",
+    "recovery"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "caseId": {
+      "enum": [
+        "ROOT-RESOLUTION",
+        "PATH-FORMS",
+        "TOKEN-ACCESS",
+        "ACL-READ-DENIED",
+        "ACL-DISCOVERY",
+        "UTC-BOUNDARY",
+        "SHOULDPROCESS",
+        "LOCK-SHARING",
+        "DELETE-PENDING",
+        "FILE-RACE",
+        "ROOT-RACE",
+        "QUEUED-DIRECTORY",
+        "REPARSE",
+        "HARDLINK",
+        "PRUNE-OPT-IN",
+        "PRUNE-DISQUALIFY",
+        "RECONCILE",
+        "HANDLE-RECOVERY",
+        "REFS-IDENTITY"
+      ]
+    },
+    "scope": {"enum": ["IsolatedFixture", "DisposableLabAcceptance"]},
+    "status": {"enum": ["Blocked", "NotRun", "Failed", "Passed", "NotApplicable"]},
+    "missingPrerequisites": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "failureReasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+    "identity": {
+      "type": ["object", "null"],
+      "required": [
+        "commit",
+        "workingTreeDirty",
+        "command",
+        "operator",
+        "approvalRef",
+        "invocation",
+        "startedUtc",
+        "endedUtc",
+        "inputs"
+      ],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "workingTreeDirty": {"type": "boolean"},
+        "command": {"enum": ["Clear-CurrentUserTemp", "Clear-WindowsTemp"]},
+        "operator": {"type": "string", "minLength": 1},
+        "approvalRef": {"type": "string", "minLength": 1},
+        "invocation": {"type": "string", "minLength": 1},
+        "startedUtc": {"type": "string", "format": "date-time"},
+        "endedUtc": {"type": "string", "format": "date-time"},
+        "inputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/artifact"}}
+      },
+      "additionalProperties": false
+    },
+    "host": {
+      "type": ["object", "null"],
+      "required": [
+        "hostId",
+        "os",
+        "osBuild",
+        "architecture",
+        "runtime",
+        "edition",
+        "tokenSid",
+        "elevated",
+        "privileges",
+        "fileSystem",
+        "volumeIdentity",
+        "snapshotId"
+      ],
+      "properties": {
+        "hostId": {"type": "string", "minLength": 1},
+        "os": {"type": "string", "minLength": 1},
+        "osBuild": {"type": "string", "minLength": 1},
+        "architecture": {"type": "string", "minLength": 1},
+        "runtime": {"type": "string", "minLength": 1},
+        "edition": {"type": "string", "minLength": 1},
+        "tokenSid": {"type": "string", "minLength": 1},
+        "fileSystem": {"type": "string", "minLength": 1},
+        "volumeIdentity": {"type": "string", "minLength": 1},
+        "snapshotId": {"type": "string", "minLength": 1},
+        "elevated": {"type": "boolean"},
+        "privileges": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      },
+      "additionalProperties": false
+    },
+    "root": {
+      "type": ["object", "null"],
+      "required": ["approvedParent", "requested", "resolved", "identity", "resolutionEvidence"],
+      "properties": {
+        "approvedParent": {"type": "string", "minLength": 1},
+        "requested": {"type": "string", "minLength": 1},
+        "resolved": {"type": "string", "minLength": 1},
+        "identity": {"type": "string", "minLength": 1},
+        "resolutionEvidence": {"$ref": "#/definitions/artifact"}
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "object",
+      "required": ["before", "preview", "after", "outcome", "concurrency", "recovery"],
+      "properties": {
+        "before": {"anyOf": [{"$ref": "#/definitions/artifact"}, {"type": "null"}]},
+        "preview": {"anyOf": [{"$ref": "#/definitions/artifact"}, {"type": "null"}]},
+        "after": {"anyOf": [{"$ref": "#/definitions/artifact"}, {"type": "null"}]},
+        "outcome": {"anyOf": [{"$ref": "#/definitions/artifact"}, {"type": "null"}]},
+        "concurrency": {"anyOf": [{"$ref": "#/definitions/artifact"}, {"type": "null"}]},
+        "recovery": {"anyOf": [{"$ref": "#/definitions/artifact"}, {"type": "null"}]}
+      },
+      "additionalProperties": false
+    },
+    "assertions": {
+      "type": "object",
+      "description": "Map planned assertion IDs to observed outcomes. Derive all counts from these entries; never supply independent totals.",
+      "propertyNames": {"minLength": 1},
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status", "detail"],
+        "properties": {
+          "status": {"enum": ["Passed", "Failed", "Skipped", "NotRun"]},
+          "detail": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "recovery": {
+      "type": ["object", "null"],
+      "required": ["handlesClosed", "environmentRestored", "residueDisposition", "resetStatus", "healthStatus"],
+      "properties": {
+        "handlesClosed": {"type": "boolean"},
+        "environmentRestored": {"type": "boolean"},
+        "residueDisposition": {"type": "string", "minLength": 1},
+        "resetStatus": {"enum": ["Completed", "Failed", "NotRun", "NotApplicable"]},
+        "healthStatus": {"enum": ["Passed", "Failed", "Unknown", "NotApplicable"]}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "Passed"}}},
+      "then": {"properties": {"identity": {"type": "object"}, "host": {"type": "object"}, "root": {"type": "object"}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "Failed"}}},
+      "then": {"required": ["failureReasons"], "properties": {"recovery": {"type": "object"}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "Passed"}}},
+      "then": {
+        "properties": {
+          "missingPrerequisites": {"maxItems": 0},
+          "failureReasons": {"maxItems": 0},
+          "identity": {"properties": {"workingTreeDirty": {"const": false}}},
+          "artifacts": {
+            "properties": {
+              "before": {"$ref": "#/definitions/artifact"},
+              "preview": {"$ref": "#/definitions/artifact"},
+              "after": {"$ref": "#/definitions/artifact"},
+              "outcome": {"$ref": "#/definitions/artifact"},
+              "concurrency": {"$ref": "#/definitions/artifact"},
+              "recovery": {"$ref": "#/definitions/artifact"}
+            }
+          },
+          "assertions": {
+            "minProperties": 1,
+            "additionalProperties": {"properties": {"status": {"const": "Passed"}}}
+          },
+          "recovery": {
+            "type": "object",
+            "properties": {
+              "handlesClosed": {"const": true},
+              "environmentRestored": {"const": true},
+              "resetStatus": {"enum": ["Completed", "NotApplicable"]},
+              "healthStatus": {"enum": ["Passed", "NotApplicable"]}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "Passed"}, "scope": {"const": "DisposableLabAcceptance"}}},
+      "then": {
+        "properties": {"recovery": {"properties": {"resetStatus": {"const": "Completed"}, "healthStatus": {"const": "Passed"}}}}
+      }
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["Blocked", "NotRun", "NotApplicable"]}}},
+      "then": {"properties": {"missingPrerequisites": {"minItems": 1}}}
+    }
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "artifact": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}},
+      "additionalProperties": false
+    }
+  }
+}
