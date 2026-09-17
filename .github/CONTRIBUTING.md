@@ -18,7 +18,7 @@ Keep changes narrowly scoped to one release-plan packet when possible. Include t
 
 For filesystem mutation changes, demonstrate `-WhatIf`/`-Confirm`, root containment, reparse-point handling, identity/race behavior, and `-ErrorAction Stop`. Do not add provider deletion for temp candidates, a generic deletion wrapper, a force or preference override, or a persistent activation switch.
 
-For documentation-only changes, run `python -m mkdocs build --strict --site-dir site`, the documentation/help/drift tests, and `git diff --check`. Generated help must come from source comment-based help; do not hand-edit packaged external help. Do not copy test counts, hashes, CI links, product/build results, or deployment claims from an earlier commit. A successful workflow or mocked fixture is not IIS, Exchange, Windows-product, or release acceptance.
+For documentation-only changes, install `docs/requirements.txt`, run `python .github/scripts/validate_documentation_configuration.py`, `zensical build --strict --clean`, the documentation/help/drift tests, and `git diff --check`. Use `zensical serve` for a local preview. Generated help must come from source comment-based help; do not hand-edit packaged external help. Do not copy test counts, hashes, CI links, product/build results, or deployment claims from an earlier commit. A successful workflow or mocked fixture is not IIS, Exchange, Windows-product, or release acceptance.
 
 ## Code of Conduct
 

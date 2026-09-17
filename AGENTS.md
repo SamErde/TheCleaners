@@ -24,7 +24,7 @@ Use cost-conscious model selection for delegated work: Luna at medium effort for
 
 ## Closing work
 
-For each packet, update its status, relevant help/docs, changelog, tests, and evidence links in the same PR. Use `implemented in draft`, `validated`, and `merged` distinctly. Do not mark a checkbox complete solely because code was generated or a workflow file exists. Record runtime version, tested commit, test totals/failures/skips, and lab limitations. Keep Zensical migration in issue #26.
+For each packet, update its status, relevant help/docs, changelog, tests, and evidence links in the same PR. Use `implemented in draft`, `validated`, and `merged` distinctly. Do not mark a checkbox complete solely because code was generated or a workflow file exists. Record runtime version, tested commit, test totals/failures/skips, and lab limitations. Track the Zensical migration and its outstanding deployment/URL-case acceptance in issue #26 until merged and verified.
 
 Every next-stage prompt must begin with a very succinct **Completed / Remaining** summary, refreshed from `docs/release-plan-1.0.md`. Include the next bounded objective and carry this same summary requirement into future prompts. Lab validation is deferred future work, not underway; prioritize the non-lab delivery sequence in the plan until the maintainer resumes labs. Save the successor without executing it automatically.
 

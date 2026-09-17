@@ -30,12 +30,14 @@ Describe 'Documentation and release-contract drift' -Tag Unit {
         $DocumentationText -join [Environment]::NewLine | Should -Not -Match 'DeleteOnClose'
     }
 
-    It 'includes the contract, lab, and deployment gate in the site navigation' {
-        $MkDocs = Get-Content -LiteralPath (Join-Path -Path $RepositoryRoot -ChildPath 'mkdocs.yml') -Raw
+    It 'includes the contract, lab, and deployment gate in the Zensical site navigation' {
+        $Zensical = Get-Content -LiteralPath (Join-Path -Path $RepositoryRoot -ChildPath 'zensical.toml') -Raw
         foreach ($PageName in @('command-contracts.md', 'lab-acceptance.md', 'deployment-validation.md')) {
-            $MkDocs | Should -Match ([regex]::Escape($PageName))
+            $Zensical | Should -Match ([regex]::Escape($PageName))
             (Join-Path -Path $RepositoryRoot -ChildPath ('docs/{0}' -f $PageName)) | Should -Exist
         }
-        $MkDocs | Should -MatchExactly 'https://day3bits\.com/TheCleaners/'
+        $Zensical | Should -MatchExactly 'site_dir = "site"'
+        $Zensical | Should -MatchExactly 'strict = true'
+        $Zensical | Should -MatchExactly 'https://day3bits\.com/TheCleaners/'
     }
 }

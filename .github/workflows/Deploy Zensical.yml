@@ -1,4 +1,4 @@
-name: 📖 Deploy MkDocs to GitHub Pages
+name: 📖 Deploy Zensical to GitHub Pages
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     paths:
       - 'docs/**'
       - '.github/scripts/*documentation*.py'
-      - '.github/workflows/Deploy MkDocs.yml'
-      - 'mkdocs.yml'
+      - '.github/workflows/Deploy Zensical.yml'
+      - 'zensical.toml'
   workflow_dispatch:
 
 concurrency:
@@ -40,9 +40,12 @@ jobs:
       - name: 🧪 Test Documentation Delivery Helpers
         run: python -m unittest discover -s .github/scripts -p 'test_documentation*.py' -v
 
+      - name: 🔎 Validate Zensical Configuration
+        run: python .github/scripts/validate_documentation_configuration.py
+
       - name: 👷 Build Documentation Once
         run: |
-          python -m mkdocs build --strict --site-dir site
+          zensical build --strict --clean
           test -f site/index.html
           test -f site/sitemap.xml
           touch site/.nojekyll
@@ -61,7 +64,7 @@ jobs:
       - name: 📦 Retain Checked Site and Manifest
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: mkdocs-site-${{ github.sha }}
+          name: zensical-site-${{ github.sha }}
           path: |
             site
             deployment-evidence/site-manifest.json
@@ -92,7 +95,7 @@ jobs:
       - name: 📥 Download Checked Site
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: mkdocs-site-${{ github.sha }}
+          name: zensical-site-${{ github.sha }}
           path: deploy-input
 
       - name: 🔎 Verify Downloaded Site
@@ -138,7 +141,7 @@ jobs:
       - name: 📥 Download Checked Site Manifest
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: mkdocs-site-${{ github.sha }}
+          name: zensical-site-${{ github.sha }}
           path: deploy-input
 
       - name: 🔬 Verify Deployed Bytes and Navigation
@@ -166,7 +169,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: mkdocs-deployment-verification-${{ github.sha }}
+          name: zensical-deployment-verification-${{ github.sha }}
           path: |
             deploy-input/deployment-evidence/site-manifest.json
             deployment-evidence/deployment-report.json
