@@ -6,9 +6,7 @@ on:
       - main
     paths:
       - 'docs/**'
-      - '.github/scripts/build_documentation_manifest.py'
-      - '.github/scripts/test_documentation_delivery.py'
-      - '.github/scripts/verify_documentation_deployment.py'
+      - '.github/scripts/*documentation*.py'
       - '.github/workflows/Deploy MkDocs.yml'
       - 'mkdocs.yml'
   workflow_dispatch:
@@ -40,7 +38,7 @@ jobs:
           python -m pip install -r docs/requirements.txt
 
       - name: 🧪 Test Documentation Delivery Helpers
-        run: python -m unittest discover -s .github/scripts -p 'test_documentation_delivery.py' -v
+        run: python -m unittest discover -s .github/scripts -p 'test_documentation*.py' -v
 
       - name: 👷 Build Documentation Once
         run: |
