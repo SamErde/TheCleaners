@@ -52,12 +52,46 @@ class DocumentationConfigurationTests(unittest.TestCase):
         with self.assertRaisesRegex(validator.ConfigurationError, "missing files"):
             validator.validate_configuration(self.fixture_root)
 
+    def test_each_command_reference_is_required_in_navigation(self) -> None:
+        """Reject removal of any command or module reference from navigation."""
+        config_path = self.fixture_root / "zensical.toml"
+        original_config = config_path.read_text(encoding="utf-8")
+
+        for page in sorted(validator.COMMAND_REFERENCE_PAGES):
+            with self.subTest(page=page):
+                retained_lines = [
+                    line
+                    for line in original_config.splitlines(keepends=True)
+                    if f'= "{page}"' not in line
+                ]
+                self.assertEqual(len(retained_lines), len(original_config.splitlines()) - 1)
+                config_path.write_text("".join(retained_lines), encoding="utf-8")
+                with self.assertRaisesRegex(validator.ConfigurationError, "missing required"):
+                    validator.validate_configuration(self.fixture_root)
+
     def test_navigation_cannot_escape_the_documentation_tree(self) -> None:
-        """Reject a navigation path that traverses outside docs."""
+        """Reject a forward-slash navigation path that traverses outside docs."""
         config_path = self.fixture_root / "zensical.toml"
         config_text = config_path.read_text(encoding="utf-8")
         config_path.write_text(
             config_text.replace('"index.md"', '"../README.md"', 1),
+            encoding="utf-8",
+        )
+
+        with self.assertRaisesRegex(validator.ConfigurationError, "unsafe path"):
+            validator.validate_configuration(self.fixture_root)
+
+    def test_windows_separator_cannot_escape_the_documentation_tree(self) -> None:
+        """Reject Windows traversal even when the escaped target exists."""
+        (self.fixture_root / "README.md").write_text("fixture", encoding="utf-8")
+        config_path = self.fixture_root / "zensical.toml"
+        config_text = config_path.read_text(encoding="utf-8")
+        config_path.write_text(
+            config_text.replace(
+                '"safety-and-confirmation.md"',
+                '"..\\\\README.md"',
+                1,
+            ),
             encoding="utf-8",
         )
 
@@ -80,6 +114,7 @@ class DocumentationConfigurationTests(unittest.TestCase):
         self.assertNotIn("mkdocs", deploy_workflow.lower())
         self.assertNotIn("mkdocs", build_workflow.lower())
         self.assertNotIn("mkdocs", read_the_docs.lower())
+        self.assertIn("formats: []", read_the_docs)
         self.assertIn("zensical-site-${{ github.sha }}", deploy_workflow)
         self.assertLess(
             deploy_workflow.index("zensical build --strict --clean"),

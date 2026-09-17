@@ -17,11 +17,20 @@ class ConfigurationError(ValueError):
 
 EXPECTED_SITE_URL = "https://day3bits.com/TheCleaners/"
 EXPECTED_REQUIREMENT = "zensical==0.0.62"
-REQUIRED_NAVIGATION = {
+COMMAND_REFERENCE_PAGES = {
+    "TheCleaners.md",
+    "Get-TheCleaners.md",
+    "Clear-CurrentUserTemp.md",
+    "Clear-WindowsTemp.md",
+    "Clear-OldIISLog.md",
+    "Clear-OldExchangeLog.md",
+    "Get-StaleUserProfile.md",
+    "Start-Cleaning.md",
+}
+REQUIRED_NAVIGATION = COMMAND_REFERENCE_PAGES | {
     "index.md",
     "command-contracts.md",
     "support-matrix.md",
-    "Get-TheCleaners.md",
     "release-plan-1.0.md",
     "lab-acceptance.md",
     "deployment-validation.md",
@@ -55,7 +64,8 @@ def _validate_navigation_paths(paths: list[str]) -> None:
     for path in paths:
         parsed_path = PurePosixPath(path)
         unsafe_path = (
-            parsed_path.is_absolute()
+            "\\" in path
+            or parsed_path.is_absolute()
             or ".." in parsed_path.parts
             or parsed_path.suffix != ".md"
         )

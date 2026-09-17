@@ -6,7 +6,7 @@ Following the `0.0.15-beta` prerelease, Windows client/server, IIS, Exchange, pr
 
 ### Changed
 
-- Implement the issue #26 Zensical migration in draft: replace the active MkDocs/Material configuration and direct dependencies with pinned Zensical 0.0.62, preserve the classic navigation and generated command references, and retain the single-build manifest-to-`gh-pages` byte-verification controls. PR, merged deployment, and lowercase-path acceptance remain open.
+- Implement the issue #26 Zensical migration in PR #41: replace the active MkDocs/Material configuration and direct dependencies with pinned Zensical 0.0.62, preserve the classic navigation and generated command references, and retain the single-build manifest-to-`gh-pages` byte-verification controls. Review, merge, deployment, and lowercase-path acceptance remain open.
 
 ## 0.0.15-beta - 2026-09-17
 
@@ -68,4 +68,4 @@ Protected publication run [35268852573](https://github.com/SamErde/TheCleaners/a
 
 ### Still pending
 
-Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; and Windows profile-inventory acceptance are deferred future work, not underway. Final 1.0 release acceptance remains open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. The published beta does not close them. The Zensical framework migration is implemented in draft under issue #26; PR, deployment, and the account-root lowercase redirect remain open.
+Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; and Windows profile-inventory acceptance are deferred future work, not underway. Final 1.0 release acceptance remains open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. The published beta does not close them. The Zensical framework migration is open in PR #41 under issue #26; review, merge, deployment, and the account-root lowercase redirect remain open.

@@ -7,6 +7,9 @@
 # Required
 version: 2
 
+# Zensical publishes HTML here; no offline-output generator is configured.
+formats: []
+
 build:
   os: ubuntu-22.04
   tools:

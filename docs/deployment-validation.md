@@ -1,6 +1,6 @@
 # Documentation deployment gate
 
-The canonical documentation URL is `https://day3bits.com/TheCleaners/`, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links must use that casing. The Zensical migration is implemented in draft; support for the lowercase path remains an open deployment acceptance item in [issue #26](https://github.com/SamErde/TheCleaners/issues/26).
+The canonical documentation URL is `https://day3bits.com/TheCleaners/`, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links must use that casing. The Zensical migration is open in [PR #41](https://github.com/SamErde/TheCleaners/pull/41); review, merge, fresh deployment, and lowercase-path acceptance remain open under [issue #26](https://github.com/SamErde/TheCleaners/issues/26).
 
 The lowercase project-prefix request is handled by the account-root Pages site before this project's generated files are selected. Zensical's native redirects map paths within the documentation output, so they cannot repair that missing project prefix. Case-only alias directories would also collide with canonical mixed-case directories on Windows. A companion account-root redirect is the remaining hosting-level option; this repository does not add ineffective redirect maps.
 
@@ -26,6 +26,8 @@ The `Deploy Zensical to GitHub Pages` workflow has three jobs with separate perm
 | `verify` | `contents: read` | Download the same manifest, compare every deployed file with bounded retries, validate representative navigation, and retain the result for 90 days. |
 
 The workflow uses the repository-scoped `GITHUB_TOKEN` through the checked-out remote. It does not require a separate deployment secret and does not change the repository's existing GitHub Pages hosting source. All third-party actions are pinned to full commit SHAs. Automatic and manual runs are restricted to `main` and share one `gh-pages` destination concurrency group. A newer request does not cancel an in-progress deployment/verification chain.
+
+Read the Docs runs a separate custom Zensical job and copies the generated HTML into its required output directory. The configuration sets `formats: []` because this repository has no offline-output generator. The removed `formats: all` setting did not produce a supported PDF, ePub, or HTMLZip for the prior MkDocs project; [Read the Docs documents those formats as unsupported with MkDocs](https://docs.readthedocs.com/platform/stable/config-file/v2.html#formats).
 
 The site artifact is named `zensical-site-<source-commit>`. It contains the complete `site` directory and `deployment-evidence/site-manifest.json`. The later `zensical-deployment-verification-<source-commit>` artifact contains that manifest and `deployment-report.json`. The report records the source identity, content-tree digest, `gh-pages` commit, canonical URL, required navigation routes, number of attempts used, and final pass or failure.
 

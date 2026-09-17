@@ -4,7 +4,7 @@
 
 **Completed:** Non-lab delivery and protected `0.0.15-beta` publication are verified. The Zensical 0.0.62 migration is implemented and locally validated with classic navigation, generated references, strict link checks, and the existing single-build exact-byte deployment controls.
 
-**Remaining:** Review and merge issue #26, verify its exact deployed bytes, and resolve the hosting-level lowercase route. Narrow deterministic fixture/contract criteria in [#28](https://github.com/SamErde/TheCleaners/issues/28), [#29](https://github.com/SamErde/TheCleaners/issues/29), and [#30](https://github.com/SamErde/TheCleaners/issues/30) remain unexecuted; product labs stay paused.
+**Remaining:** Review and merge issue #26 [PR #41](https://github.com/SamErde/TheCleaners/pull/41), verify its exact deployed bytes, and resolve the hosting-level lowercase route. Narrow deterministic fixture/contract criteria in [#28](https://github.com/SamErde/TheCleaners/issues/28), [#29](https://github.com/SamErde/TheCleaners/issues/29), and [#30](https://github.com/SamErde/TheCleaners/issues/30) remain unexecuted; product labs stay paused.
 
 Recommended model: GPT-5.6 Sol (`gpt-5.6-sol`), reasoning effort high. Use a different model for independent review when practical; escalate to Astra only for a concrete unresolved deployment or URL-routing risk.
 
