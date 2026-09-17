@@ -44,6 +44,7 @@
     "scope": {"enum": ["IsolatedFixture", "DisposableLabAcceptance"]},
     "status": {"enum": ["Blocked", "NotRun", "Failed", "Passed", "NotApplicable"]},
     "missingPrerequisites": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "failureReasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
     "identity": {
       "type": ["object", "null"],
       "required": [
@@ -154,8 +155,12 @@
   },
   "allOf": [
     {
-      "if": {"properties": {"status": {"enum": ["Passed", "Failed"]}}},
+      "if": {"properties": {"status": {"const": "Passed"}}},
       "then": {"properties": {"identity": {"type": "object"}, "host": {"type": "object"}, "root": {"type": "object"}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "Failed"}}},
+      "then": {"required": ["failureReasons"]}
     },
     {
       "if": {"properties": {"status": {"const": "Passed"}}},

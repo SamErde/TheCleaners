@@ -33,7 +33,7 @@ Expand each case below across the applicable OS/runtime/token/filesystem combina
 
 ## Evidence contract
 
-Use [`lab/acceptance-record.schema.json`](https://github.com/SamErde/TheCleaners/blob/main/lab/acceptance-record.schema.json) for the outer record (JSON Schema draft 7). JSON validity is only structural; the reviewer must verify artifact hashes, source identity, case expectations, completed interleavings and recovery. Unknown counts are `null`, never zero. Record intentional error cases as expected observations, separately from assertion failures.
+Use [`lab/acceptance-record.schema.json`](https://github.com/SamErde/TheCleaners/blob/main/lab/acceptance-record.schema.json) for the outer record (JSON Schema draft 7). JSON validity is only structural; the reviewer must verify artifact hashes, source identity, case expectations, completed interleavings and recovery. Unknown counts are `null`, never zero. A `Failed` record requires explicit `failureReasons` and may retain null identity/host/root metadata when the failure prevented collection; never invent those values. Record intentional error cases as expected observations, separately from assertion failures.
 
 | Artifact group | Required content |
 | --- | --- |
