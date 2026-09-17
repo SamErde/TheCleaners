@@ -15,7 +15,7 @@ The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-
 | PowerShell 7.5 stable | `7.5.11` passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858). |
 | PowerShell 7.6 LTS | `7.6.6` passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858). |
 
-All three PS7 producers generated identical original and repeated 19-file archives: 224,050 bytes, SHA-256 `1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383`. The bounded PR #35 baseline uncovered-command review is complete; its remaining native, platform and product cases stay assigned to deferred labs. Protected publication, published-install evidence, broader product acceptance and final maintainer release acceptance remain open.
+All three PS7 producers generated identical original and repeated 19-file archives: 224,050 bytes, SHA-256 `1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383`. Protected run [35268852573](https://github.com/SamErde/TheCleaners/actions/runs/35268852573) used that archive for `0.0.15-beta` publication and fresh-install verification; independent verification matched all 15 retained artifact wrappers and four installed-package reports. The bounded PR #35 baseline review is complete, while its native, platform and product cases remain assigned to deferred labs. Final 1.0 release acceptance remains open.
 
 ## Historical runtime evidence
 
@@ -42,7 +42,7 @@ Microsoft's lifecycle page and official release inventory were checked on Septem
 
 Each PS7 lane built and tested its own exact artifact, then repeated ZIP generation. The [dependent comparison job](https://github.com/SamErde/TheCleaners/actions/runs/35152376944/job/104984394111) downloaded all three archives, checked every content record and sidecar, and verified identical original/repeated and cross-runtime bytes. Windows PowerShell 5.1 downloaded the selected canonical 7.6.6 artifact and archive; it never rebuilt that package. Its source tests also exercised the archive helper's PS5.1 API compatibility on isolated fixtures, without making PS5.1 a canonical archive producer.
 
-This section is historical evidence for `fdadbee08f854b1af6fdc7654ae4532ebbf605df`; the earlier table is historical evidence for `037c27a81234361620a633f68a33bfb370f0a03e`. Current exact merged evidence appears above. The bounded PR #35 baseline uncovered-command review is complete; its remaining native/platform/product cases belong to deferred labs. Publication, published installation, broader Windows/product acceptance and final maintainer release acceptance remain open. See [packaging](packaging.md).
+This section is historical evidence for `fdadbee08f854b1af6fdc7654ae4532ebbf605df`; the earlier table is historical evidence for `037c27a81234361620a633f68a33bfb370f0a03e`. Current exact merged evidence appears above. At this historical checkpoint, publication and installed-package verification were open. The bounded PR #35 baseline review is now complete; its remaining native/platform/product cases belong to deferred labs, and final maintainer release acceptance remains open. See [packaging](packaging.md).
 
 ## Windows product matrix
 

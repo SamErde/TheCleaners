@@ -19,7 +19,7 @@
 
 A PowerShell module for Windows temporary-file maintenance, IIS and Exchange log discovery, and stale-profile discovery. IIS and Exchange are **preview-only**, with no deletion implementation in the 1.0 preparation work.
 
-**This branch contains unreleased changes. It is not a production-ready 1.0 release, and the published Gallery package may not contain the behavior described here.** Follow the [implementation ledger](docs/release-plan-1.0.md) and [migration guide](docs/migration-to-1.0.md).
+**The published `0.0.15-beta` package is a prerelease, not a production-ready 1.0 release.** This branch continues 1.0 preparation and may contain documentation changes made after the packaged source. Follow the [implementation ledger](docs/release-plan-1.0.md) and [migration guide](docs/migration-to-1.0.md).
 
 ## Requirements
 
@@ -27,10 +27,10 @@ Windows PowerShell 5.1 is the minimum. The 1.0 policy also includes Microsoft-su
 
 ## Installation and development
 
-Install the currently published prerelease (`0.0.13-alpha`) from PowerShell Gallery:
+Install the published `0.0.15-beta` prerelease from [PowerShell Gallery](https://www.powershellgallery.com/packages/TheCleaners/0.0.15-beta):
 
 ```powershell
-Install-Module -Name TheCleaners -AllowPrerelease
+Install-Module -Name TheCleaners -Repository PSGallery -RequiredVersion '0.0.15-beta' -AllowPrerelease
 ```
 
 To evaluate a checked-out development branch instead, import that source explicitly in an isolated test environment:

@@ -10,7 +10,7 @@ Locale: en-US
 
 ## Description
 
-TheCleaners provides Windows temporary-file maintenance, read-only IIS and Exchange log previews, and stale-profile discovery. The source manifest is the unreleased `0.0.15-beta`; the PowerShell Gallery still serves `0.0.13-alpha`. Consult each command's maturity metadata and the release ledger before treating merged implementation as accepted support.
+TheCleaners provides Windows temporary-file maintenance, read-only IIS and Exchange log previews, and stale-profile discovery. The published `0.0.15-beta` package remains a prerelease; Windows, IIS, Exchange, profile, and final 1.0 acceptance are still open. Consult each command's maturity metadata and the release ledger before treating merged implementation as accepted support.
 
 ## TheCleaners commands
 

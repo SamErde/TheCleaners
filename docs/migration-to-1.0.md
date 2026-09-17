@@ -1,6 +1,6 @@
 # Migrating prerelease scripts toward 1.0
 
-PR #31 merged the stabilization implementation into `main`, but this is not a published 1.0 release. The source manifest is `0.0.15-beta`; the Gallery still serves `0.0.13-alpha`. A merge does not update the Gallery automatically or satisfy product/lab acceptance.
+The `0.0.15-beta` prerelease is published from exact source commit `345f06c861b6d4074e5896e0b27a19f869dfa7e3`, but it is not a production-ready 1.0 release. Publication and fresh-install verification do not satisfy Windows, IIS, Exchange, profile, or final 1.0 acceptance.
 
 ## Command inventory
 
