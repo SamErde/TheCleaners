@@ -72,6 +72,20 @@ def build_manifest(site: Path) -> dict:
     )
 
 
+def verification_settings(
+    attempts: int = 1,
+    workers: int = 2,
+) -> object:
+    return deployment_tool.VerificationSettings(
+        attempts=attempts,
+        initial_delay=0,
+        backoff=1,
+        maximum_delay=0,
+        timeout=2,
+        workers=workers,
+    )
+
+
 class SiteServer:
     def __init__(
         self,
@@ -80,6 +94,7 @@ class SiteServer:
         stale_on_requests: dict[str, set[int]] | None = None,
         redirects: dict[str, str] | None = None,
     ):
+        """Prepare an isolated HTTP server with optional stale and redirect responses."""
         self.files = files
         self.stale_once = set(stale_once or set())
         self.stale_on_requests = stale_on_requests or {}
@@ -113,17 +128,20 @@ class SiteServer:
                 self.end_headers()
                 self.wfile.write(content)
 
-            def log_message(self, format, *args):
+            def log_message(self, message_format, *args):
+                """Discard test-server request logging."""
                 return
 
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 
     def __enter__(self):
+        """Start the isolated server and return its base URL."""
         self.thread.start()
         return f"http://127.0.0.1:{self.server.server_port}{BASE_PATH}"
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """Stop the isolated server and release its listener."""
         self.server.shutdown()
         self.thread.join(timeout=5)
         self.server.server_close()
@@ -230,12 +248,7 @@ class DocumentationDeploymentTests(unittest.TestCase):
                             manifest,
                             base_url,
                             self.required_routes,
-                            attempts=1,
-                            initial_delay=0,
-                            backoff=1,
-                            maximum_delay=0,
-                            timeout=2,
-                            workers=1,
+                            verification_settings(workers=1),
                         )
                     transport.assert_not_called()
 
@@ -251,12 +264,7 @@ class DocumentationDeploymentTests(unittest.TestCase):
                     manifest,
                     base_url,
                     self.required_routes,
-                    attempts=1,
-                    initial_delay=0,
-                    backoff=1,
-                    maximum_delay=0,
-                    timeout=2,
-                    workers=4,
+                    verification_settings(workers=4),
                 )
 
             self.assertEqual(attempts, 1)
@@ -276,12 +284,7 @@ class DocumentationDeploymentTests(unittest.TestCase):
                     manifest,
                     base_url,
                     self.required_routes,
-                    attempts=2,
-                    initial_delay=0,
-                    backoff=1,
-                    maximum_delay=0,
-                    timeout=2,
-                    workers=1,
+                    verification_settings(attempts=2, workers=1),
                 )
 
             self.assertEqual(attempts, 2)
@@ -309,12 +312,7 @@ class DocumentationDeploymentTests(unittest.TestCase):
                         manifest,
                         base_url,
                         self.required_routes,
-                        attempts=1,
-                        initial_delay=0,
-                        backoff=1,
-                        maximum_delay=0,
-                        timeout=2,
-                        workers=2,
+                        verification_settings(),
                     )
 
             self.assertEqual(server.request_counts.get(redirect_target, 0), 0)
@@ -343,12 +341,7 @@ class DocumentationDeploymentTests(unittest.TestCase):
                         manifest,
                         base_url,
                         self.required_routes,
-                        attempts=2,
-                        initial_delay=0,
-                        backoff=1,
-                        maximum_delay=0,
-                        timeout=2,
-                        workers=1,
+                        verification_settings(attempts=2, workers=1),
                     )
 
     def test_wrong_bytes_fail_closed_after_bounded_attempts(self):
@@ -369,12 +362,7 @@ class DocumentationDeploymentTests(unittest.TestCase):
                         manifest,
                         base_url,
                         self.required_routes,
-                        attempts=2,
-                        initial_delay=0,
-                        backoff=1,
-                        maximum_delay=0,
-                        timeout=2,
-                        workers=2,
+                        verification_settings(attempts=2),
                     )
 
     def test_missing_representative_navigation_fails(self):
@@ -393,12 +381,7 @@ class DocumentationDeploymentTests(unittest.TestCase):
                         manifest,
                         base_url,
                         self.required_routes,
-                        attempts=1,
-                        initial_delay=0,
-                        backoff=1,
-                        maximum_delay=0,
-                        timeout=2,
-                        workers=2,
+                        verification_settings(),
                     )
 
 

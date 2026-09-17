@@ -11,6 +11,7 @@ import sys
 import time
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -24,8 +25,21 @@ class DeploymentVerificationError(RuntimeError):
 LOCAL_HTTP_HOSTS = {"127.0.0.1", "localhost"}
 
 
+@dataclass(frozen=True)
+class VerificationSettings:
+    """Bound retry and transport settings for one deployment verification."""
+
+    attempts: int
+    initial_delay: float
+    backoff: float
+    maximum_delay: float
+    timeout: float
+    workers: int
+
+
 class LinkCollector(html.parser.HTMLParser):
     def __init__(self) -> None:
+        """Initialize collections for links and canonical declarations."""
         super().__init__()
         self.links: list[str] = []
         self.canonicals: list[str] = []
@@ -62,6 +76,19 @@ def _file_url(base_url: str, relative_path: str, source_commit: str, attempt: in
     return urllib.parse.urljoin(base_url, quoted_path) + "?" + query
 
 
+def _validate_transport_scheme(parsed: urllib.parse.SplitResult) -> None:
+    if parsed.scheme == "http":
+        if parsed.hostname not in LOCAL_HTTP_HOSTS:
+            raise DeploymentVerificationError(
+                "URL must use HTTPS, except HTTP is allowed for localhost tests."
+            )
+        return
+    if parsed.scheme != "https":
+        raise DeploymentVerificationError(
+            "URL must use HTTPS, except HTTP is allowed for localhost tests."
+        )
+
+
 def _parse_http_url(url: str) -> urllib.parse.SplitResult:
     try:
         parsed = urllib.parse.urlsplit(url)
@@ -70,15 +97,7 @@ def _parse_http_url(url: str) -> urllib.parse.SplitResult:
     except ValueError as error:
         raise DeploymentVerificationError(f"Invalid HTTP URL: {url!r}.") from error
 
-    if parsed.scheme == "http":
-        if hostname not in LOCAL_HTTP_HOSTS:
-            raise DeploymentVerificationError(
-                "URL must use HTTPS, except HTTP is allowed for localhost tests."
-            )
-    elif parsed.scheme != "https":
-        raise DeploymentVerificationError(
-            "URL must use HTTPS, except HTTP is allowed for localhost tests."
-        )
+    _validate_transport_scheme(parsed)
     if not hostname:
         raise DeploymentVerificationError("HTTP URL must include a hostname.")
     if parsed.username is not None or parsed.password is not None:
@@ -165,19 +184,7 @@ def _route_manifest_path(route: str) -> str:
     return route
 
 
-def verify_navigation(
-    base_url: str,
-    index_content: bytes,
-    required_routes: list[str],
-    manifest_paths: set[str],
-) -> None:
-    try:
-        document = index_content.decode("utf-8")
-    except UnicodeDecodeError as error:
-        raise DeploymentVerificationError("Deployed index.html is not UTF-8.") from error
-
-    collector = LinkCollector()
-    collector.feed(document)
+def _validate_canonical_url(base_url: str, canonical_links: list[str]) -> None:
     base_path = urllib.parse.urlparse(base_url).path
     base_parts = urllib.parse.urlparse(base_url)
     canonical_urls = {
@@ -186,7 +193,7 @@ def verify_navigation(
                 params="", query="", fragment=""
             )
         )
-        for href in collector.canonicals
+        for href in canonical_links
     }
     expected_canonical = urllib.parse.urlunparse(
         base_parts._replace(params="", query="", fragment="")
@@ -200,10 +207,13 @@ def verify_navigation(
             f"index.html does not declare the canonical URL {expected_canonical!r}."
         )
 
-    linked_paths = {
-        urllib.parse.urlparse(urllib.parse.urljoin(base_url, href)).path
-        for href in collector.links
-    }
+
+def _validate_required_navigation(
+    base_url: str,
+    required_routes: list[str],
+    linked_paths: set[str],
+    manifest_paths: set[str],
+) -> None:
     missing_links: list[str] = []
     missing_files: list[str] = []
     for route in required_routes:
@@ -224,52 +234,95 @@ def verify_navigation(
         raise DeploymentVerificationError("; ".join(problems))
 
 
-def verify_deployment(
-    manifest: dict[str, Any],
+def verify_navigation(
     base_url: str,
+    index_content: bytes,
     required_routes: list[str],
-    attempts: int,
-    initial_delay: float,
-    backoff: float,
-    maximum_delay: float,
-    timeout: float,
-    workers: int,
-) -> tuple[int, dict[str, bytes]]:
+    manifest_paths: set[str],
+) -> None:
+    try:
+        document = index_content.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise DeploymentVerificationError("Deployed index.html is not UTF-8.") from error
+
+    collector = LinkCollector()
+    collector.feed(document)
+    _validate_canonical_url(base_url, collector.canonicals)
+    linked_paths = {
+        urllib.parse.urlparse(urllib.parse.urljoin(base_url, href)).path
+        for href in collector.links
+    }
+    _validate_required_navigation(
+        base_url,
+        required_routes,
+        linked_paths,
+        manifest_paths,
+    )
+
+
+def _validate_verification_request(
+    base_url: str,
+    settings: VerificationSettings,
+) -> None:
     parsed_base = _parse_http_url(base_url)
     if parsed_base.query:
         raise DeploymentVerificationError("Base URL must not include a query string.")
     if not base_url.endswith("/"):
         raise DeploymentVerificationError("Base URL must end with '/'.")
-    if attempts < 1 or workers < 1:
+    if settings.attempts < 1 or settings.workers < 1:
         raise DeploymentVerificationError("Attempts and workers must be positive.")
+
+
+def _fetch_attempt(
+    base_url: str,
+    records: dict[str, dict[str, Any]],
+    source_commit: str,
+    attempt: int,
+    settings: VerificationSettings,
+) -> tuple[dict[str, bytes], dict[str, str]]:
+    verified_content: dict[str, bytes] = {}
+    errors: dict[str, str] = {}
+    with ThreadPoolExecutor(max_workers=settings.workers) as executor:
+        futures = {
+            executor.submit(
+                _fetch_file,
+                base_url,
+                record,
+                source_commit,
+                attempt,
+                settings.timeout,
+            ): path
+            for path, record in records.items()
+        }
+        for future in as_completed(futures):
+            path, body, error = future.result()
+            if error is None and body is not None:
+                verified_content[path] = body
+            else:
+                errors[path] = error or "empty response"
+    return verified_content, errors
+
+
+def verify_deployment(
+    manifest: dict[str, Any],
+    base_url: str,
+    required_routes: list[str],
+    settings: VerificationSettings,
+) -> tuple[int, dict[str, bytes]]:
+    _validate_verification_request(base_url, settings)
 
     source_commit = manifest["source"]["commit"]
     records = {record["path"]: record for record in manifest["files"]}
-    verified_content: dict[str, bytes] = {}
     last_errors: dict[str, str] = {}
 
-    for attempt in range(1, attempts + 1):
-        last_errors = {}
-        verified_content = {}
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            futures = {
-                executor.submit(
-                    _fetch_file,
-                    base_url,
-                    record,
-                    source_commit,
-                    attempt,
-                    timeout,
-                ): path
-                for path, record in records.items()
-            }
-            for future in as_completed(futures):
-                path, body, error = future.result()
-                if error is None and body is not None:
-                    verified_content[path] = body
-                else:
-                    last_errors[path] = error or "empty response"
-
+    for attempt in range(1, settings.attempts + 1):
+        verified_content, last_errors = _fetch_attempt(
+            base_url,
+            records,
+            source_commit,
+            attempt,
+            settings,
+        )
         if not last_errors:
             verify_navigation(
                 base_url,
@@ -278,15 +331,18 @@ def verify_deployment(
                 set(records),
             )
             return attempt, verified_content
-        if attempt < attempts:
-            delay = min(initial_delay * (backoff ** (attempt - 1)), maximum_delay)
+        if attempt < settings.attempts:
+            delay = min(
+                settings.initial_delay * (settings.backoff ** (attempt - 1)),
+                settings.maximum_delay,
+            )
             time.sleep(delay)
 
     samples = "; ".join(
         f"{path}: {last_errors[path]}" for path in sorted(last_errors)[:10]
     )
     raise DeploymentVerificationError(
-        f"Deployment did not match after {attempts} attempts; "
+        f"Deployment did not match after {settings.attempts} attempts; "
         f"{len(last_errors)} file(s) still differ. {samples}"
     )
 
@@ -332,12 +388,14 @@ def main() -> int:
             manifest,
             arguments.base_url,
             arguments.required_navigation,
-            arguments.attempts,
-            arguments.initial_delay,
-            arguments.backoff,
-            arguments.maximum_delay,
-            arguments.timeout,
-            arguments.workers,
+            VerificationSettings(
+                attempts=arguments.attempts,
+                initial_delay=arguments.initial_delay,
+                backoff=arguments.backoff,
+                maximum_delay=arguments.maximum_delay,
+                timeout=arguments.timeout,
+                workers=arguments.workers,
+            ),
         )
         report["status"] = "passed"
         report["attempts_used"] = used_attempts

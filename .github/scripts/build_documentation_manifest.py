@@ -33,6 +33,29 @@ def _validate_relative_path(value: str) -> PurePosixPath:
     return path
 
 
+def _validate_site_directories(current_path: Path, directory_names: list[str]) -> None:
+    for directory_name in directory_names:
+        directory_path = current_path / directory_name
+        if directory_path.is_symlink():
+            raise ManifestError(f"Site contains a symbolic-link directory: {directory_path}")
+
+
+def _site_file_record(root: Path, file_path: Path) -> dict[str, Any]:
+    if file_path.is_symlink():
+        raise ManifestError(f"Site contains a symbolic-link file: {file_path}")
+    if not file_path.is_file():
+        raise ManifestError(f"Site contains a non-regular file: {file_path}")
+
+    content = file_path.read_bytes()
+    relative_path = file_path.relative_to(root).as_posix()
+    _validate_relative_path(relative_path)
+    return {
+        "path": relative_path,
+        "size": len(content),
+        "sha256": sha256_bytes(content),
+    }
+
+
 def collect_site_files(site_dir: Path) -> list[dict[str, Any]]:
     root = site_dir.resolve(strict=True)
     if not root.is_dir():
@@ -43,29 +66,10 @@ def collect_site_files(site_dir: Path) -> list[dict[str, Any]]:
         directory_names.sort()
         file_names.sort()
         current_path = Path(current)
-
-        for directory_name in directory_names:
-            directory_path = current_path / directory_name
-            if directory_path.is_symlink():
-                raise ManifestError(f"Site contains a symbolic-link directory: {directory_path}")
+        _validate_site_directories(current_path, directory_names)
 
         for file_name in file_names:
-            file_path = current_path / file_name
-            if file_path.is_symlink():
-                raise ManifestError(f"Site contains a symbolic-link file: {file_path}")
-            if not file_path.is_file():
-                raise ManifestError(f"Site contains a non-regular file: {file_path}")
-
-            content = file_path.read_bytes()
-            relative_path = file_path.relative_to(root).as_posix()
-            _validate_relative_path(relative_path)
-            records.append(
-                {
-                    "path": relative_path,
-                    "size": len(content),
-                    "sha256": sha256_bytes(content),
-                }
-            )
+            records.append(_site_file_record(root, current_path / file_name))
 
     records.sort(key=lambda item: item["path"])
     if not records:
@@ -137,26 +141,36 @@ def write_manifest(manifest: dict[str, Any], output_path: Path, site_dir: Path) 
     )
 
 
-def _validate_file_records(
-    records: list[Any],
-) -> tuple[list[dict[str, Any]], set[str]]:
+def _validate_file_size(path: str, size: Any) -> int:
+    if isinstance(size, bool) or not isinstance(size, int) or size < 0:
+        raise ManifestError(f"Manifest size is invalid for {path}.")
+    return size
+
+
+def _validate_file_digest(path: str, digest: Any) -> str:
+    if not isinstance(digest, str) or not SHA256_PATTERN.fullmatch(digest):
+        raise ManifestError(f"Manifest SHA-256 is invalid for {path}.")
+    return digest
+
+
+def _normalize_file_record(record: Any, paths: set[str]) -> dict[str, Any]:
+    if not isinstance(record, dict):
+        raise ManifestError("Manifest file record has the wrong type.")
+    path = str(record.get("path", ""))
+    _validate_relative_path(path)
+    if path in paths:
+        raise ManifestError(f"Manifest contains a duplicate path: {path}")
+    paths.add(path)
+    return {
+        "path": path,
+        "size": _validate_file_size(path, record.get("size")),
+        "sha256": _validate_file_digest(path, record.get("sha256")),
+    }
+
+
+def _validate_file_records(records: list[Any]) -> tuple[list[dict[str, Any]], set[str]]:
     paths: set[str] = set()
-    normalized_records: list[dict[str, Any]] = []
-    for record in records:
-        if not isinstance(record, dict):
-            raise ManifestError("Manifest file record has the wrong type.")
-        path = str(record.get("path", ""))
-        _validate_relative_path(path)
-        if path in paths:
-            raise ManifestError(f"Manifest contains a duplicate path: {path}")
-        paths.add(path)
-        size = record.get("size")
-        digest = record.get("sha256")
-        if isinstance(size, bool) or not isinstance(size, int) or size < 0:
-            raise ManifestError(f"Manifest size is invalid for {path}.")
-        if not isinstance(digest, str) or not SHA256_PATTERN.fullmatch(digest):
-            raise ManifestError(f"Manifest SHA-256 is invalid for {path}.")
-        normalized_records.append({"path": path, "size": size, "sha256": digest})
+    normalized_records = [_normalize_file_record(record, paths) for record in records]
     return normalized_records, paths
 
 
@@ -204,25 +218,40 @@ def load_manifest(manifest_path: Path) -> dict[str, Any]:
     return manifest
 
 
+def _difference_text(label: str, paths: list[str]) -> str:
+    if not paths:
+        return ""
+    return f"{label}=" + ",".join(paths[:10])
+
+
+def _site_difference_details(
+    expected: dict[str, dict[str, Any]],
+    actual: dict[str, dict[str, Any]],
+) -> str:
+    missing = sorted(set(expected) - set(actual))
+    unexpected = sorted(set(actual) - set(expected))
+    changed = sorted(
+        path for path in set(expected) & set(actual) if expected[path] != actual[path]
+    )
+    differences = (
+        _difference_text("missing", missing),
+        _difference_text("unexpected", unexpected),
+        _difference_text("changed", changed),
+    )
+    return "; ".join(filter(None, differences))
+
+
 def verify_site_directory(site_dir: Path, manifest: dict[str, Any]) -> None:
     actual_records = collect_site_files(site_dir)
     expected_records = manifest["files"]
-    if actual_records != expected_records:
-        expected = {record["path"]: record for record in expected_records}
-        actual = {record["path"]: record for record in actual_records}
-        missing = sorted(set(expected) - set(actual))
-        unexpected = sorted(set(actual) - set(expected))
-        changed = sorted(
-            path for path in set(expected) & set(actual) if expected[path] != actual[path]
-        )
-        details = []
-        if missing:
-            details.append("missing=" + ",".join(missing[:10]))
-        if unexpected:
-            details.append("unexpected=" + ",".join(unexpected[:10]))
-        if changed:
-            details.append("changed=" + ",".join(changed[:10]))
-        raise ManifestError("Site does not match manifest: " + "; ".join(details))
+    if actual_records == expected_records:
+        return
+
+    expected = {record["path"]: record for record in expected_records}
+    actual = {record["path"]: record for record in actual_records}
+    raise ManifestError(
+        "Site does not match manifest: " + _site_difference_details(expected, actual)
+    )
 
 
 def parse_arguments() -> argparse.Namespace:
