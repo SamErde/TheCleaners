@@ -323,6 +323,25 @@
   
   
   
+    <li class="md-tabs__item">
+      <a href="../releases/0.0.15-beta/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  0.0.15-beta preparation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
     
     
       <li class="md-tabs__item">
@@ -554,6 +573,33 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../releases/0.0.15-beta/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0.0.15-beta preparation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
     
@@ -568,10 +614,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
             
   
   
@@ -589,8 +635,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -856,10 +902,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -877,8 +923,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -923,6 +969,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../publishing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release-plan-1.0/" class="md-nav__link">
         
   
@@ -931,6 +1005,34 @@
     
   
     1.0 implementation plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../next-stage-prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Next-stage prompts
   
 
     
@@ -1039,10 +1141,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#historical-evidence-from-september-16" class="md-nav__link">
+  <a href="#workflow-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Historical evidence from September 16
+        Workflow contract
       
     </span>
   </a>
@@ -1050,10 +1152,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#manifest-foundation-for-exact-build-verification" class="md-nav__link">
+  <a href="#propagation-and-failure-behavior" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Manifest foundation for exact-build verification
+        Propagation and failure behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-verified-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current verified state
       
     </span>
   </a>
@@ -1145,17 +1269,73 @@
 
 
 <h1 id="documentation-deployment-gate">Documentation deployment gate</h1>
-<p>The canonical documentation URL is <code>https://day3bits.com/TheCleaners/</code>, matching the maintainer's September 17 title-case decision and MkDocs configuration. The MkDocs workflow must build with <code>--strict</code> before deployment and must retain the generated <code>index.html</code> and sitemap. A deployment acceptance record must verify:</p>
+<p>The canonical documentation URL is <code>https://day3bits.com/TheCleaners/</code>, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links must use that casing. Support for the lowercase path remains deferred to <a href="https://github.com/SamErde/TheCleaners/issues/26">Zensical migration issue #26</a>.</p>
+<p>A documentation deployment is accepted only when the workflow proves all of the following for one source commit:</p>
 <ol>
-<li><code>https://day3bits.com/TheCleaners/</code> returns the current site and preserves the title-case path.</li>
-<li>Function pages, the support matrix, command contracts, migration guide, and release ledger are reachable from navigation.</li>
-<li>The generated pages declare the title-case canonical URL. Support for both URL cases belongs to <a href="https://github.com/SamErde/TheCleaners/issues/26">Zensical issue #26</a> and remains outside this delivery gate.</li>
-<li>The generated site contains no unresolved help-template markers or broken internal navigation links.</li>
+<li>MkDocs completes one strict build.</li>
+<li>An empty <code>.nojekyll</code> hosting marker is added to the built site before the retained manifest records every file's relative path, byte count, and SHA-256 digest, plus a digest for the complete file set and the source repository, commit, ref, workflow run, and attempt.</li>
+<li>The deployment consumes the retained site artifact and verifies it locally against that manifest before publishing.</li>
+<li>The <code>gh-pages</code> publisher copies that directory without asking MkDocs to build again or adding unrecorded files.</li>
+<li>Every public file returned by <code>https://day3bits.com/TheCleaners/</code> has the recorded byte count and SHA-256 digest. Directory index files are requested through their public trailing-slash routes.</li>
+<li>The home page retains its title-case canonical declaration and links to representative function, contract, support, migration, and release-plan pages.</li>
 </ol>
-<p>The workflow performs the build-time strict checks. Redirect, DNS, and deployed-host checks require the deployment environment and remain release evidence; they are not claimed by a local build.</p>
-<h2 id="historical-evidence-from-september-16">Historical evidence from September 16</h2>
-<p>For merged commit <code>037c27a81234361620a633f68a33bfb370f0a03e</code>, <a href="https://github.com/SamErde/TheCleaners/actions/runs/35129434855">GitHub Actions run 35129434855</a> completed <code>mkdocs build --strict --site-dir site</code> and checked <code>site/index.html</code> and <code>site/sitemap.xml</code>. Its later <code>mkdocs gh-deploy --strict --force</code> command performed a second strict build and pushed <code>gh-pages</code> commit <code>2ea8bf4</code>; the workflow does not establish byte identity between the separately checked <code>site</code> directory and the deployed output. A successful deployment job also does not prove the custom-domain path is canonical.</p>
-<p>The live check on September 16, 2026 found:</p>
+<p>A local build, a <code>gh-pages</code> push, an HTTP 200 response, or a green Pages deployment does not establish this complete chain by itself.</p>
+<h2 id="workflow-contract">Workflow contract</h2>
+<p>The <code>Deploy MkDocs to GitHub Pages</code> workflow has three jobs with separate permissions:</p>
+<table>
+<thead>
+<tr>
+<th>Job</th>
+<th>Repository permission</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>build</code></td>
+<td><code>contents: read</code></td>
+<td>Test the delivery helpers, build once with <code>python -m mkdocs build --strict --site-dir site</code>, create the byte manifest, and retain the site plus manifest for 90 days.</td>
+</tr>
+<tr>
+<td><code>deploy</code></td>
+<td><code>contents: write</code></td>
+<td>Download and recheck the retained site, then use pinned <code>ghp-import</code> 2.1.0 to commit and push those files to the existing <code>gh-pages</code> branch. This is the only job with write access.</td>
+</tr>
+<tr>
+<td><code>verify</code></td>
+<td><code>contents: read</code></td>
+<td>Download the same manifest, compare every deployed file with bounded retries, validate representative navigation, and retain the result for 90 days.</td>
+</tr>
+</tbody>
+</table>
+<p>The workflow uses the repository-scoped <code>GITHUB_TOKEN</code> through the checked-out remote. It does not require a separate deployment secret and does not change the repository's existing GitHub Pages hosting source. All third-party actions are pinned to full commit SHAs. Automatic and manual runs are restricted to <code>main</code> and share one <code>gh-pages</code> destination concurrency group. A newer request does not cancel an in-progress deployment/verification chain.</p>
+<p>The site artifact is named <code>mkdocs-site-&lt;source-commit&gt;</code>. It contains the complete <code>site</code> directory and <code>deployment-evidence/site-manifest.json</code>. The later <code>mkdocs-deployment-verification-&lt;source-commit&gt;</code> artifact contains that manifest and <code>deployment-report.json</code>. The report records the source identity, content-tree digest, <code>gh-pages</code> commit, canonical URL, required navigation routes, number of attempts used, and final pass or failure.</p>
+<h2 id="propagation-and-failure-behavior">Propagation and failure behavior</h2>
+<p>GitHub Pages and its cache can briefly serve the preceding deployment after the branch push. The verifier therefore retries the complete file set and passes only when one full attempt matches every file. It never combines successes from separate attempts. Each request asks for identity encoding and carries the source commit and attempt number as cache-busting query parameters. The production workflow permits six attempts with delays of 5, 10, 20, 30, and 30 seconds.</p>
+<p>Verification fails closed when any file remains missing, redirects to a differently cased path, has the wrong length or SHA-256 digest, or returns an unexpected status. It also fails when the exact home page omits its canonical path or any required navigation link. A stale deployment can pass only after every recorded file matches the retained build. The workflow does not update release-plan status automatically; merge-commit workflow evidence must be reviewed and recorded separately.</p>
+<p>Representative navigation covers:</p>
+<ul>
+<li><code>Get-TheCleaners/</code></li>
+<li><code>support-matrix/</code></li>
+<li><code>command-contracts/</code></li>
+<li><code>migration-to-1.0/</code></li>
+<li><code>release-plan-1.0/</code></li>
+</ul>
+<p>The byte comparison includes every other generated page and asset as well. The navigation list is a focused structural check, not a limit on byte verification.</p>
+<h2 id="local-validation">Local validation</h2>
+<p>The helper tests use only Python's standard library, isolated temporary directories, and a local HTTP server. They cover exact binary content, downloaded-tree verification, duplicate and symbolic-link rejection, retry after stale content, permanent wrong-byte failure, and missing navigation.</p>
+<p>From the repository root, run:</p>
+<div class="highlight"><pre><span></span><code><span class="n">python</span> <span class="n">-m</span> <span class="n">unittest</span> <span class="n">discover</span> <span class="n">-s</span> <span class="p">.</span><span class="n">github</span><span class="p">/</span><span class="n">scripts</span> <span class="n">-p</span> <span class="s1">'test_documentation_delivery.py'</span> <span class="n">-v</span>
+<span class="n">python</span> <span class="n">-m</span> <span class="n">mkdocs</span> <span class="n">build</span> <span class="p">-</span><span class="n">-strict</span> <span class="p">-</span><span class="n">-site-dir</span> <span class="n">site</span>
+<span class="nb">New-Item</span> <span class="n">-Path</span> <span class="n">site</span><span class="p">/.</span><span class="n">nojekyll</span> <span class="n">-ItemType</span> <span class="n">File</span> <span class="n">-Force</span> <span class="p">|</span> <span class="nb">Out-Null</span>
+<span class="n">python</span> <span class="p">.</span><span class="n">github</span><span class="p">/</span><span class="n">scripts</span><span class="p">/</span><span class="n">build_documentation_manifest</span><span class="p">.</span><span class="n">py</span> <span class="n">create</span> <span class="p">-</span><span class="n">-site-dir</span> <span class="n">site</span> <span class="p">-</span><span class="n">-output</span> <span class="n">deployment-evidence</span><span class="p">/</span><span class="n">site-manifest</span><span class="p">.</span><span class="n">json</span> <span class="p">-</span><span class="n">-source-repository</span> <span class="s1">'SamErde/TheCleaners'</span> <span class="p">-</span><span class="n">-source-commit</span> <span class="p">(</span><span class="n">git</span> <span class="n">rev-parse</span> <span class="n">HEAD</span><span class="p">)</span> <span class="p">-</span><span class="n">-source-ref</span> <span class="p">(</span><span class="n">git</span> <span class="n">symbolic-ref</span> <span class="n">-q</span> <span class="n">HEAD</span><span class="p">)</span>
+<span class="n">python</span> <span class="p">.</span><span class="n">github</span><span class="p">/</span><span class="n">scripts</span><span class="p">/</span><span class="n">build_documentation_manifest</span><span class="p">.</span><span class="n">py</span> <span class="n">verify</span> <span class="p">-</span><span class="n">-site-dir</span> <span class="n">site</span> <span class="p">-</span><span class="n">-manifest</span> <span class="n">deployment-evidence</span><span class="p">/</span><span class="n">site-manifest</span><span class="p">.</span><span class="n">json</span>
+</code></pre></div>
+<p>Do not run the live verifier against a newly changed source tree before that exact tree has been deployed. It is designed to reject the current site as stale.</p>
+<h2 id="current-verified-state">Current verified state</h2>
+<p>The September 17, 2026 live check found title-case <code>/TheCleaners/</code> HTTP 200 and lowercase <code>/thecleaners/</code> HTTP 404. GitHub Pages reports the title-case site URL. The maintainer selected that working path as canonical, superseding the earlier lowercase-hosting requirement. This does not prove the deployed bytes match this branch.</p>
+<p>For merged commit <code>037c27a81234361620a633f68a33bfb370f0a03e</code>, <a href="https://github.com/SamErde/TheCleaners/actions/runs/35129434855">GitHub Actions run 35129434855</a> completed <code>mkdocs build --strict --site-dir site</code> and checked <code>site/index.html</code> and <code>site/sitemap.xml</code>. Its later <code>mkdocs gh-deploy --strict --force</code> command performed a second strict build and pushed <code>gh-pages</code> commit <code>2ea8bf4</code>; that historical workflow did not establish byte identity between the checked <code>site</code> directory and deployed output.</p>
+<p>The historical live check on September 16, 2026 found:</p>
 <table>
 <thead>
 <tr>
@@ -1178,14 +1358,7 @@
 </tr>
 </tbody>
 </table>
-<p>At that historical checkpoint, the plan still required lowercase hosting. The maintainer's September 17 title-case decision supersedes that requirement; the observations remain evidence for their original commit. Exact deployed-byte verification remains open.</p>
-<h2 id="manifest-foundation-for-exact-build-verification">Manifest foundation for exact-build verification</h2>
-<p>The content-manifest helper records each built file's relative path, byte length and SHA-256, plus the source commit and workflow run. Keep its output outside the site directory. For example, after a strict build:</p>
-<div class="highlight"><pre><span></span><code><span class="n">python</span> <span class="p">.</span><span class="n">github</span><span class="p">/</span><span class="n">scripts</span><span class="p">/</span><span class="n">build_documentation_manifest</span><span class="p">.</span><span class="n">py</span> <span class="n">create</span> <span class="p">-</span><span class="n">-site-dir</span> <span class="n">site</span> <span class="p">-</span><span class="n">-output</span> <span class="n">deployment-evidence</span><span class="p">/</span><span class="n">site-manifest</span><span class="p">.</span><span class="n">json</span> <span class="p">-</span><span class="n">-source-repository</span> <span class="n">SamErde</span><span class="p">/</span><span class="n">TheCleaners</span> <span class="p">-</span><span class="n">-source-commit</span> <span class="p">(</span><span class="n">git</span> <span class="n">rev-parse</span> <span class="n">HEAD</span><span class="p">)</span>
-<span class="n">python</span> <span class="p">.</span><span class="n">github</span><span class="p">/</span><span class="n">scripts</span><span class="p">/</span><span class="n">build_documentation_manifest</span><span class="p">.</span><span class="n">py</span> <span class="n">verify</span> <span class="p">-</span><span class="n">-site-dir</span> <span class="n">site</span> <span class="p">-</span><span class="n">-manifest</span> <span class="n">deployment-evidence</span><span class="p">/</span><span class="n">site-manifest</span><span class="p">.</span><span class="n">json</span>
-</code></pre></div>
-<p>Creation rejects symbolic links and unsafe paths. Verification rejects changed, missing or additional files, including hidden files. The helper and isolated regression tests prepare the one-build deployment work in <a href="https://github.com/SamErde/TheCleaners/pull/37">PR #37</a>; they do not establish deployed-byte or navigation acceptance. PR #37 also applies the maintainer's title-case canonical URL decision. Historical URL observations above remain observations of their original commit.</p>
-<p>The companion <code>documentation_http.py</code> helper accepts HTTPS, with HTTP permitted only for test servers at <code>127.0.0.1</code> or <code>localhost</code>. It uses explicit HTTP connections, bounds response reads and returns redirects without following them. The deployment verifier in PR #37 checks status, size and digest before accepting a response.</p>
+<p>No live deployment or external hosting change was performed while implementing this workflow. Exact deployed-byte and navigation evidence remains open until the workflow runs for the merged commit and its retained artifacts are reviewed.</p>
 
 
 

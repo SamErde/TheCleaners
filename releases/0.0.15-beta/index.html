@@ -12,31 +12,31 @@
         <meta name="author" content="Sam Erde">
       
       
-        <link rel="canonical" href="https://day3bits.com/TheCleaners/Get-TheCleaners/">
+        <link rel="canonical" href="https://day3bits.com/TheCleaners/releases/0.0.15-beta/">
       
       
-        <link rel="prev" href="../TheCleaners/">
+        <link rel="prev" href="../../migration-to-1.0/">
       
       
-        <link rel="next" href="../Clear-CurrentUserTemp/">
+        <link rel="next" href="../../TheCleaners/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Get-TheCleaners - The Cleaners PowerShell Module</title>
+        <title>0.0.15-beta preparation - The Cleaners PowerShell Module</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#get-thecleaners" class="md-skip">
+        <a href="#thecleaners-0015-beta" class="md-skip">
           Skip to content
         </a>
       
@@ -96,7 +96,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="The Cleaners PowerShell Module" class="md-header__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
+    <a href="../.." title="The Cleaners PowerShell Module" class="md-header__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Get-TheCleaners
+              0.0.15-beta preparation
             
           </span>
         </div>
@@ -231,7 +231,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -250,7 +250,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../safety-and-confirmation/" class="md-tabs__link">
+      <a href="../../safety-and-confirmation/" class="md-tabs__link">
         
   
   
@@ -269,7 +269,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../command-contracts/" class="md-tabs__link">
+      <a href="../../command-contracts/" class="md-tabs__link">
         
   
   
@@ -288,7 +288,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../support-matrix/" class="md-tabs__link">
+      <a href="../../support-matrix/" class="md-tabs__link">
         
   
   
@@ -307,7 +307,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../migration-to-1.0/" class="md-tabs__link">
+      <a href="../../migration-to-1.0/" class="md-tabs__link">
         
   
   
@@ -324,9 +324,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../releases/0.0.15-beta/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -343,13 +345,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../TheCleaners/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../TheCleaners/" class="md-tabs__link">
           
   
   
@@ -369,7 +369,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../packaging/" class="md-tabs__link">
+        <a href="../../packaging/" class="md-tabs__link">
           
   
   
@@ -411,7 +411,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="The Cleaners PowerShell Module" class="md-nav__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
+    <a href="../.." title="The Cleaners PowerShell Module" class="md-nav__button md-logo" aria-label="The Cleaners PowerShell Module" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -441,7 +441,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -468,7 +468,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../safety-and-confirmation/" class="md-nav__link">
+      <a href="../../safety-and-confirmation/" class="md-nav__link">
         
   
   
@@ -495,7 +495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../command-contracts/" class="md-nav__link">
+      <a href="../../command-contracts/" class="md-nav__link">
         
   
   
@@ -522,7 +522,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../support-matrix/" class="md-nav__link">
+      <a href="../../support-matrix/" class="md-nav__link">
         
   
   
@@ -549,7 +549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../migration-to-1.0/" class="md-nav__link">
+      <a href="../../migration-to-1.0/" class="md-nav__link">
         
   
   
@@ -573,118 +573,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../releases/0.0.15-beta/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    0.0.15-beta preparation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-    
-  
-  
-  
-    
-    
-    
-    
-      
-        
-        
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Functions
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_7">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Functions
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../TheCleaners/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Module reference
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -704,7 +592,7 @@
   <span class="md-ellipsis">
     
   
-    Get-TheCleaners
+    0.0.15-beta preparation
   
 
     
@@ -722,7 +610,7 @@
   <span class="md-ellipsis">
     
   
-    Get-TheCleaners
+    0.0.15-beta preparation
   
 
     
@@ -748,10 +636,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#synopsis" class="md-nav__link">
+  <a href="#changes-and-compatibility" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Synopsis
+        Changes and compatibility
       
     </span>
   </a>
@@ -759,10 +647,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#syntax" class="md-nav__link">
+  <a href="#validation-limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Syntax
+        Validation limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-history-reconciliation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release-history reconciliation
       
     </span>
   </a>
@@ -776,6 +675,85 @@
     </li>
   
 
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Functions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Functions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TheCleaners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -785,7 +763,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../Clear-CurrentUserTemp/" class="md-nav__link">
+      <a href="../../Get-TheCleaners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get-TheCleaners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Clear-CurrentUserTemp/" class="md-nav__link">
         
   
   
@@ -813,7 +819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Clear-WindowsTemp/" class="md-nav__link">
+      <a href="../../Clear-WindowsTemp/" class="md-nav__link">
         
   
   
@@ -841,7 +847,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Clear-OldIISLog/" class="md-nav__link">
+      <a href="../../Clear-OldIISLog/" class="md-nav__link">
         
   
   
@@ -869,7 +875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Clear-OldExchangeLog/" class="md-nav__link">
+      <a href="../../Clear-OldExchangeLog/" class="md-nav__link">
         
   
   
@@ -897,7 +903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Get-StaleUserProfile/" class="md-nav__link">
+      <a href="../../Get-StaleUserProfile/" class="md-nav__link">
         
   
   
@@ -925,7 +931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Start-Cleaning/" class="md-nav__link">
+      <a href="../../Start-Cleaning/" class="md-nav__link">
         
   
   
@@ -1012,7 +1018,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../packaging/" class="md-nav__link">
+      <a href="../../packaging/" class="md-nav__link">
         
   
   
@@ -1040,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../publishing/" class="md-nav__link">
+      <a href="../../publishing/" class="md-nav__link">
         
   
   
@@ -1068,7 +1074,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-plan-1.0/" class="md-nav__link">
+      <a href="../../release-plan-1.0/" class="md-nav__link">
         
   
   
@@ -1096,7 +1102,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../next-stage-prompts/" class="md-nav__link">
+      <a href="../../next-stage-prompts/" class="md-nav__link">
         
   
   
@@ -1124,7 +1130,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../lab-acceptance/" class="md-nav__link">
+      <a href="../../lab-acceptance/" class="md-nav__link">
         
   
   
@@ -1152,7 +1158,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment-validation/" class="md-nav__link">
+      <a href="../../deployment-validation/" class="md-nav__link">
         
   
   
@@ -1198,46 +1204,6 @@
   
 
 
-  <nav class="md-path" aria-label="Navigation" >
-    <ol class="md-path__list">
-      
-        
-  
-  
-    <li class="md-path__item">
-      <a href=".." class="md-path__link">
-        
-  <span class="md-ellipsis">
-    Home
-  </span>
-
-      </a>
-    </li>
-  
-
-      
-      
-        
-  
-  
-    
-    
-      <li class="md-path__item">
-        <a href="../TheCleaners/" class="md-path__link">
-          
-  <span class="md-ellipsis">
-    Functions
-  </span>
-
-        </a>
-      </li>
-    
-  
-
-      
-    </ol>
-  </nav>
-
               
               <article class="md-content__inner md-typeset">
                 
@@ -1248,18 +1214,26 @@
   
 
 
-<h1 id="get-thecleaners">Get-TheCleaners</h1>
-<h2 id="synopsis">Synopsis</h2>
-<p>Get the available commands and their current maturity without running cleanup.</p>
-<h2 id="syntax">Syntax</h2>
-<div class="highlight"><pre><span></span><code><span class="nb">Get-TheCleaners</span> <span class="p">[</span><span class="n">-Dedication</span><span class="p">]</span> <span class="p">[</span><span class="n">-NoLogo</span><span class="p">]</span> <span class="p">[&lt;</span><span class="n">CommonParameters</span><span class="p">&gt;]</span>
-</code></pre></div>
-<p>Returns one <code>TheCleaners.CommandInfo</code> object per exported function, with <code>Name</code>, <code>Maturity</code>, <code>RemovalEnabled</code>, and <code>SupportsWhatIf</code>. IIS and Exchange are <code>PreviewOnly</code>; other commands remain <code>Prerelease</code> until their acceptance gates pass. Aliases are not duplicated as inventory entries.</p>
-<div class="highlight"><pre><span></span><code><span class="nb">Get-TheCleaners</span>
-<span class="nb">Get-TheCleaners</span> <span class="n">-NoLogo</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="n">Maturity</span> <span class="o">-EQ</span> <span class="s1">'PreviewOnly'</span>
-</code></pre></div>
-<p><code>-NoLogo</code> omits interactive branding for pipelines. <code>-Dedication</code> explicitly shows the dedication. The function never performs maintenance. <code>Start-Cleaning</code> remains a deprecated alias with the same parameters and behavior through 1.x.</p>
-<p>Canonical page: <a href="https://day3bits.com/TheCleaners/Get-TheCleaners/">https://day3bits.com/TheCleaners/Get-TheCleaners/</a>.</p>
+<h1 id="thecleaners-0015-beta">TheCleaners 0.0.15-beta</h1>
+<p><strong>Prepared prerelease; publication is pending.</strong> The proposed Gallery version is <code>0.0.15-beta</code> and the proposed Git tag is <code>v0.0.15-beta</code>. The release requires approval of its exact tested commit and artifact before a tag or upload is created.</p>
+<p>This beta prepares the 1.0 command and safety contracts for Windows PowerShell 5.1 and supported PowerShell 7 releases on Windows. It includes temporary-file maintenance, typed results, quiet imports, the <code>Get-TheCleaners</code> command inventory, and deterministic source-layout packaging.</p>
+<h2 id="changes-and-compatibility">Changes and compatibility</h2>
+<ul>
+<li>Temporary-file deletion uses opened file identities and reports proposed, removed, skipped and failed candidates. Errors remain visible through PowerShell's error stream.</li>
+<li>Empty-directory pruning is opt-in with <code>-RemoveEmptyDirectory</code> and limited to directories emptied by that invocation and their qualifying ancestors.</li>
+<li><code>Get-TheCleaners</code> replaces <code>Start-Cleaning</code>; the old name remains a deprecated alias through 1.x. Neither command starts cleanup. Module import is quiet.</li>
+<li>Stale-profile discovery returns typed, read-only results with explicit unknown-date handling and optional sizing.</li>
+<li>IIS and Exchange discovery require explicit <code>-WhatIf</code> and remain structurally deletion-disabled. Exchange no longer invokes IIS cleanup. No force flag, activation setting or Exchange removal switch is available.</li>
+<li>Published package verification uses the exact tested module content, archive digest and source identity. Help and documentation use the canonical <a href="https://day3bits.com/TheCleaners/">title-case site</a>.</li>
+</ul>
+<p>See the <a href="../../migration-to-1.0/">migration guide</a> for parameter and behavior changes and the repository <a href="https://github.com/SamErde/TheCleaners/blob/main/CHANGELOG.md">changelog</a> for the complete preparation history.</p>
+<h2 id="validation-limits">Validation limits</h2>
+<p>Windows client/server, filesystem/privilege, profile, IIS and Exchange lab validation is <strong>deferred future work and is not underway</strong>. Hosted fixture and package tests do not establish product acceptance. IIS/Exchange candidate lists remain experimental. This beta does not establish production-ready 1.0 support or enable server-log deletion.</p>
+<p>Exact candidate, publication and installed-package evidence belongs in the <a href="../../release-plan-1.0/">release ledger</a>. Prior runtime/archive evidence remains bound to its original commit; it cannot be reused as proof for this package.</p>
+<h2 id="release-history-reconciliation">Release-history reconciliation</h2>
+<p>The September 17, 2026 inventory found Gallery versions <code>0.0.6-alpha</code> through <code>0.0.13-alpha</code>, with <a href="https://www.powershellgallery.com/packages/TheCleaners/0.0.13-alpha">0.0.13-alpha</a> the latest published version. The source version <code>0.0.15-beta</code> was unused in the Gallery. No Git tags existed at that check.</p>
+<p>GitHub also retained an unpublished draft, release ID <code>172666498</code>, titled <code>Testing and Workflow Updates</code> and labeled <code>0.0.11-alpha</code>; its label did not resolve to a Git tag. It is historical draft metadata and is preserved. Its dependency-only notes are not the notes for this beta, and no historical package is assigned to the current source commit without evidence. The next release establishes a new explicit version/tag/commit/artifact mapping.</p>
+<p>Recheck version availability immediately before publication. The publisher refuses an existing Gallery version. Publication and clean installation of that exact version remain pending; local-feed rehearsal is separate evidence.</p>
 
 
 
@@ -1319,10 +1293,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.tracking", "navigation.sections", "navigation.top", "toc.follow", "toc.integrate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.tracking", "navigation.sections", "navigation.top", "toc.follow", "toc.integrate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
