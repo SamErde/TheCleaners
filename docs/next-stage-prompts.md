@@ -1,12 +1,12 @@
 # Next-stage prompts
 
-These prompts replace the previously proposed immediate concurrency/lab-preparation stage. Lab validation is deferred future work, not underway. Refresh the summaries and exact identities before each use; do not execute a successor automatically.
+These prompts replace the previously proposed immediate concurrency/lab-preparation stage. Lab validation is deferred future work, not underway. Refresh the summaries and exact identities before each use. Save successors for recovery; when continuous execution is explicitly authorized, continue the non-deferred sequence while preserving final publication approval.
 
 ## Next: non-lab delivery readiness
 
-**Completed:** TC-002 loader/naming; supported runtime/archive subgates; PR #35 risk review; PR #36 harness/schema/runbook preparation; title-case canonical URL decision; live publishing environment with SamErde review and `v*` tags.
+**Completed:** TC-002 loader/naming; supported runtime/archive subgates; PR #35 risk review; PR #36 harness/schema/runbook preparation; title-case canonical URL decision; publishing environment controls and credential presence; unused `0.0.15-beta` and release-history inventory.
 
-**Remaining:** integrate and validate the planning changes; exact docs deployment; environment credential setup and local publication rehearsal; prerelease metadata, approved publication and published installation. TC-003–007 labs and final TC-001/008/009 release acceptance remain deferred/open.
+**Remaining:** integrate and validate delivery changes; exact docs deployment and local publication rehearsal; concrete prerelease validation/approval, publication and published installation. TC-003–007 labs and final TC-001/008/009 release acceptance remain deferred/open.
 
 Recommended model: GPT-5.6 Sol (`gpt-5.6-sol`), reasoning effort high. Delegate bounded inventory/checks to Luna at medium effort and independent implementation/review to Sol at medium or high effort. Escalate to Astra only for concrete unresolved risk or complexity.
 

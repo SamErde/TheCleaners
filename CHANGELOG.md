@@ -2,7 +2,7 @@
 
 ## Unreleased - 1.0 preparation
 
-This entry describes unreleased work, not a released 1.0 package. Historical changes preceding this work still need reconciliation against the repository and Gallery history.
+This entry describes unreleased work, not a released 1.0 package. The prepared beta notes reconcile the observed repository and Gallery history without inventing source identities for old packages.
 
 The next prepared prerelease is **0.0.15-beta**, proposed tag `v0.0.15-beta`. The [release notes and history reconciliation](docs/releases/0.0.15-beta.md) map the changes below to that candidate. Publication remains pending; the old unpublished `0.0.11-alpha` GitHub draft is preserved as historical metadata and is not reused for this beta.
 
@@ -24,8 +24,10 @@ The next prepared prerelease is **0.0.15-beta**, proposed tag `v0.0.15-beta`. Th
 
 - Prioritize non-lab documentation/delivery readiness and an optional approved prerelease; Windows, IIS, Exchange, and profile lab validation is deferred future work, not underway. Require succinct Completed / Remaining summaries in every successor prompt.
 - Use the working title-case `https://day3bits.com/TheCleaners/` URL consistently in configuration, manifest, source help, and documentation. Track support for both URL cases in Zensical issue #26.
-- Configure the GitHub `powershell-gallery` environment with SamErde review and `v*` tag restrictions. Update the publishing workflow to use the dedicated `PSGALLERY_PUBLISH_API_KEY` environment secret, fail clearly when absent, and stop passing repository secrets to the build matrix. Credential provisioning and publication remain pending.
+- Configure the GitHub `powershell-gallery` environment with SamErde review and `v*` tag restrictions. Update the publishing workflow to use the dedicated `PSGALLERY_PUBLISH_API_KEY` environment secret, fail clearly when absent, and stop passing repository secrets to the build matrix. Credential presence is verified; Gallery validity and actual publication remain pending.
 - Add a closed local-rehearsal publisher mode that uses an existing local filesystem repository and an internal placeholder key. Preserve the exact-artifact guards shared with the fixed PSGallery production path and require an explicit valid source commit in both modes.
+- Bind publication to the maintainer-approved archive digest and verify the published version's installed payload, metadata, import, help, aliases and preview locks on fresh supported-runtime runners.
+- Build documentation once, retain a source-bound manifest, deploy that exact output and verify every public file's bytes and representative navigation with bounded propagation retries.
 
 - TC-008 merged implementation: add current PowerShell 7.4.20 and 7.5.11 hosted lanes; preserve 7.6.6 and canonical-artifact PS5.1 testing.
 - Replace runtime-dependent ZIP compression with stored entries, ordinal ordering, UTF-8 names and fixed metadata; require repeated and cross-runtime byte equality, exact commit identity, complete extracted file verification and hidden-file uploads.

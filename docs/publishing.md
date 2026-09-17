@@ -33,4 +33,19 @@ Existing repository secret names `POWERSHELLGALLERY_KEY` and `POWERSHELLGALLERY_
 5. After approval, create the agreed matching release tag and manually dispatch the publishing workflow for that tag with `approved_archive_sha256` set to the approved archive digest. The full release matrix must pass before the environment-gated job can publish its exact tested artifact; the upload also refuses an archive whose digest differs from the approved value. Never bypass environment review or other applicable protection.
 6. Install the exact published Gallery version in fresh Windows CI environments across the supported runtimes. Verify the module payload against the tested content manifest, accounting explicitly for Gallery-added packaging metadata; also verify quiet import, exports, aliases, help and preview locks without live cleanup. Retain version/commit-bound reports and mark only that prerelease's publication/install gates validated.
 
+## Local rehearsal and retained evidence
+
+From a clean tracked worktree, build the exact candidate and then run:
+
+```powershell
+Invoke-Build -File ./src/TheCleaners.build.ps1
+./.github/scripts/Invoke-LocalPublicationRehearsal.ps1 -ArtifactPath ./src/Artifacts -ArchiveDirectory ./src/Archive -OutputPath ./src/Reports/LocalPublicationRehearsal.json
+```
+
+The rehearsal requires the content manifest's commit to match the current checkout. It creates a unique local feed and module search root, invokes the real publisher in a fresh instance of the current PowerShell runtime, saves the exact version, checks its payload and runtime contract, and verifies that a second publication is refused. Synthetic tag variables exist only inside the worker process; no Git tag or Gallery upload is created. The report records source/version/runtime identity, package digests, completed checks and cleanup outcomes. CI requires this rehearsal in the canonical PowerShell 7.6.6 build lane and retains its report with the Pester artifacts.
+
+The shared repository-module checker accepts only the tested payload plus PowerShellGet's root `PSGetModuleInfo.xml` file. Every payload length and SHA-256 must match the tested manifest. Exact-path and module-name imports must resolve the same copy quietly, help and exports must remain intact, and IIS/Exchange must refuse calls without explicit `-WhatIf` before discovery. Local `Save-Module` acquisition exercises repository packaging; only the post-publication `Install-Module` matrix establishes real Gallery installation evidence.
+
+After an approved upload, `Publish.yml` installs the exact Gallery version in separate fresh Windows jobs for Windows PowerShell 5.1 and PowerShell 7.4.20, 7.5.11 and 7.6.6. The jobs use the same tested archive manifest and retain `published-install-<runtime>` JSON reports. A successful upload alone does not close the installed-artifact gate.
+
 Final 1.0 acceptance still requires its applicable product gates, maintainer approval, final metadata and fresh publication/install evidence. Local-feed rehearsal and prerelease delivery do not establish Windows, IIS, Exchange or profile lab acceptance. See the [release plan](release-plan-1.0.md) and [next-stage prompts](next-stage-prompts.md).
