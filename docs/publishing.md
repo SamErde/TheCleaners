@@ -11,6 +11,7 @@ On September 17, 2026, the maintainer authorized resolving the missing environme
 | Environment | `powershell-gallery` exists in `SamErde/TheCleaners`. |
 | Required reviewer | `SamErde`. Approval must be given by the maintainer for the concrete release. |
 | Self-review | Permitted, so the sole configured maintainer can approve a manually initiated release. This is not a second-person approval policy. |
+| Administrator bypass | Disabled. Administrators must use the required environment approval rather than forcing a waiting deployment. |
 | Deployment refs | Custom policies with one tag rule, `v*`, and no branch rule. The publisher additionally checks the full version/tag/prerelease match. |
 | Publishing credential | `PSGALLERY_PUBLISH_API_KEY` is present as an environment secret, confirmed by a September 17 metadata-only read after maintainer provisioning. Its value and Gallery validity were not inspected. |
 | Build access | The reusable build matrix does not inherit repository secrets. Only the publishing step maps the dedicated secret into its process environment. |
