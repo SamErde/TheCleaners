@@ -53,7 +53,7 @@ The temp commands own their mutations. They discover under an approved root, cap
 
 Retention and removed-byte accounting use the current metadata observed from the deletion handle. Discovery establishes identity and candidacy, not an immutable content snapshot. A same-object file may be removed after a content/length change if its observed last-write time still meets the cutoff. Read-only sharing blocks data writers and renames but does not block every attribute-only timestamp update; metadata validation and disposition are not atomic. The [issue #30 contract and fixtures](issue-30-retention-handle.md) define these limits.
 
-The implementation follows the safety intent tracked in [issue #28](https://github.com/SamErde/TheCleaners/issues/28) and [issue #29](https://github.com/SamErde/TheCleaners/issues/29). Broader NTFS/ReFS and Windows client/server acceptance still requires disposable Windows environments with recorded filesystem and runtime evidence; deterministic issue fixtures do not replace those gates.
+The closed [issue #28 directory-identity packet](issue-28-directory-identity.md) and [issue #29 deletion-rights packet](issue-29-delete-rights.md) record the merged deterministic evidence for this implementation. Broader NTFS/ReFS and Windows client/server acceptance still requires disposable Windows environments with recorded filesystem and runtime evidence; deterministic issue fixtures do not replace those gates.
 
 ## Preview contract
 

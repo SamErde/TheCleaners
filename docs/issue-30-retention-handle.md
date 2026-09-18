@@ -1,10 +1,10 @@
 # Temp retention and deletion-handle contract
 
 This packet records the bounded deterministic fixture and contract work in
-[issue #30](https://github.com/SamErde/TheCleaners/issues/30). The runtime already
-uses native same-handle deletion at source base
-`af330858b41335366476f0b845e3f73a3c1497d1`; this packet adds evidence and states its
-concurrency limits. It does not enable stable status or replace the deferred
+[issue #30](https://github.com/SamErde/TheCleaners/issues/30). [PR #42](https://github.com/SamErde/TheCleaners/pull/42)
+merged as `3d07e9ccbfd441c388b1a3a69edc92fc326a4a66` and closed the issue. The runtime
+already used native same-handle deletion before this packet; the merged work adds
+evidence and states its concurrency limits. It does not enable stable status or replace the deferred
 Windows client/server, actual-root, ReFS, filesystem-filter, or hostile-driver labs.
 See the [release ledger](release-plan-1.0.md) for current acceptance gates.
 
@@ -95,7 +95,7 @@ are removed as links before fixture teardown.
 | Sharing errors, Stop, counters and bytes | Both commands verify late writer failure with native error 32, stable error ID/category, zero removals/bytes, and Stop unwinding with a successful root rename afterward. Access-mask/ACL cases remain independently evidenced in issue #29. |
 | Approval and permissions boundaries | Both commands prove WhatIf never reaches acquisition. Existing Confirm tests and the native no-content-read access mask are unchanged. |
 
-### Local checkpoint
+### Historical local checkpoint
 
 Local evidence is recorded against base `af330858b41335366476f0b845e3f73a3c1497d1`
 plus the uncommitted new test and this document, using isolated Pester **5.7.1**.
@@ -112,7 +112,8 @@ The tested new file's SHA-256 is
 `a8d0a1be296e8618ae7ce47174218b777506913b9711d88381529c9af887d429`.
 `git diff --check` and the new files' whitespace checks passed. No runtime source
 behavior was changed; the integration also clarifies comment-based help. This local checkpoint does not claim execution on PowerShell 7.4 or
-7.5; the exact-head hosted matrix remains the integrator's next validation gate.
+7.5; the later exact-head and merged-source hosted results are recorded in the
+[release ledger](release-plan-1.0.md).
 
 The retained machine-readable reports are `src/Reports/issue30/ps7-final.xml`,
 `ps7-final.json`, `ps51-final.xml`, and `ps51-final.json` (ignored local evidence).
@@ -127,4 +128,5 @@ and Windows PowerShell **5.1.26100.9444**, using Pester **5.7.1** on Windows
 **10.0.26200.0**. Both runs had zero failures, skips and not-run tests. The new
 test hash remained the value above. The strict clean Zensical **0.0.62** build
 and configuration validation passed. This is local exact-commit evidence; the
-PR's final-head hosted matrix and merge results must be verified separately.
+PR's later final-head hosted matrix and merge results are recorded in the release
+ledger; this checkpoint remains local evidence only.

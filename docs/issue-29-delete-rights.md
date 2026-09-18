@@ -6,6 +6,14 @@ exact source and test results recorded below. It does not establish Windows
 client/server product acceptance, actual Windows-root cleanup, or ReFS runtime
 acceptance; those remain TC-003/004 release gates.
 
+[PR #44](https://github.com/SamErde/TheCleaners/pull/44) merged as
+`6fd8af169da631d17579a3c7eb3fa0aa8b285be0` and closed the issue. Exact reviewed
+head `abe5f4275b2d5b9a7a510aa0759413dbcf91a727` and merged source
+`6fd8af169da631d17579a3c7eb3fa0aa8b285be0` passed the supported hosted
+runtime/artifact matrix; merged-source analyzer and 39-file documentation
+deployment verification also passed. The [release ledger](release-plan-1.0.md)
+records the immutable runs, counts, digests and review boundary.
+
 No executable runtime source changed in this packet. The base implementation
 already met the selected native contract; the new work supplies the missing
 both-command ACL, error, identity, and reconciliation evidence.
@@ -95,8 +103,8 @@ Its merged source passed
 tests on PS5.1, with zero failures/skips/not-run. All eleven artifact wrappers,
 source/runtime reports and archives were independently verified. Issue #28's
 directory-identity packet also merged in [PR #43](https://github.com/SamErde/TheCleaners/pull/43)
-as `0829d076ac13095ed016c54ea96c4a8b6abd8287`. This packet is rebased onto both
-merges and will run the combined suite on its own final head before closure.
+as `0829d076ac13095ed016c54ea96c4a8b6abd8287`. This packet was rebased onto both
+merges before its own reviewed-head and merged-source verification.
 
 ## ReFS disposition
 
@@ -124,8 +132,8 @@ contracts, under PowerShell **7.6.6** and Windows PowerShell
 JSON/XML evidence is named `issue29-rebased-ps7` and `issue29-rebased-ps51`.
 The test-file SHA-256 is
 `d439b0d1fc4edc0ab2eb4f11fca87dd6a523c5667f6411169e2105e90581c082`.
-Final-head hosted validation and merged-source verification remain separate
-gates; these local results do not establish either one.
+These local results do not establish final-head hosted or merged-source
+verification; the later exact evidence is recorded above and in the release ledger.
 
 Independent Astra high review also ran exact clean pre-rebase head
 `7ce8c0f6796617c47c046a4d4c90ca2ed86d4a96` in fresh processes, with the native

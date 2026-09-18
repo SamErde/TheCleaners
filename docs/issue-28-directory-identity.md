@@ -2,9 +2,9 @@
 
 ## Scope and result
 
-This packet closes the remaining deterministic fixture gap in [issue #28](https://github.com/SamErde/TheCleaners/issues/28). The runtime already retains native Windows directory handles through candidate mutation and compares volume/file identity before non-recursive pruning. No runtime defect was found, so this packet adds a dedicated public-command regression suite without changing production behavior.
+This packet closes the remaining deterministic fixture gap in [issue #28](https://github.com/SamErde/TheCleaners/issues/28). [PR #43](https://github.com/SamErde/TheCleaners/pull/43) merged as `0829d076ac13095ed016c54ea96c4a8b6abd8287` and closed the issue. The runtime already retains native Windows directory handles through candidate mutation and compares volume/file identity before non-recursive pruning. No runtime defect was found, so the packet adds a dedicated public-command regression suite without changing production behavior.
 
-The initial implementation checkpoint used base commit `af330858b41335366476f0b845e3f73a3c1497d1` plus uncommitted test/documentation changes. It is retained below as historical evidence. The clean metadata-correction checkpoint records local committed fixture validation; final-head hosted CI across all supported runtimes and post-merge evidence remain separate checks.
+The initial implementation checkpoint used base commit `af330858b41335366476f0b845e3f73a3c1497d1` plus uncommitted test/documentation changes. It is retained below as historical evidence. Exact reviewed head `12db558565d39e1a52c726160a6b4014b72cf5ff` and the merged-source workflow results are recorded in the [release ledger](release-plan-1.0.md); they supersede the pending language in the historical checkpoints below.
 
 ## Deterministic fixture design
 
@@ -28,7 +28,7 @@ The second case demonstrates defense in depth when the primary handle barrier is
 | Preserve root, unrelated empty branches, recent files, and reparse points | The end-to-end boundary case retains the fixture root, an unrelated empty directory, a recent-file branch, a junction, and the junction target outside the cleanup root. |
 | Avoid path/timestamp-only identity proof | Tests use `FILE_ID_INFO` identities from the native interop. The fallback fixture explicitly matches creation time, last-write time, and attributes, then records unequal original and replacement identities while confirming the displaced original retains its planned identity. |
 | Keep `ShouldProcess` and error behavior | `-WhatIf` reports candidates and performs no mutation; mutation cases use explicit `-Confirm:$false`; a locked candidate with `-ErrorAction Stop` terminates with `TempFileRemovalFailed` and preserves directory ancestry. |
-| Validate the supported runtime matrix | Local coverage passed on PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444 with Pester 5.7.1. Full-matrix acceptance remains pending inspection of exact final-head hosted results, including PowerShell 7.4.20 and 7.5.11. |
+| Validate the supported runtime matrix | Local coverage passed on PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444 with Pester 5.7.1. Exact final-head and merged-source hosted evidence for PowerShell 7.4.20, 7.5.11, 7.6.6 and Windows PowerShell 5.1 is recorded in the release ledger. |
 
 ## Validation evidence
 
@@ -41,7 +41,7 @@ Local fixture runs used Windows **10.0.26200.0**, PowerShell **7.6.6** and Windo
 | Review base `581907e7d83c283de423c0f36d02b735c7153876` plus uncommitted refinement | 14 passed, zero failed/skipped/not-run | Historical first run with matching replacement metadata; reports `pester-review-followup-ps766.xml` and `pester-review-followup-ps51.xml` in the same temporary evidence directory. |
 | Clean correction `2372a218d04354df100c2d9188bc30c419764151` | 18/18 passed, zero failed/skipped/not-run | Includes the metadata-matching assertions and four documentation contracts. Retained reports: `issue28-final2372-ps7.json/.xml` and `issue28-final2372-ps51.json/.xml`. Test-file SHA-256: `d6f2c31c5625cec86cabee0fb5d9f856a40ed2f43ff3e479dbe326a2a8f8a6fa`. Strict Zensical 0.0.62 passed. |
 
-The clean correction's hosted build failed test-source analysis because two display-only `Article` parameters were unused; it did not pass the full build. Commit `da99d4ebdd0e8c76cba332eb506e06d2eda43691` removed those unused parameters and simplified the test descriptions without changing fixture logic. Its PowerShell parsers and PR-range whitespace check passed. Final-head hosted runtime reports, artifact inspection and post-merge results remain separate gates and are recorded in the PR and release ledger when verified.
+The clean correction's hosted build failed test-source analysis because two display-only `Article` parameters were unused; it did not pass the full build. Commit `da99d4ebdd0e8c76cba332eb506e06d2eda43691` removed those unused parameters and simplified the test descriptions without changing fixture logic. Its PowerShell parsers and PR-range whitespace check passed. These are historical correction checkpoints; the final-head and merged-source runtime, artifact and deployment results are recorded in the PR and release ledger.
 
 ## Limitations
 This is deterministic local NTFS fixture evidence, not Windows client/server, ReFS, real-system-root, elevated/non-elevated, hostile-filter, or product lab acceptance. Issue #28 does not require ReFS validation, and the production help already states that the checks cannot provide an atomic defense when a filesystem or filter does not provide stable file IDs. Deferred lab gates and final 1.0 acceptance remain open.
