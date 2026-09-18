@@ -11,7 +11,10 @@ function Clear-WindowsTemp {
         remain held through candidate mutation so a validated parent cannot be
         renamed or replaced by a reparse point during the operation. The handle
         requests DELETE and FILE_READ_ATTRIBUTES only; it does not read file
-        contents. Directory removal is opt-in,
+        contents. Retention and logical byte counts use metadata observed from
+        that deletion handle. Data writers and renames are blocked while it is
+        held, but attribute-only timestamp changes can still occur. The retention
+        check and deletion are not an atomic operation. Directory removal is opt-in,
         non-recursive, deepest-first, and limited to directories emptied by this
         invocation. Reparse points, roots, unrelated branches, replacements,
         hard-link identity changes, and paths outside the approved root are

@@ -51,7 +51,9 @@ Discovery failure is never represented as an empty successful result. Under cont
 
 The temp commands own their mutations. They discover under an approved root, capture native volume/file identities, and reopen each candidate with a Windows handle requesting `DELETE` and `FILE_READ_ATTRIBUTES`, without `FILE_READ_DATA`. The same handle is identity-checked and marked for deletion; the PowerShell provider is not used to delete candidates. Directory pruning is non-recursive, opt-in through `-RemoveEmptyDirectory`, deepest-first, and limited to directories emptied by that invocation. Reparse points, roots, unrelated branches, hard-link targets, replacements, and paths outside the root are preserved.
 
-The implementation follows the safety intent tracked in [issue #28](https://github.com/SamErde/TheCleaners/issues/28) and [issue #29](https://github.com/SamErde/TheCleaners/issues/29). NTFS and ReFS acceptance still requires a disposable Windows lab with recorded filesystem and runtime evidence.
+Retention and removed-byte accounting use the current metadata observed from the deletion handle. Discovery establishes identity and candidacy, not an immutable content snapshot. A same-object file may be removed after a content/length change if its observed last-write time still meets the cutoff. Read-only sharing blocks data writers and renames but does not block every attribute-only timestamp update; metadata validation and disposition are not atomic. The [issue #30 contract and fixtures](issue-30-retention-handle.md) define these limits.
+
+The implementation follows the safety intent tracked in [issue #28](https://github.com/SamErde/TheCleaners/issues/28) and [issue #29](https://github.com/SamErde/TheCleaners/issues/29). Broader NTFS/ReFS and Windows client/server acceptance still requires disposable Windows environments with recorded filesystem and runtime evidence; deterministic issue fixtures do not replace those gates.
 
 ## Preview contract
 
