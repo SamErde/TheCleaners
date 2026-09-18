@@ -5,8 +5,8 @@ BeforeDiscovery {
         @{ CommandName = 'Clear-WindowsTemp' }
     )
     $ReplacementCases = @(
-        @{ Article = 'an'; ReplacementKind = 'empty'; HasReplacementContent = $false }
-        @{ Article = 'a'; ReplacementKind = 'populated'; HasReplacementContent = $true }
+        @{ ReplacementKind = 'empty'; HasReplacementContent = $false }
+        @{ ReplacementKind = 'populated'; HasReplacementContent = $true }
     )
 }
 
@@ -80,8 +80,8 @@ Describe 'Temp directory identity closure: <CommandName>' -ForEach $TempCases -S
         $env:SystemRoot = $PreviousSystemRoot
     }
 
-    It 'prevents a same-path replacement attempt with <Article> <ReplacementKind> payload while the planned handle is retained' -TestCases $ReplacementCases {
-        param($Article, $ReplacementKind, $HasReplacementContent)
+    It 'prevents a same-path replacement attempt with a payload of type <ReplacementKind> while the planned handle is retained' -TestCases $ReplacementCases {
+        param($ReplacementKind, $HasReplacementContent)
 
         $ReplacementSource = Join-Path -Path $FixtureRoot -ChildPath "Replacement-$ReplacementKind"
         $DisplacedPath = Join-Path -Path $FixtureRoot -ChildPath "Displaced-$ReplacementKind"
@@ -146,8 +146,8 @@ Describe 'Temp directory identity closure: <CommandName>' -ForEach $TempCases -S
         @($State.Handles | Where-Object { -not $_.IsClosed }) | Should -HaveCount 0
     }
 
-    It 'rejects and preserves an injected same-path replacement with <Article> <ReplacementKind> payload by native identity' -TestCases $ReplacementCases {
-        param($Article, $ReplacementKind, $HasReplacementContent)
+    It 'rejects and preserves an injected same-path replacement with a payload of type <ReplacementKind> by native identity' -TestCases $ReplacementCases {
+        param($ReplacementKind, $HasReplacementContent)
 
         $ReplacementSource = Join-Path -Path $FixtureRoot -ChildPath "InjectedReplacement-$ReplacementKind"
         $DisplacedPath = Join-Path -Path $FixtureRoot -ChildPath "OriginalDirectory-$ReplacementKind"
