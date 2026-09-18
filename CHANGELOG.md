@@ -6,6 +6,8 @@ Following the `0.0.15-beta` prerelease, Windows client/server, IIS, Exchange, pr
 
 ### Changed
 
+- Reconcile current documentation after PRs #42, #43 and #44 closed issues #30, #28 and #29. Record their exact reviewed-head and merged-source evidence, preserve the published `0.0.15-beta` artifact as a distinct historical package, close stale issue #26 URL wording, and keep deferred Windows/ReFS/IIS/Exchange/profile labs and final 1.0 acceptance explicit.
+
 - Complete issue #28's public-command directory-identity regressions for empty and populated replacements, retained-handle prevention, defensive identity refusal, deepest-first pruning, preservation boundaries, WhatIf and terminating errors. The fixture note distinguishes reachable production behavior from injected handle-loss tests; executable runtime behavior and lab gates are unchanged.
 
 - Complete issue #29's NTFS ACL regressions for both temp commands: prove denied content reads still permit authorized deletion, denied deletion reports errors and honors Stop, substitutions/disappearance are preserved, and native identity uses all 128 bits with fail-closed errors. Document the conservative sharing decision and ReFS API semantics separately from deferred ReFS runtime acceptance.

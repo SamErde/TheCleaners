@@ -2,20 +2,20 @@
 
 **Windows client/server, IIS, Exchange, and profile lab validation is deferred future work, not underway.** Hosted fixture/package results below remain scoped to their exact tested commits and do not establish product acceptance.
 
-The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Current exact runtime evidence is for merged commit `345f06c861b6d4074e5896e0b27a19f869dfa7e3`; it does not apply automatically to a later commit.
+The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Current exact merged runtime evidence is for `6fd8af169da631d17579a3c7eb3fa0aa8b285be0`; it does not apply automatically to later commits.
 
 ## Current exact merged runtime evidence
 
-[Build run 35257555108](https://github.com/SamErde/TheCleaners/actions/runs/35257555108) and independent artifact inspection validate the current candidate:
+[Build run 35340908362](https://github.com/SamErde/TheCleaners/actions/runs/35340908362) and independent inspection of all eleven retained artifacts validate exact merged source `6fd8af169da631d17579a3c7eb3fa0aa8b285be0`:
 
 | Runtime | Exact merged evidence |
 | --- | --- |
-| Windows PowerShell 5.1 | `5.1.26100.33296` Desktop passed 309 combined tests with zero failures, skips or not-run tests and consumed the canonical 7.6.6 artifact. |
-| PowerShell 7.4 LTS | `7.4.20` passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858). |
-| PowerShell 7.5 stable | `7.5.11` passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858). |
-| PowerShell 7.6 LTS | `7.6.6` passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858). |
+| Windows PowerShell 5.1 | `5.1.26100.33296` Desktop passed 363 combined tests with zero failures, skips or not-run tests and consumed the canonical 7.6.6 artifact. |
+| PowerShell 7.4 LTS | `7.4.20` passed 359 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 88.05% (1,636/1,858). |
+| PowerShell 7.5 stable | `7.5.11` passed 359 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 88.05% (1,636/1,858). |
+| PowerShell 7.6 LTS | `7.6.6` passed 359 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 88.05% (1,636/1,858). |
 
-All three PS7 producers generated identical original and repeated 19-file archives: 224,050 bytes, SHA-256 `1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383`. Protected run [35268852573](https://github.com/SamErde/TheCleaners/actions/runs/35268852573) used that archive for `0.0.15-beta` publication and fresh-install verification; independent verification matched all 15 retained artifact wrappers and four installed-package reports. The bounded PR #35 baseline review is complete, while its native, platform and product cases remain assigned to deferred labs. Final 1.0 release acceptance remains open.
+All three PS7 producers generated identical original and repeated 19-file archives: 224,558 bytes, SHA-256 `5153966aaef9f194fdf60fe8793989f4693dcd3310b10c4223d6208865d0135f`. Independent inspection matched all eleven artifact wrappers, source/runtime reports, NUnit results, ACL and local-feed evidence, and repeated/cross-runtime archives. Merged-source analyzer run [35340908372](https://github.com/SamErde/TheCleaners/actions/runs/35340908372) and documentation run [35340908280](https://github.com/SamErde/TheCleaners/actions/runs/35340908280) also passed. The distinct published `0.0.15-beta` artifact remains 224,050 bytes with SHA-256 `1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383` from exact source `345f06c861b6d4074e5896e0b27a19f869dfa7e3`; current untagged source changes are not part of that Gallery package. The bounded PR #35 baseline review is complete, while its native, platform and product cases remain assigned to deferred labs. Final 1.0 release acceptance remains open.
 
 ## Historical runtime evidence
 

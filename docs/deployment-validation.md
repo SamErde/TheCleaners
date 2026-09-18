@@ -1,8 +1,8 @@
 # Documentation deployment gate
 
-The canonical documentation URL is `https://day3bits.com/TheCleaners/`, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links must use that casing. The Zensical migration is open in [PR #41](https://github.com/SamErde/TheCleaners/pull/41); review, merge, fresh deployment, and lowercase-path acceptance remain open under [issue #26](https://github.com/SamErde/TheCleaners/issues/26).
+The canonical documentation URL is `https://day3bits.com/TheCleaners/`, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links use that casing. Zensical [PR #41](https://github.com/SamErde/TheCleaners/pull/41) merged as `af330858b41335366476f0b845e3f73a3c1497d1`, and [issue #26](https://github.com/SamErde/TheCleaners/issues/26) is closed. Deployment run [35282935445](https://github.com/SamErde/TheCleaners/actions/runs/35282935445) and an independent live recheck verified its 36 canonical files and required navigation. Later deployments supersede that byte snapshot and require their own source-bound evidence.
 
-The lowercase project-prefix request is handled by the account-root Pages site before this project's generated files are selected. Zensical's native redirects map paths within the documentation output, so they cannot repair that missing project prefix. Case-only alias directories would also collide with canonical mixed-case directories on Windows. A companion account-root redirect is the remaining hosting-level option; this repository does not add ineffective redirect maps.
+The lowercase project-prefix request is handled by the separately owned account-root Pages site before this project's generated files are selected. Companion [SamErde/samerde.github.io#13](https://github.com/SamErde/samerde.github.io/pull/13) merged as `0b096e19b6058a0c60119d20b57ba7de7aa3236c`. Its account-root 404 page uses JavaScript to send the lowercase project prefix to the canonical title-case path; this is a fallback from an HTTP 404 response, not an HTTP 301/302 redirect. Zensical's native redirects map paths only within this documentation output, and case-only alias directories would collide on Windows.
 
 A documentation deployment is accepted only when the workflow proves all of the following for one source commit:
 
@@ -78,7 +78,7 @@ The following retained baseline validates the exact deployment gate for PR #37 m
 | Workflow verification | Passed after three complete attempts during propagation |
 | Independent live verification | Passed all 71 files and five navigation routes in one attempt |
 
-This closes exact deployed-byte and representative-navigation verification for that source commit only. The Zensical migration changes the generated site and therefore requires a fresh merged-source deployment and retained evidence before it can replace this baseline. Lowercase `/thecleaners/` acceptance also remains open in issue #26.
+This closes exact deployed-byte and representative-navigation verification for that source commit only. It is a historical pre-Zensical baseline. The Zensical migration checkpoint is the 36-file verification for `af330858b41335366476f0b845e3f73a3c1497d1` above; later source changes and deployments need fresh retained evidence. Lowercase compatibility is supplied by the separately owned account-root 404/JavaScript fallback described above.
 
 Before this gate was implemented, the September 17, 2026 live check found title-case `/TheCleaners/` HTTP 200 and lowercase `/thecleaners/` HTTP 404. GitHub Pages reported the title-case site URL, and the maintainer selected that working path as canonical.
 
@@ -92,4 +92,4 @@ The historical live check on September 16, 2026 found:
 | `https://day3bits.com/TheCleaners/` | HTTP 200 with the deployed MkDocs site. |
 | `https://day3bits.com/TheCleaners` | HTTP 301 to `/TheCleaners/`. |
 
-The historical run above remains useful only as the pre-gate baseline. Run 35257555130 and its independently checked retained evidence establish the current exact-source deployment claim.
+The historical run above remains useful only as the pre-gate baseline. Run 35257555130 established the later exact-source pre-Zensical deployment claim; the merged Zensical checkpoint and subsequent source-bound deployments supersede it.
