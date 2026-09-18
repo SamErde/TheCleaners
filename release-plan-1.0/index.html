@@ -1048,6 +1048,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#september-18-issue-30-retention-packet" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        September 18 issue #30 retention packet
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#issue-26-zensical-migration-checkpoint" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1461,6 +1472,9 @@
 <p>The prerelease delivery sequence is complete. Finish the separately authorized issue #26 follow-up through reviewed PR and merged deployment acceptance, then refresh the open-issue audit before choosing later work. Issues #28, #29, and #30 retain bounded deterministic fixture/contract criteria that are not lab work and were not executed in this migration. Do not start labs without a new maintainer direction and approved disposable-host prerequisites.</p>
 <p>The previous next stage (DELETE-PENDING, ROOT-RACE, HANDLE-RECOVERY fixture drivers and evidence-schema regressions) is deferred with the lab work. Do not resume provisioning, actual-root acceptance, IIS/Exchange labs, or profile acceptance automatically. Preserve the runbook and case inventory for a later maintainer-directed resumption. TC-001 product acceptance, TC-003 through TC-007 acceptance, and final stable-release acceptance remain open. No IIS/Exchange removal or 1.0 Exchange <code>-AllowRemoval</code> is introduced.</p>
 <p>See <a href="../publishing/">publishing controls</a> and the <a href="../next-stage-prompts/">copy-ready next-stage prompts</a>. Supporting both URL cases remains an open issue #26 deployment gate and does not alter the completed beta publication evidence.</p>
+<h2 id="september-18-issue-30-retention-packet">September 18 issue #30 retention packet</h2>
+<p><strong>Implemented in draft:</strong> <a href="../issue-30-retention-handle/">Issue #30's deterministic contract packet</a> adds 28 native/public-command regression cases for both temp commands and updates source help, command references and safety guidance. The same-handle runtime behavior is unchanged. The documented retention decision uses the timestamp observed from the deletion handle; attribute-only updates after that observation are outside an atomic guarantee.</p>
+<p>Exact clean integration commit <code>1f6a28e1da328440f1942c66648e9991ba3c5522</code> passed 28 new fixture cases and four documentation contracts (<strong>32/32</strong>) under PowerShell <strong>7.6.6</strong> and Windows PowerShell <strong>5.1.26100.9444</strong>, with Pester <strong>5.7.1</strong> on Windows <strong>10.0.26200.0</strong>. Both runs had zero failures/skips/not-run tests; strict Zensical <strong>0.0.62</strong> and configuration validation passed. The <a href="../issue-30-retention-handle/">issue evidence</a> records the test hash and scope. Final-head hosted runtime evidence must be verified before merge; this checkpoint is not merged evidence. Issues #28 and #29 remain in progress. TC-001 product acceptance, TC-003 through TC-007 lab acceptance, and final TC-008/009 release acceptance remain open.</p>
 <h2 id="issue-26-zensical-migration-checkpoint">Issue #26 Zensical migration checkpoint</h2>
 <p><a href="https://github.com/SamErde/TheCleaners/pull/41">PR #41</a> opened from exact initial head <a href="https://github.com/SamErde/TheCleaners/commit/1063c8400609c68c9fe1348d24a191a25905a321"><code>1063c8400609c68c9fe1348d24a191a25905a321</code></a>. Local evidence for that head used Python 3.14.6 and Zensical 0.0.62. The Python suite reported 29 tests: 28 passed, 0 failed, and 1 symbolic-link test skipped because this host did not permit symbolic links. The focused documentation contract passed 4/4 with zero failures, skips, or not-run tests under PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444. Configuration validation, the strict clean build, <code>actionlint</code>, <code>git diff --check</code>, and old/new eight-entry navigation comparison passed. The exact local site manifest (<code>local-site-manifest.json</code>) verified 36 files, 1,574,983 bytes, empty <code>.nojekyll</code>, and tree SHA-256 <code>a6c1740cbd8a4965229385e38bf79939bbd0608a5a8de7ff43758392337251a0</code>; <code>local-validation-summary.json</code> records the full checkpoint.</p>
 <p><a href="https://github.com/SamErde/TheCleaners/actions/runs/35278067004">Build run 35278067004</a> was still in progress for initial head <code>1063c8400609c68c9fe1348d24a191a25905a321</code> when this checkpoint was written. Completed jobs or a later final conclusion for that run apply only to the initial head. Review corrections create a new candidate that requires its own exact-head checks; neither run establishes merge or deployment acceptance.</p>
