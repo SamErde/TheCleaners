@@ -89,12 +89,14 @@ The same-type recent/old replacement, post-preflight reparse substitution,
 rename/relink, and concurrent content/timestamp observation cases are owned by
 issue #30 rather than duplicated here. [PR #42](https://github.com/SamErde/TheCleaners/pull/42)
 merged them as `3d07e9ccbfd441c388b1a3a69edc92fc326a4a66` and closed issue #30.
-Its exact reviewed head `719750ce8c7fd3142b24261b8b75d09499e9f840` passed
-[build 35330950539](https://github.com/SamErde/TheCleaners/actions/runs/35330950539):
+Its merged source passed
+[build 35332020558](https://github.com/SamErde/TheCleaners/actions/runs/35332020558):
 333 unit plus four integration tests on each supported PS7 lane and 337 combined
-tests on PS5.1, with zero failures/skips/not-run. That is PR-head evidence;
-merge-source verification remains separate. This packet is based on the merge
-and will run the combined suite on its own final head before closure.
+tests on PS5.1, with zero failures/skips/not-run. All eleven artifact wrappers,
+source/runtime reports and archives were independently verified. Issue #28's
+directory-identity packet also merged in [PR #43](https://github.com/SamErde/TheCleaners/pull/43)
+as `0829d076ac13095ed016c54ea96c4a8b6abd8287`. This packet is rebased onto both
+merges and will run the combined suite on its own final head before closure.
 
 ## ReFS disposition
 
@@ -114,59 +116,32 @@ this non-lab issue packet.
 
 ## Local validation
 
-The standalone-setup review working tree based on exact head
-`1bd434564823640c8a2eb8e3f7c3641bce4abf89` passed **12/12** focused tests
-under PowerShell **7.6.6** and Windows PowerShell **5.1.26100.9444** with pinned
-Pester **5.7.1**. Each test run started in a fresh process, imported Pester, and
-invoked this test file without dot-sourcing or calling the native initializer in
-the parent process. The test's own `BeforeAll` loaded and initialized native
-interop. Both runs had zero failures/skips/not-run. Reports are
-`TestResults/issue-29-standalone-pwsh7.xml` and
-`TestResults/issue-29-standalone-winps51.xml`; their SHA-256 digests are
-`dfecaa40d7fe92e5850ad2c696cdef2e16bc39da25c9c2000d645030898c55a2` and
-`391126446d7c751a3f8a0ea9bb29ff0942e9318cafcb2612abc3ff1284977a8d`.
-The tested CRLF-normalized test-file SHA-256 is
+Exact clean rebased commit `a1f3b2a3e3d66c331de31c7457a17e733cab3582`
+passed **16/16** tests: 12 deletion-rights cases plus four documentation
+contracts, under PowerShell **7.6.6** and Windows PowerShell
+**5.1.26100.9444**, with pinned Pester **5.7.1** on Windows
+**10.0.26200.0**. Both runs had zero failures, skips and not-run tests. Retained
+JSON/XML evidence is named `issue29-rebased-ps7` and `issue29-rebased-ps51`.
+The test-file SHA-256 is
 `d439b0d1fc4edc0ab2eb4f11fca87dd6a523c5667f6411169e2105e90581c082`.
-This remains dirty-working-tree evidence pending an immutable follow-up commit.
+Final-head hosted validation and merged-source verification remain separate
+gates; these local results do not establish either one.
 
-Immediately before this setup-only follow-up, exact clean PR head
-`1bd434564823640c8a2eb8e3f7c3641bce4abf89` passed **16/16** tests in both
-hosts: 12 focused deletion-rights cases plus four documentation contracts, with
-zero failures/skips/not-run. That result is historical evidence for the clean
-all-byte-equality head; it does not include this standalone initialization and
-ACL fail-fast delta.
+Independent Astra high review also ran exact clean pre-rebase head
+`7ce8c0f6796617c47c046a4d4c90ca2ed86d4a96` in fresh processes, with the native
+type verified absent before Pester. The dedicated file passed **12/12** on both
+hosts without a parent-process native initializer. Its own `BeforeAll` loaded
+native interop. Reports are named
+`pr44-astra-7ce8c0f-standalone-ps7` and
+`pr44-astra-7ce8c0f-standalone-ps51`; the test hash matches the rebased result.
 
-The PR review follow-up working tree based on exact head
-`5f93ae011e1117eb1030b814ca6e059829708f8f` passed **12/12** focused
-`TempDeletionRights` tests on PowerShell **7.6.6** and Windows PowerShell
-**5.1.26100.9444** with pinned Pester **5.7.1**. Both runs had zero
-failures/skips/not-run. The machine-readable reports are
-`TestResults/issue-29-review-pwsh7.xml` and
-`TestResults/issue-29-review-winps51.xml`. The tested CRLF-normalized test file
-SHA-256 is `50d67f3a8cbe8e008815b02045c58183e2afaf4e505edee28cb2598884e90037`.
-This is dirty-working-tree review evidence until the follow-up is committed and
-validated at its immutable PR head.
+The following checkpoints are historical. Each result applies only to its
+listed source and scope, not to later changes or merged-source acceptance.
 
-After integration onto issue #30's merge, exact clean commit `51ef3783f8f89c15b870042579c09a6073e816f3` passed **15/15** tests (11 new cases plus four documentation contracts) on PowerShell **7.6.6** and Windows PowerShell **5.1.26100.9444**, with Pester **5.7.1** on Windows **10.0.26200.0**. Both runs had zero failures/skips/not-run. Strict Zensical **0.0.62** and the complete PR-range whitespace check passed. The tested new file's SHA-256 was `29fb813d9d3cccab6599fd8fcdc7bbbedbfc98700e8bc91a2d6dd455cf331764`. Final-head hosted validation and merged-source verification remain separate gates.
-
-The earlier implementation checkpoint below is retained as historical evidence.
-
-The tested boundary starts at base commit
-`af330858b41335366476f0b845e3f73a3c1497d1` with only this issue's new test and
-evidence document dirty. Both focused runs used the exact Pester 5.7.1 module
-that CI pins, imported by absolute manifest path. Native interop was initialized
-in each host before Pester created its test scopes.
-
-| Runtime | Pester | Report | Result |
-| --- | --- | --- | --- |
-| PowerShell 7.6.6 Core | 5.7.1 | `TestResults/issue-29-pwsh7.xml` | 11 passed, 0 failed, 0 skipped, 0 not run |
-| Windows PowerShell 5.1.26100.9444 Desktop | 5.7.1 | `TestResults/issue-29-winps51.xml` | 11 passed, 0 failed, 0 skipped, 0 not run |
-
-An immediately preceding supporting run also passed all 95 tests in
-`TempDeletionRights`, `TempCandidateSafety`, `TempFailureBranches`,
-`CleanupBehavior`, and `IdentitySafety` under each host. That broader result was
-recorded before the new test file received its mechanical LF-to-CRLF workspace
-normalization, so it is historical regression evidence rather than exact-byte
-evidence for the final working copy. The two 11-test XML reports above were
-regenerated after normalization and are the exact local evidence for this
-packet.
+| Checkpoint | Scope and result on both local hosts |
+| --- | --- |
+| Initial working tree based on `af330858b41335366476f0b845e3f73a3c1497d1` | 11 focused cases passed after CRLF normalization; an earlier 95-case supporting run preceded normalization. Neither was immutable-head evidence. |
+| Clean integration `51ef3783f8f89c15b870042579c09a6073e816f3` | 15/15 (11 focused plus four documentation contracts); before the all-byte equality and standalone refinements. Test hash `29fb813d9d3cccab6599fd8fcdc7bbbedbfc98700e8bc91a2d6dd455cf331764`; strict Zensical 0.0.62 and PR-range whitespace checks passed. |
+| Review working tree based on `5f93ae011e1117eb1030b814ca6e059829708f8f` | 12 focused cases passed with the new equality assertions; dirty-working-tree evidence, test hash `50d67f3a8cbe8e008815b02045c58183e2afaf4e505edee28cb2598884e90037`. |
+| Clean `1bd434564823640c8a2eb8e3f7c3641bce4abf89` | 16/16 including documentation contracts; before standalone initialization and terminating ACL refinements. |
+| Standalone working tree based on `1bd434564823640c8a2eb8e3f7c3641bce4abf89` | 12/12 with the final test hash above; superseded by the independent clean `7ce8c0f` results. |
