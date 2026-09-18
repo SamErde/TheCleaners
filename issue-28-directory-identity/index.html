@@ -12,13 +12,9 @@
         <meta name="author" content="Sam Erde">
       
       
-        <link rel="canonical" href="https://day3bits.com/TheCleaners/safety-and-confirmation/">
+        <link rel="canonical" href="https://day3bits.com/TheCleaners/issue-28-directory-identity/">
       
       
-        <link rel="prev" href="./..">
-      
-      
-        <link rel="next" href="../command-contracts/">
       
       
         
@@ -29,7 +25,7 @@
     
     
       
-        <title>Safety - The Cleaners PowerShell Module</title>
+        <title>Issue #28 directory-identity closure - The Cleaners PowerShell Module</title>
       
     
     
@@ -85,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#safety-and-confirmation" class="md-skip">
+        <a href="#issue-28-directory-identity-closure" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Safety
+              Issue #28 directory-identity closure
             
           </span>
         </div>
@@ -223,11 +219,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="././" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../safety-and-confirmation/" class="md-tabs__link">
         
   
   Safety
@@ -428,38 +422,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-        <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Safety
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="././" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../safety-and-confirmation/" class="md-nav__link">
         
   
   
@@ -474,82 +440,6 @@
   
 
       </a>
-      
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="On this page">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      On this page
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#temporary-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Temporary files
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#result-summaries" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Result summaries
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#iis-preview" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        IIS preview
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exchange-preview" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Exchange preview
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#other-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Other commands
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1176,38 +1066,97 @@
   
 
 
-<h1 id="safety-and-confirmation">Safety and confirmation</h1>
-<p>This branch is prerelease work. No command is newly certified production-ready by the 1.0 plan. Use isolated test systems until the applicable acceptance gates pass.</p>
-<h2 id="temporary-files">Temporary files</h2>
-<p><code>Clear-CurrentUserTemp</code> uses <code>[System.IO.Path]::GetTempPath()</code> on Windows. <code>Clear-WindowsTemp</code> uses <code>SystemRoot\Temp</code>. Both remove files whose <code>LastWriteTimeUtc</code> is <strong>at or before</strong> one cutoff captured for the invocation. The default is 30 days; filename extension does not restrict temporary-file candidates.</p>
-<p>The functions discover candidates before deletion, skip reparse points before traversing directories, and validate literal paths. Immediately before removal, they recheck ancestry, item type, and last-write time. Candidate deletion opens the file itself with a Windows handle requesting <code>DELETE</code> and <code>FILE_READ_ATTRIBUTES</code>, without <code>FILE_READ_DATA</code>, reads the native identity and final timestamp from that handle, and marks that same handle for deletion. The PowerShell provider is not used to delete a candidate. A path that disappears is counted as skipped, and a path replaced by a directory or another identity is never removed or counted as a successful file deletion. Path checks are still not a complete defense against every hostile filesystem race, so additional concurrent-change and platform acceptance cases remain in the release plan.</p>
-<p>Retention and logical byte counts use metadata observed from the deletion handle. A same-object content change before that observation is permitted if the observed timestamp remains old; a now-recent file is skipped. Read-only sharing blocks ordinary data writers and renames, but Windows can still permit an attribute-only timestamp update. The timestamp check and deletion are not atomic, and a later timestamp change does not revoke an earlier eligibility decision. See the <a href="../issue-30-retention-handle/">retention and deletion-handle contract</a> for the tested scenarios and threat-model limits.</p>
-<p>Cleanup roots and literal filesystem paths must use fully qualified Windows syntax: a drive-qualified path such as <code>C:\Temp</code> or a UNC path with both server and share components. Drive-relative (<code>C:Temp</code>), root-relative (<code>\Temp</code>), ordinary relative, provider-qualified, and device paths are rejected before filesystem resolution. Extended-length drive and UNC syntax is accepted by the parser and then depends on the Windows provider and long-path policy; device namespaces remain rejected.</p>
-<p>By default, no directories are removed. <code>-RemoveEmptyDirectory</code> permits only directories emptied by this invocation and now-empty ancestors. It does not authorize the cleanup root, an unrelated pre-existing empty branch, or a directory containing a retained file. Pruning is deepest-first. Empty directories are deleted using a non-recursive API inside the owning command's approved <code>ShouldProcess</code> branch; a file appearing after the emptiness check causes deletion to fail, not become recursive.</p>
-<p>The plan retains directory handles through pruning, preventing an ordinary rename/replacement of the touched directory while those handles remain open. Pruning also compares native volume/file identity, so a different directory at the same path is not authorized by path equality alone. The <a href="../issue-28-directory-identity/">directory-identity regression evidence</a> separately records production handle-lock tests and an injected handle-loss case that verifies this defensive identity check.</p>
-<div class="highlight"><pre><span></span><code><span class="nb">Clear-CurrentUserTemp</span> <span class="n">-Days</span> <span class="n">30</span> <span class="n">-RemoveEmptyDirectory</span> <span class="n">-WhatIf</span> <span class="n">-PassThru</span> <span class="n">-Verbose</span>
-<span class="nb">Clear-WindowsTemp</span> <span class="n">-Days</span> <span class="n">60</span> <span class="n">-WhatIf</span> <span class="n">-PassThru</span>
-</code></pre></div>
-<p><code>-WhatIf</code> reports the batch proposal and returns zero removals. <code>-Verbose</code> identifies candidate paths. <code>-Confirm</code> asks for approval of the discovered file/directory plan at the root. <code>-Confirm:$false</code> suppresses that confirmation, not errors or safety checks. These commands do not currently need a separate <code>ShouldContinue</code> or <code>-Force</code> switch.</p>
-<p>An enumeration failure reports an error, makes no deletions, and returns <code>Status = DiscoveryFailed</code> with unknown candidate counts under <code>-PassThru</code>. Individual removal failures use the error stream and continue by default; <code>-ErrorAction Stop</code> terminates. <code>PrivilegeStatus</code> reports whether the process is elevated, but does not grant access or predict a per-file ACL outcome. System-owned files generally require an elevated session. Actual client/server elevation acceptance remains a release gate.</p>
-<h2 id="result-summaries">Result summaries</h2>
-<p><code>-PassThru</code> returns <code>TheCleaners.CleanupResult</code> objects. The complete shared field list and stable error IDs are in <a href="../command-contracts/">1.0 command contracts</a>.</p>
-<p>Statuses are <code>NoCandidates</code>, <code>WhatIf</code>, <code>Declined</code>, <code>DiscoveryFailed</code>, <code>Completed</code>, <code>CompletedWithSkips</code>, or <code>PartialFailure</code>. An empty candidate set is <code>NoCandidates</code>, including in a WhatIf invocation. <code>BytesReclaimed</code> sums logical file lengths for successful removals; compressed files, hard links, and filesystem behavior mean it is not a measured physical free-space delta. Without <code>-PassThru</code>, normal success does not return a summary object.</p>
-<h2 id="iis-preview">IIS preview</h2>
-<div class="highlight"><pre><span></span><code><span class="nb">Clear-OldIISLog</span> <span class="n">-Days</span> <span class="n">60</span> <span class="n">-WhatIf</span> <span class="n">-PassThru</span>
-</code></pre></div>
-<p>IIS is structurally preview-only until its root discovery, exact format allowlist, and server acceptance gates pass. Explicit <code>-WhatIf</code> is mandatory; omission, <code>-WhatIf:$false</code>, or an ambient preference without the explicit switch fails before discovery. <code>Clean-IISLog</code> has the same lock. There is no <code>-Force</code>, <code>-EnableRemoval</code>, or <code>-AllowRemoval</code> bypass.</p>
-<p>The command discovers site roots through WebAdministration when available; otherwise, it considers the default and registry-configured roots. It requires each root to be a directory, skips reparse points, and applies format-specific filename allowlists. The discovery contract remains experimental until the product/version matrix and server lab gates pass. The command contains no deletion implementation and no generic deletion wrapper remains in the module.</p>
-<p>With <code>-PassThru</code>, IIS returns one summary per successfully enumerated existing root, with <code>DiscoveryStatus = Experimental</code>, <code>Status = WhatIf</code>, <code>CandidatePaths</code>, and zero removal/byte counts. Missing or non-directory roots are noted in verbose output; discovery failures use the error stream rather than returning a successful empty summary.</p>
-<h2 id="exchange-preview">Exchange preview</h2>
-<div class="highlight"><pre><span></span><code><span class="nb">Clear-OldExchangeLog</span> <span class="n">-Days</span> <span class="n">60</span> <span class="n">-WhatIf</span> <span class="n">-PassThru</span>
-</code></pre></div>
-<p>Exchange has <strong>no deletion implementation</strong> in this work. Explicit <code>-WhatIf</code> is mandatory. Omission, <code>-WhatIf:$false</code>, or an ambient preference without the explicit switch fails before registry discovery. Neither <code>-Confirm:$false</code> nor the legacy alias bypasses the lock. <code>-Force</code>, <code>-EnableRemoval</code>, and <code>-AllowRemoval</code> are not supported.</p>
-<p>Preview reads the Exchange v15 installation registry location and scans existing <code>Logging</code>, <code>Bin\Search\Ceres\Diagnostics\ETLTraces</code>, <code>Bin\Search\Ceres\Diagnostics\Logs</code>, and <code>TransportRoles\Logs\MessageTracking</code> roots with product-specific filename allowlists. Installation and log roots must resolve to directories. Database and transaction-log paths returned by Exchange management discovery are protected. The product/version matrix and lab validation remain open. The preview never calls IIS cleanup.</p>
-<p>With <code>-PassThru</code>, Exchange returns one summary per successfully enumerated existing root, with <code>DiscoveryStatus = Experimental</code>, <code>Status = WhatIf</code>, <code>CandidatePaths</code>, and zero removal/byte counts. Missing or non-directory roots are skipped; enumeration failures produce errors rather than successful empty summaries. A later minor release may introduce per-invocation authorization after lab validation; there is no one-time persistent activation.</p>
-<h2 id="other-commands">Other commands</h2>
-<p><code>Get-StaleUserProfile</code> does not delete profiles. <code>Get-TheCleaners</code> lists maturity metadata and reports both IIS and Exchange as <code>PreviewOnly</code>. Module import itself is quiet.</p>
-<p>When <code>Get-StaleUserProfile -IncludeSize</code> enumerates a profile, it retains identity-checked handles for the profile ancestors through the size operation. Each queued child directory carries its discovery-time identity and is opened and revalidated when it is traversed; where the current token permits it, the active directory uses a native handle with delete and read-attribute access and without delete sharing while the provider reads its children. Ancestors fall back to identity-only handles when DELETE access is unavailable, and a failed or changed identity reports <code>SizeStatus = Unavailable</code> rather than returning a partial size. The profile command remains inventory-only and never marks a handle for deletion.</p>
+<h1 id="issue-28-directory-identity-closure">Issue #28 directory-identity closure</h1>
+<h2 id="scope-and-result">Scope and result</h2>
+<p>This packet closes the remaining deterministic fixture gap in <a href="https://github.com/SamErde/TheCleaners/issues/28">issue #28</a>. The runtime already retains native Windows directory handles through candidate mutation and compares volume/file identity before non-recursive pruning. No runtime defect was found, so this packet adds a dedicated public-command regression suite without changing production behavior.</p>
+<p>The initial implementation checkpoint used base commit <code>af330858b41335366476f0b845e3f73a3c1497d1</code> plus uncommitted test/documentation changes. It is retained below as historical evidence. The clean metadata-correction checkpoint records local committed fixture validation; final-head hosted CI across all supported runtimes and post-merge evidence remain separate checks.</p>
+<h2 id="deterministic-fixture-design">Deterministic fixture design</h2>
+<p>Every test redirects the current-user and Windows temp roots to a unique Pester fixture. <code>Clear-WindowsTemp</code> uses a controlled root resolver mock; the original environment is restored after each case. No cleaner targets actual user, Windows, IIS, Exchange, or other product data.</p>
+<p>The replacement regressions distinguish two safety layers:</p>
+<ol>
+<li>The production-reachable test deletes the old candidate, then attempts to move the touched directory aside and install a staged empty or populated replacement at the same path. The fixture requires the first move to throw native sharing violation 32; only a successful first move permits the staged replacement attempt. The retained DELETE-capable handle denies the move, so the replacement cannot occur while the plan remains active. The staged directory and any new file remain intact outside the cleanup root.</li>
+<li>The defensive identity test uses an explicitly labeled isolated fault injection at the same pre-prune boundary. It releases only the touched directory's retained handle, moves the now-empty original to a displaced path, and installs a real empty or populated directory at the original path. The displaced original stays alive to prevent file-ID reuse. Before reading the replacement identity, the fixture sets its creation time, last-write time, and attributes to the values captured for the planned original and asserts those mutable fields match. The command still observes that the native volume/file identity differs, skips the replacement and its ancestor, and reports no directory-removal failure.</li>
+</ol>
+<p>The second case demonstrates defense in depth when the primary handle barrier is unavailable. It is not a claim that production planning normally releases that handle or permits the physical replacement.</p>
+<h2 id="acceptance-mapping">Acceptance mapping</h2>
+<table>
+<thead>
+<tr>
+<th>Issue #28 criterion</th>
+<th>Deterministic evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preserve a touched directory removed and recreated at the same path before pruning</td>
+<td>For both public commands, the intact production plan blocks the replacement attempt. The isolated fallback fixture then performs the replacement, verifies different native identities, and preserves the replacement and its ancestor.</td>
+</tr>
+<tr>
+<td>Verify both temp commands</td>
+<td>Every case is parameterized across <code>Clear-CurrentUserTemp</code> and <code>Clear-WindowsTemp</code>.</td>
+</tr>
+<tr>
+<td>Cover recreated directories with and without new contents</td>
+<td>The fallback fixture installs one empty replacement and one replacement containing <code>new.tmp</code> for each command; all four replacements remain. The primary handle test also stages and attempts both payloads.</td>
+</tr>
+<tr>
+<td>Preserve normal deepest-first pruning</td>
+<td>Each command removes an old file, its child directory, and its parent in that order-sensitive plan, with two directory candidates and two removals.</td>
+</tr>
+<tr>
+<td>Preserve root, unrelated empty branches, recent files, and reparse points</td>
+<td>The end-to-end boundary case retains the fixture root, an unrelated empty directory, a recent-file branch, a junction, and the junction target outside the cleanup root.</td>
+</tr>
+<tr>
+<td>Avoid path/timestamp-only identity proof</td>
+<td>Tests use <code>FILE_ID_INFO</code> identities from the native interop. The fallback fixture explicitly matches creation time, last-write time, and attributes, then records unequal original and replacement identities while confirming the displaced original retains its planned identity.</td>
+</tr>
+<tr>
+<td>Keep <code>ShouldProcess</code> and error behavior</td>
+<td><code>-WhatIf</code> reports candidates and performs no mutation; mutation cases use explicit <code>-Confirm:$false</code>; a locked candidate with <code>-ErrorAction Stop</code> terminates with <code>TempFileRemovalFailed</code> and preserves directory ancestry.</td>
+</tr>
+<tr>
+<td>Validate the supported runtime matrix</td>
+<td>Local coverage passed on PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444 with Pester 5.7.1. Full-matrix acceptance remains pending inspection of exact final-head hosted results, including PowerShell 7.4.20 and 7.5.11.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="validation-evidence">Validation evidence</h2>
+<p>Local fixture runs used Windows <strong>10.0.26200.0</strong>, PowerShell <strong>7.6.6</strong> and Windows PowerShell <strong>5.1.26100.9444</strong>, with pinned Pester <strong>5.7.1</strong>. Native interop was initialized before Pester under Windows PowerShell 5.1, matching the hosted workflow's runspace requirement. Each result below belongs only to its stated checkpoint; an older run does not validate a later correction.</p>
+<table>
+<thead>
+<tr>
+<th>Checkpoint</th>
+<th>Result on each local runtime</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Initial base <code>af330858b41335366476f0b845e3f73a3c1497d1</code> plus uncommitted implementation</td>
+<td>14 passed, zero failed/skipped/not-run</td>
+<td>Historical initial fixture suite. Reports: <code>%TEMP%\TheCleaners-issue28-evidence\pester-ps766.xml</code> and <code>pester-ps51.xml</code>.</td>
+</tr>
+<tr>
+<td>Clean integration <code>171b4cc558b875f72ffedd68aa051d6aeac6e43e</code></td>
+<td>18/18 passed, zero failed/skipped/not-run</td>
+<td>Original 14 fixtures plus four documentation contracts; predates the metadata-matching refinement. Strict Zensical 0.0.62 and PR-range whitespace checks also passed.</td>
+</tr>
+<tr>
+<td>Review base <code>581907e7d83c283de423c0f36d02b735c7153876</code> plus uncommitted refinement</td>
+<td>14 passed, zero failed/skipped/not-run</td>
+<td>Historical first run with matching replacement metadata; reports <code>pester-review-followup-ps766.xml</code> and <code>pester-review-followup-ps51.xml</code> in the same temporary evidence directory.</td>
+</tr>
+<tr>
+<td>Clean correction <code>2372a218d04354df100c2d9188bc30c419764151</code></td>
+<td>18/18 passed, zero failed/skipped/not-run</td>
+<td>Includes the metadata-matching assertions and four documentation contracts. Retained reports: <code>issue28-final2372-ps7.json/.xml</code> and <code>issue28-final2372-ps51.json/.xml</code>. Test-file SHA-256: <code>d6f2c31c5625cec86cabee0fb5d9f856a40ed2f43ff3e479dbe326a2a8f8a6fa</code>. Strict Zensical 0.0.62 passed.</td>
+</tr>
+</tbody>
+</table>
+<p>The clean correction's hosted build failed test-source analysis because two display-only <code>Article</code> parameters were unused; it did not pass the full build. Commit <code>da99d4ebdd0e8c76cba332eb506e06d2eda43691</code> removed those unused parameters and simplified the test descriptions without changing fixture logic. Its PowerShell parsers and PR-range whitespace check passed. Final-head hosted runtime reports, artifact inspection and post-merge results remain separate gates and are recorded in the PR and release ledger when verified.</p>
+<h2 id="limitations">Limitations</h2>
+<p>This is deterministic local NTFS fixture evidence, not Windows client/server, ReFS, real-system-root, elevated/non-elevated, hostile-filter, or product lab acceptance. Issue #28 does not require ReFS validation, and the production help already states that the checks cannot provide an atomic defense when a filesystem or filter does not provide stable file IDs. Deferred lab gates and final 1.0 acceptance remain open.</p>
 
 
 
