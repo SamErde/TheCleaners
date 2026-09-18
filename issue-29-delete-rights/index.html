@@ -12,13 +12,9 @@
         <meta name="author" content="Sam Erde">
       
       
-        <link rel="canonical" href="https://day3bits.com/TheCleaners/safety-and-confirmation/">
+        <link rel="canonical" href="https://day3bits.com/TheCleaners/issue-29-delete-rights/">
       
       
-        <link rel="prev" href="./..">
-      
-      
-        <link rel="next" href="../command-contracts/">
       
       
         
@@ -29,7 +25,7 @@
     
     
       
-        <title>Safety - The Cleaners PowerShell Module</title>
+        <title>Issue #29: deletion rights and native file identity - The Cleaners PowerShell Module</title>
       
     
     
@@ -85,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#safety-and-confirmation" class="md-skip">
+        <a href="#issue-29-deletion-rights-and-native-file-identity" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Safety
+              Issue #29: deletion rights and native file identity
             
           </span>
         </div>
@@ -223,11 +219,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="././" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../safety-and-confirmation/" class="md-tabs__link">
         
   
   Safety
@@ -428,38 +422,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-        <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Safety
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="././" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../safety-and-confirmation/" class="md-nav__link">
         
   
   
@@ -474,82 +440,6 @@
   
 
       </a>
-      
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="On this page">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      On this page
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#temporary-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Temporary files
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#result-summaries" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Result summaries
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#iis-preview" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        IIS preview
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exchange-preview" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Exchange preview
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#other-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Other commands
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1176,39 +1066,205 @@
   
 
 
-<h1 id="safety-and-confirmation">Safety and confirmation</h1>
-<p>This branch is prerelease work. No command is newly certified production-ready by the 1.0 plan. Use isolated test systems until the applicable acceptance gates pass.</p>
-<h2 id="temporary-files">Temporary files</h2>
-<p><code>Clear-CurrentUserTemp</code> uses <code>[System.IO.Path]::GetTempPath()</code> on Windows. <code>Clear-WindowsTemp</code> uses <code>SystemRoot\Temp</code>. Both remove files whose <code>LastWriteTimeUtc</code> is <strong>at or before</strong> one cutoff captured for the invocation. The default is 30 days; filename extension does not restrict temporary-file candidates.</p>
-<p>The functions discover candidates before deletion, skip reparse points before traversing directories, and validate literal paths. Immediately before removal, they recheck ancestry, item type, and last-write time. Candidate deletion opens the file itself with a Windows handle requesting <code>DELETE</code> and <code>FILE_READ_ATTRIBUTES</code>, without <code>FILE_READ_DATA</code>, reads the native identity and final timestamp from that handle, and marks that same handle for deletion. The PowerShell provider is not used to delete a candidate. A path that disappears is counted as skipped, and a path replaced by a directory or another identity is never removed or counted as a successful file deletion. Path checks are still not a complete defense against every hostile filesystem race, so additional concurrent-change and platform acceptance cases remain in the release plan.</p>
-<p>Retention and logical byte counts use metadata observed from the deletion handle. A same-object content change before that observation is permitted if the observed timestamp remains old; a now-recent file is skipped. Read-only sharing blocks ordinary data writers and renames, but Windows can still permit an attribute-only timestamp update. The timestamp check and deletion are not atomic, and a later timestamp change does not revoke an earlier eligibility decision. See the <a href="../issue-30-retention-handle/">retention and deletion-handle contract</a> for the tested scenarios and threat-model limits.</p>
-<p>Cleanup roots and literal filesystem paths must use fully qualified Windows syntax: a drive-qualified path such as <code>C:\Temp</code> or a UNC path with both server and share components. Drive-relative (<code>C:Temp</code>), root-relative (<code>\Temp</code>), ordinary relative, provider-qualified, and device paths are rejected before filesystem resolution. Extended-length drive and UNC syntax is accepted by the parser and then depends on the Windows provider and long-path policy; device namespaces remain rejected.</p>
-<p>By default, no directories are removed. <code>-RemoveEmptyDirectory</code> permits only directories emptied by this invocation and now-empty ancestors. It does not authorize the cleanup root, an unrelated pre-existing empty branch, or a directory containing a retained file. Pruning is deepest-first. Empty directories are deleted using a non-recursive API inside the owning command's approved <code>ShouldProcess</code> branch; a file appearing after the emptiness check causes deletion to fail, not become recursive.</p>
-<p>The plan retains directory handles through pruning, preventing an ordinary rename/replacement of the touched directory while those handles remain open. Pruning also compares native volume/file identity, so a different directory at the same path is not authorized by path equality alone. The <a href="../issue-28-directory-identity/">directory-identity regression evidence</a> separately records production handle-lock tests and an injected handle-loss case that verifies this defensive identity check.</p>
-<div class="highlight"><pre><span></span><code><span class="nb">Clear-CurrentUserTemp</span> <span class="n">-Days</span> <span class="n">30</span> <span class="n">-RemoveEmptyDirectory</span> <span class="n">-WhatIf</span> <span class="n">-PassThru</span> <span class="n">-Verbose</span>
-<span class="nb">Clear-WindowsTemp</span> <span class="n">-Days</span> <span class="n">60</span> <span class="n">-WhatIf</span> <span class="n">-PassThru</span>
-</code></pre></div>
-<p><code>-WhatIf</code> reports the batch proposal and returns zero removals. <code>-Verbose</code> identifies candidate paths. <code>-Confirm</code> asks for approval of the discovered file/directory plan at the root. <code>-Confirm:$false</code> suppresses that confirmation, not errors or safety checks. These commands do not currently need a separate <code>ShouldContinue</code> or <code>-Force</code> switch.</p>
-<p>An enumeration failure reports an error, makes no deletions, and returns <code>Status = DiscoveryFailed</code> with unknown candidate counts under <code>-PassThru</code>. Individual removal failures use the error stream and continue by default; <code>-ErrorAction Stop</code> terminates. <code>PrivilegeStatus</code> reports whether the process is elevated, but does not grant access or predict a per-file ACL outcome. System-owned files generally require an elevated session. Actual client/server elevation acceptance remains a release gate.</p>
-<p>The candidate handle requests deletion and metadata rights without content-read permission. The <a href="../issue-29-delete-rights/">deletion-rights and identity evidence</a> proves both commands can remove an old NTFS fixture whose ACL denies reading its contents but permits deletion. Denied deletion remains a surfaced <code>PermissionDenied</code> error, including when read access is separately denied; elevation is not evidence that a particular file can be deleted. Documented 128-bit ReFS identity semantics do not establish an executed ReFS acceptance result.</p>
-<h2 id="result-summaries">Result summaries</h2>
-<p><code>-PassThru</code> returns <code>TheCleaners.CleanupResult</code> objects. The complete shared field list and stable error IDs are in <a href="../command-contracts/">1.0 command contracts</a>.</p>
-<p>Statuses are <code>NoCandidates</code>, <code>WhatIf</code>, <code>Declined</code>, <code>DiscoveryFailed</code>, <code>Completed</code>, <code>CompletedWithSkips</code>, or <code>PartialFailure</code>. An empty candidate set is <code>NoCandidates</code>, including in a WhatIf invocation. <code>BytesReclaimed</code> sums logical file lengths for successful removals; compressed files, hard links, and filesystem behavior mean it is not a measured physical free-space delta. Without <code>-PassThru</code>, normal success does not return a summary object.</p>
-<h2 id="iis-preview">IIS preview</h2>
-<div class="highlight"><pre><span></span><code><span class="nb">Clear-OldIISLog</span> <span class="n">-Days</span> <span class="n">60</span> <span class="n">-WhatIf</span> <span class="n">-PassThru</span>
-</code></pre></div>
-<p>IIS is structurally preview-only until its root discovery, exact format allowlist, and server acceptance gates pass. Explicit <code>-WhatIf</code> is mandatory; omission, <code>-WhatIf:$false</code>, or an ambient preference without the explicit switch fails before discovery. <code>Clean-IISLog</code> has the same lock. There is no <code>-Force</code>, <code>-EnableRemoval</code>, or <code>-AllowRemoval</code> bypass.</p>
-<p>The command discovers site roots through WebAdministration when available; otherwise, it considers the default and registry-configured roots. It requires each root to be a directory, skips reparse points, and applies format-specific filename allowlists. The discovery contract remains experimental until the product/version matrix and server lab gates pass. The command contains no deletion implementation and no generic deletion wrapper remains in the module.</p>
-<p>With <code>-PassThru</code>, IIS returns one summary per successfully enumerated existing root, with <code>DiscoveryStatus = Experimental</code>, <code>Status = WhatIf</code>, <code>CandidatePaths</code>, and zero removal/byte counts. Missing or non-directory roots are noted in verbose output; discovery failures use the error stream rather than returning a successful empty summary.</p>
-<h2 id="exchange-preview">Exchange preview</h2>
-<div class="highlight"><pre><span></span><code><span class="nb">Clear-OldExchangeLog</span> <span class="n">-Days</span> <span class="n">60</span> <span class="n">-WhatIf</span> <span class="n">-PassThru</span>
-</code></pre></div>
-<p>Exchange has <strong>no deletion implementation</strong> in this work. Explicit <code>-WhatIf</code> is mandatory. Omission, <code>-WhatIf:$false</code>, or an ambient preference without the explicit switch fails before registry discovery. Neither <code>-Confirm:$false</code> nor the legacy alias bypasses the lock. <code>-Force</code>, <code>-EnableRemoval</code>, and <code>-AllowRemoval</code> are not supported.</p>
-<p>Preview reads the Exchange v15 installation registry location and scans existing <code>Logging</code>, <code>Bin\Search\Ceres\Diagnostics\ETLTraces</code>, <code>Bin\Search\Ceres\Diagnostics\Logs</code>, and <code>TransportRoles\Logs\MessageTracking</code> roots with product-specific filename allowlists. Installation and log roots must resolve to directories. Database and transaction-log paths returned by Exchange management discovery are protected. The product/version matrix and lab validation remain open. The preview never calls IIS cleanup.</p>
-<p>With <code>-PassThru</code>, Exchange returns one summary per successfully enumerated existing root, with <code>DiscoveryStatus = Experimental</code>, <code>Status = WhatIf</code>, <code>CandidatePaths</code>, and zero removal/byte counts. Missing or non-directory roots are skipped; enumeration failures produce errors rather than successful empty summaries. A later minor release may introduce per-invocation authorization after lab validation; there is no one-time persistent activation.</p>
-<h2 id="other-commands">Other commands</h2>
-<p><code>Get-StaleUserProfile</code> does not delete profiles. <code>Get-TheCleaners</code> lists maturity metadata and reports both IIS and Exchange as <code>PreviewOnly</code>. Module import itself is quiet.</p>
-<p>When <code>Get-StaleUserProfile -IncludeSize</code> enumerates a profile, it retains identity-checked handles for the profile ancestors through the size operation. Each queued child directory carries its discovery-time identity and is opened and revalidated when it is traversed; where the current token permits it, the active directory uses a native handle with delete and read-attribute access and without delete sharing while the provider reads its children. Ancestors fall back to identity-only handles when DELETE access is unavailable, and a failed or changed identity reports <code>SizeStatus = Unavailable</code> rather than returning a partial size. The profile command remains inventory-only and never marks a handle for deletion.</p>
+<h1 id="issue-29-deletion-rights-and-native-file-identity">Issue #29: deletion rights and native file identity</h1>
+<p>This note records the bounded non-lab closure evidence for
+<a href="https://github.com/SamErde/TheCleaners/issues/29">issue #29</a>. It applies to the
+exact source and test results recorded below. It does not establish Windows
+client/server product acceptance, actual Windows-root cleanup, or ReFS runtime
+acceptance; those remain TC-003/004 release gates.</p>
+<p>No executable runtime source changed in this packet. The base implementation
+already met the selected native contract; the new work supplies the missing
+both-command ACL, error, identity, and reconciliation evidence.</p>
+<h2 id="native-contract">Native contract</h2>
+<p>Both temp commands discover a candidate and capture its volume serial number,
+128-bit file ID, attributes, logical length, UTC last-write time, and parent
+identity. After <code>ShouldProcess</code>, the command opens the current literal path with
+<code>CreateFileW</code> using these values:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Desired access</td>
+<td><code>DELETE</code> and <code>FILE_READ_ATTRIBUTES</code></td>
+<td>Permit same-handle metadata validation and disposition without <code>FILE_READ_DATA</code>.</td>
+</tr>
+<tr>
+<td>Share mode</td>
+<td><code>FILE_SHARE_READ</code></td>
+<td>Permit readers while preventing content/data-write, rename, or other delete opens during validation and disposition.</td>
+</tr>
+<tr>
+<td>Creation disposition</td>
+<td><code>OPEN_EXISTING</code></td>
+<td>Never create a missing candidate.</td>
+</tr>
+<tr>
+<td>Flags</td>
+<td><code>FILE_FLAG_OPEN_REPARSE_POINT</code></td>
+<td>Inspect the link itself and reject reparse points instead of following them.</td>
+</tr>
+</tbody>
+</table>
+<p>The requested share-read/write/delete combination from the issue comment was
+reviewed and intentionally narrowed. Microsoft documents that
+<code>FILE_SHARE_WRITE</code> permits later write opens and <code>FILE_SHARE_DELETE</code> permits
+later delete or rename opens for the lifetime of the handle. Those operations
+would weaken the race boundary after identity and retention validation. The
+safer contract allows concurrent reads while excluding content/data writers and
+delete/rename opens. An existing incompatible content writer or delete/rename
+handle produces a sharing violation, which the owning command reports as
+<code>TempFileRemovalFailed</code>; it does not force deletion.</p>
+<p>Windows does not apply share-mode conflicts to attribute-only access. A caller
+with <code>FILE_WRITE_ATTRIBUTES</code> can therefore change a timestamp while this handle
+is open. The command reads the final retention timestamp from the deletion
+handle immediately before setting disposition, but Windows offers no atomic
+check-and-delete operation for this sequence. Issue #30 owns the exact
+concurrent timestamp observation contract and its deterministic regressions;
+this share-mode decision does not claim full object or timestamp immutability.</p>
+<p>The command reads <code>FILE_ID_INFO</code>, <code>FILE_STANDARD_INFO</code>, <code>FILE_BASIC_INFO</code>, and
+<code>FILE_ATTRIBUTE_TAG_INFO</code> from that opened handle. It compares volume serial
+number plus all 16 file-ID bytes with the discovery snapshot, rejects a
+directory, reparse point, different identity, or now-recent file, and only then
+calls <code>SetFileInformationByHandle(FileDispositionInfo)</code>. It never reopens the
+path between validation and disposition. Missing-candidate errors, including
+native codes 2, 3, 53, and 123, are intentionally reconciled as skips. Other
+native open, identity, metadata, or disposition failures are reported through
+the command error stream.</p>
+<p>Microsoft's Win32 documentation defines
+<a href="https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-file_id_info"><code>FILE_ID_INFO</code></a>
+as a volume serial number plus a 128-bit file ID and directs callers to compare
+both values to determine whether two handles represent the same file. The
+<a href="https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfileinformationbyhandle"><code>SetFileInformationByHandle</code></a>
+documentation requires <code>DELETE</code> access for <code>FileDispositionInfo</code> and lists ReFS
+as supported. The
+<a href="https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew"><code>CreateFile</code> documentation</a>
+defines the share flags, <code>OPEN_EXISTING</code>, and
+<code>FILE_FLAG_OPEN_REPARSE_POINT</code>, and also lists ReFS as supported.</p>
+<h2 id="deterministic-acceptance-mapping">Deterministic acceptance mapping</h2>
+<p><code>src/Tests/Unit/TempDeletionRights.Tests.ps1</code> runs each command against its own
+isolated fixture beneath Pester's temporary directory:</p>
+<table>
+<thead>
+<tr>
+<th>Issue requirement</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Delete an old candidate when content reads are denied</td>
+<td>An explicit current-token deny ACE for <code>ReadData</code> and allow ACE for <code>Delete</code> are verified; a real <code>FileStream</code> read must throw <code>UnauthorizedAccessException</code>, including when the process is elevated; the native metadata/deletion handle succeeds and the command reports one removal and four reclaimed bytes.</td>
+</tr>
+<tr>
+<td>Report denied deletion and honor <code>-ErrorAction Stop</code></td>
+<td>The file denies <code>Delete</code> and its parent denies <code>DeleteSubdirectoriesAndFiles</code>, closing both Windows authorization routes. The non-terminating case reports one <code>PermissionDenied</code> error and reconciles failure/removal/skip/byte counters; the terminating case must throw <code>TempFileRemovalFailed</code>.</td>
+</tr>
+<tr>
+<td>Preserve a directory replacement</td>
+<td>The read-denied file is removed after real discovery and replaced by a directory. The command preserves it and reports one skip.</td>
+</tr>
+<tr>
+<td>Reconcile disappearance</td>
+<td>The read-denied file disappears after real discovery. The command reports one skip, no failure, and no reclaimed bytes.</td>
+</tr>
+<tr>
+<td>Use a 128-bit identity and fail closed</td>
+<td>A real native identity must expose 32 hexadecimal file-ID digits. Synthetic identities prove equality compares the volume serial and every one of the 16 file-ID bytes, including each byte in the upper 64 bits; otherwise identical IDs compare unequal when any byte changes. Equal cloned arrays compare equal, while length, timestamp, and attribute differences do not change the intentionally volume-plus-file-ID equality contract. The source contract requires a 16-byte <code>FILE_ID_INFO</code> buffer, and an invalid handle must produce the underlying <code>Win32Exception</code> instead of a path or partial identity fallback.</td>
+</tr>
+<tr>
+<td>Avoid provider path deletion</td>
+<td>The existing <code>TempCandidateSafety.Tests.ps1</code> AST regression verifies that neither owning command calls <code>Remove-Item</code> for candidate deletion and that both use <code>OpenForDeletion</code> plus <code>MarkForDeletion</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The ACL is restored before fixture cleanup whenever the denied candidate remains.
+Every opened stream, safe handle, Windows identity, and redirected <code>TEMP</code>/<code>TMP</code>
+value is disposed or restored in test cleanup. ACL discovery, mutation, and
+restoration use terminating errors. The positive fixture verifies its <code>ReadData</code>
+deny and <code>Delete</code> allow rules; the negative fixture verifies both the file
+<code>Delete</code> deny and parent <code>DeleteSubdirectoriesAndFiles</code> deny before invoking a
+cleaner, so an ACL setup failure cannot pass as command behavior.</p>
+<p>The same-type recent/old replacement, post-preflight reparse substitution,
+rename/relink, and concurrent content/timestamp observation cases are owned by
+issue #30 rather than duplicated here. <a href="https://github.com/SamErde/TheCleaners/pull/42">PR #42</a>
+merged them as <code>3d07e9ccbfd441c388b1a3a69edc92fc326a4a66</code> and closed issue #30.
+Its merged source passed
+<a href="https://github.com/SamErde/TheCleaners/actions/runs/35332020558">build 35332020558</a>:
+333 unit plus four integration tests on each supported PS7 lane and 337 combined
+tests on PS5.1, with zero failures/skips/not-run. All eleven artifact wrappers,
+source/runtime reports and archives were independently verified. Issue #28's
+directory-identity packet also merged in <a href="https://github.com/SamErde/TheCleaners/pull/43">PR #43</a>
+as <code>0829d076ac13095ed016c54ea96c4a8b6abd8287</code>. This packet is rebased onto both
+merges and will run the combined suite on its own final head before closure.</p>
+<h2 id="refs-disposition">ReFS disposition</h2>
+<p>The implementation does not use the legacy 64-bit file index. It marshals the
+documented 16-byte <code>FILE_ID_128</code>, combines it with the volume serial number, and
+compares every byte. <code>GetFileInformationByHandleEx</code> failure is not converted to
+a path identity or an empty result: it throws a native error, and the command
+preserves the candidate. Microsoft documents ReFS support for the open and
+same-handle disposition APIs used by this design.</p>
+<p>The validation host exposed NTFS volumes only. The focused tests therefore
+establish NTFS behavior and the 128-bit/fail-closed API contract, but they do not
+claim an executed ReFS filesystem result. A later approved ReFS TC-003/004 lane
+must still record the volume/build, raw <code>FILE_ID_INFO</code> behavior, ACL cases, race
+cases, results, and recovery. No ReFS volume was provisioned or substituted for
+this non-lab issue packet.</p>
+<h2 id="local-validation">Local validation</h2>
+<p>Exact clean rebased commit <code>a1f3b2a3e3d66c331de31c7457a17e733cab3582</code>
+passed <strong>16/16</strong> tests: 12 deletion-rights cases plus four documentation
+contracts, under PowerShell <strong>7.6.6</strong> and Windows PowerShell
+<strong>5.1.26100.9444</strong>, with pinned Pester <strong>5.7.1</strong> on Windows
+<strong>10.0.26200.0</strong>. Both runs had zero failures, skips and not-run tests. Retained
+JSON/XML evidence is named <code>issue29-rebased-ps7</code> and <code>issue29-rebased-ps51</code>.
+The test-file SHA-256 is
+<code>d439b0d1fc4edc0ab2eb4f11fca87dd6a523c5667f6411169e2105e90581c082</code>.
+Final-head hosted validation and merged-source verification remain separate
+gates; these local results do not establish either one.</p>
+<p>Independent Astra high review also ran exact clean pre-rebase head
+<code>7ce8c0f6796617c47c046a4d4c90ca2ed86d4a96</code> in fresh processes, with the native
+type verified absent before Pester. The dedicated file passed <strong>12/12</strong> on both
+hosts without a parent-process native initializer. Its own <code>BeforeAll</code> loaded
+native interop. Reports are named
+<code>pr44-astra-7ce8c0f-standalone-ps7</code> and
+<code>pr44-astra-7ce8c0f-standalone-ps51</code>; the test hash matches the rebased result.</p>
+<p>The following checkpoints are historical. Each result applies only to its
+listed source and scope, not to later changes or merged-source acceptance.</p>
+<table>
+<thead>
+<tr>
+<th>Checkpoint</th>
+<th>Scope and result on both local hosts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Initial working tree based on <code>af330858b41335366476f0b845e3f73a3c1497d1</code></td>
+<td>11 focused cases passed after CRLF normalization; an earlier 95-case supporting run preceded normalization. Neither was immutable-head evidence.</td>
+</tr>
+<tr>
+<td>Clean integration <code>51ef3783f8f89c15b870042579c09a6073e816f3</code></td>
+<td>15/15 (11 focused plus four documentation contracts); before the all-byte equality and standalone refinements. Test hash <code>29fb813d9d3cccab6599fd8fcdc7bbbedbfc98700e8bc91a2d6dd455cf331764</code>; strict Zensical 0.0.62 and PR-range whitespace checks passed.</td>
+</tr>
+<tr>
+<td>Review working tree based on <code>5f93ae011e1117eb1030b814ca6e059829708f8f</code></td>
+<td>12 focused cases passed with the new equality assertions; dirty-working-tree evidence, test hash <code>50d67f3a8cbe8e008815b02045c58183e2afaf4e505edee28cb2598884e90037</code>.</td>
+</tr>
+<tr>
+<td>Clean <code>1bd434564823640c8a2eb8e3f7c3641bce4abf89</code></td>
+<td>16/16 including documentation contracts; before standalone initialization and terminating ACL refinements.</td>
+</tr>
+<tr>
+<td>Standalone working tree based on <code>1bd434564823640c8a2eb8e3f7c3641bce4abf89</code></td>
+<td>12/12 with the final test hash above; superseded by the independent clean <code>7ce8c0f</code> results.</td>
+</tr>
+</tbody>
+</table>
 
 
 
