@@ -117,8 +117,8 @@ behavior was changed; the integration also clarifies comment-based help. This lo
 
 The retained machine-readable reports are `src/Reports/issue30/ps7-final.xml`,
 `ps7-final.json`, `ps51-final.xml`, and `ps51-final.json` (ignored local evidence).
-The integrator records exact final-commit and hosted runtime evidence in the
-release ledger before issue closure or any stability decision.
+The later final-head and merged-source evidence was recorded in the release
+ledger. Command stability still requires the applicable product and release gates.
 
 ### Committed integration checkpoint
 

@@ -6,6 +6,8 @@ Updated September 18, 2026. Non-lab delivery readiness and the approved `0.0.15-
 
 **Open** means work has not been completed. **Implemented in draft** is reserved for code in an unmerged branch or pull request. **Merged implementation** means the code is on `main`, but applicable validation may still be open. **Validated** requires passing evidence for the exact referenced commit and scope. **Release accepted** additionally requires every applicable product, artifact, deployment, metadata, and maintainer gate.
 
+Reviews naming Astra, Sol or Terra below are independent model reviews posted as GitHub `COMMENT` reviews. Their model-approval judgments do not assert a separate human GitHub approval or replace maintainer release acceptance.
+
 The manifest stays on the current prerelease version during this packet. No command is advertised as stable merely because it is exported. The plan is milestone/gate-driven, not a promised calendar deadline.
 
 ## Accepted decisions
