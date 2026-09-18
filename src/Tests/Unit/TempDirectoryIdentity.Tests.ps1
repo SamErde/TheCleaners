@@ -105,10 +105,12 @@ Describe 'Temp directory identity closure: <CommandName>' -ForEach $TempCases -S
                 $script:ReplacementAttempted = $true
                 try {
                     [System.IO.Directory]::Move($ChildPath, $DisplacedPath)
-                    [System.IO.Directory]::Move($ReplacementSource, $ChildPath)
-                    $script:ReplacementInstalled = $true
                 } catch {
                     $script:ReplacementFailure = $_.Exception.GetBaseException()
+                }
+                if ($null -eq $script:ReplacementFailure) {
+                    [System.IO.Directory]::Move($ReplacementSource, $ChildPath)
+                    $script:ReplacementInstalled = $true
                 }
             }
 
@@ -130,6 +132,8 @@ Describe 'Temp directory identity closure: <CommandName>' -ForEach $TempCases -S
         $script:ReplacementAttempted | Should -BeTrue
         $script:ReplacementInstalled | Should -BeFalse
         $script:ReplacementFailure | Should -Not -BeNullOrEmpty
+        $script:ReplacementFailure | Should -BeOfType ([System.IO.IOException])
+        ($script:ReplacementFailure.HResult -band 0xFFFF) | Should -Be 32
         $DisplacedPath | Should -Not -Exist
         $ReplacementSource | Should -Exist
         if ($HasReplacementContent) {
