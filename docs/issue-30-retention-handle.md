@@ -111,10 +111,20 @@ PowerShell 5.1 process. Both runtimes are launched with `-NoProfile -NonInteract
 The tested new file's SHA-256 is
 `a8d0a1be296e8618ae7ce47174218b777506913b9711d88381529c9af887d429`.
 `git diff --check` and the new files' whitespace checks passed. No runtime source
-was changed. This local checkpoint does not claim execution on PowerShell 7.4 or
+behavior was changed; the integration also clarifies comment-based help. This local checkpoint does not claim execution on PowerShell 7.4 or
 7.5; the exact-head hosted matrix remains the integrator's next validation gate.
 
 The retained machine-readable reports are `src/Reports/issue30/ps7-final.xml`,
 `ps7-final.json`, `ps51-final.xml`, and `ps51-final.json` (ignored local evidence).
 The integrator records exact final-commit and hosted runtime evidence in the
 release ledger before issue closure or any stability decision.
+
+### Committed integration checkpoint
+
+Exact clean commit `1f6a28e1da328440f1942c66648e9991ba3c5522` passed the 28 new
+cases plus four documentation-contract tests: **32/32** on PowerShell **7.6.6**
+and Windows PowerShell **5.1.26100.9444**, using Pester **5.7.1** on Windows
+**10.0.26200.0**. Both runs had zero failures, skips and not-run tests. The new
+test hash remained the value above. The strict clean Zensical **0.0.62** build
+and configuration validation passed. This is local exact-commit evidence; the
+PR's final-head hosted matrix and merge results must be verified separately.
