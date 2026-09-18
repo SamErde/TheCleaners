@@ -7,7 +7,7 @@ BeforeDiscovery {
 }
 
 BeforeAll {
-    $ModuleRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners')).Path
+    $ModuleRoot = (Resolve-Path -LiteralPath (Join-Path -Path $PSScriptRoot -ChildPath '../../TheCleaners') -ErrorAction Stop).Path
     foreach ($RelativePath in @(
         'Private/ResultContracts.ps1'
         'Private/Initialize-TheCleanersNativeFileInterop.ps1'
@@ -19,6 +19,9 @@ BeforeAll {
     )) {
         . (Join-Path -Path $ModuleRoot -ChildPath $RelativePath)
     }
+    if ([Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT) {
+        Initialize-TheCleanersNativeFileInterop
+    }
     $OriginalTempPlan = ${function:Get-TheCleanersTempPlan}
 }
 
@@ -28,14 +31,14 @@ Describe 'Temp deletion rights: <CommandName>' -ForEach $TempCases -Skip:(-not $
         $PreviousTmp = $env:TMP
         $FixtureRoot = Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().Guid)
         $TempRoot = Join-Path -Path $FixtureRoot -ChildPath 'Temp'
-        $null = New-Item -Path $TempRoot -ItemType Directory -Force
+        $null = New-Item -Path $TempRoot -ItemType Directory -Force -ErrorAction Stop
         $CandidatePath = Join-Path -Path $TempRoot -ChildPath 'candidate.tmp'
         [System.IO.File]::WriteAllBytes($CandidatePath, [byte[]](1, 2, 3, 4))
         $Now = [DateTime]::UtcNow
         [System.IO.File]::SetLastWriteTimeUtc($CandidatePath, $Now.AddDays(-31))
         $Identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-        $OriginalCandidateAcl = Get-Acl -LiteralPath $CandidatePath
-        $OriginalRootAcl = Get-Acl -LiteralPath $TempRoot
+        $OriginalCandidateAcl = Get-Acl -LiteralPath $CandidatePath -ErrorAction Stop
+        $OriginalRootAcl = Get-Acl -LiteralPath $TempRoot -ErrorAction Stop
         $AclState = [pscustomobject]@{
             CandidateChanged = $false
             RootChanged      = $false
@@ -47,7 +50,7 @@ Describe 'Temp deletion rights: <CommandName>' -ForEach $TempCases -Skip:(-not $
         Mock Get-Date { $Now }
 
         $SetReadDeniedDeleteAllowed = {
-            $CandidateAcl = Get-Acl -LiteralPath $CandidatePath
+            $CandidateAcl = Get-Acl -LiteralPath $CandidatePath -ErrorAction Stop
             $DeleteAllow = [System.Security.AccessControl.FileSystemAccessRule]::new(
                 $Identity.User,
                 [System.Security.AccessControl.FileSystemRights]::Delete,
@@ -60,32 +63,53 @@ Describe 'Temp deletion rights: <CommandName>' -ForEach $TempCases -Skip:(-not $
             )
             $CandidateAcl.SetAccessRule($DeleteAllow)
             $CandidateAcl.AddAccessRule($ReadDeny)
-            Set-Acl -LiteralPath $CandidatePath -AclObject $CandidateAcl
+            Set-Acl -LiteralPath $CandidatePath -AclObject $CandidateAcl -ErrorAction Stop
             $AclState.CandidateChanged = $true
         }
 
         $SetDeleteDenied = {
-            $CandidateAcl = Get-Acl -LiteralPath $CandidatePath
+            $CandidateAcl = Get-Acl -LiteralPath $CandidatePath -ErrorAction Stop
             $DeleteDeny = [System.Security.AccessControl.FileSystemAccessRule]::new(
                 $Identity.User,
                 [System.Security.AccessControl.FileSystemRights]::Delete,
                 [System.Security.AccessControl.AccessControlType]::Deny
             )
             $CandidateAcl.AddAccessRule($DeleteDeny)
-            Set-Acl -LiteralPath $CandidatePath -AclObject $CandidateAcl
+            Set-Acl -LiteralPath $CandidatePath -AclObject $CandidateAcl -ErrorAction Stop
             $AclState.CandidateChanged = $true
 
             # DELETE on the file or FILE_DELETE_CHILD on its parent can authorize
             # deletion. Deny both routes so this fixture exercises the error path.
-            $RootAcl = Get-Acl -LiteralPath $TempRoot
+            $RootAcl = Get-Acl -LiteralPath $TempRoot -ErrorAction Stop
             $DeleteChildDeny = [System.Security.AccessControl.FileSystemAccessRule]::new(
                 $Identity.User,
                 [System.Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles,
                 [System.Security.AccessControl.AccessControlType]::Deny
             )
             $RootAcl.AddAccessRule($DeleteChildDeny)
-            Set-Acl -LiteralPath $TempRoot -AclObject $RootAcl
+            Set-Acl -LiteralPath $TempRoot -AclObject $RootAcl -ErrorAction Stop
             $AclState.RootChanged = $true
+        }
+
+        $AssertDeleteDenied = {
+            $CandidateRules = @((Get-Acl -LiteralPath $CandidatePath -ErrorAction Stop).GetAccessRules(
+                    $true,
+                    $true,
+                    [System.Security.Principal.SecurityIdentifier]
+                ) | Where-Object IdentityReference -EQ $Identity.User)
+            @($CandidateRules | Where-Object {
+                    $_.AccessControlType -eq [System.Security.AccessControl.AccessControlType]::Deny -and
+                    ($_.FileSystemRights -band [System.Security.AccessControl.FileSystemRights]::Delete)
+                }) | Should -Not -BeNullOrEmpty
+            $ParentRules = @((Get-Acl -LiteralPath $TempRoot -ErrorAction Stop).GetAccessRules(
+                    $true,
+                    $true,
+                    [System.Security.Principal.SecurityIdentifier]
+                ) | Where-Object IdentityReference -EQ $Identity.User)
+            @($ParentRules | Where-Object {
+                    $_.AccessControlType -eq [System.Security.AccessControl.AccessControlType]::Deny -and
+                    ($_.FileSystemRights -band [System.Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles)
+                }) | Should -Not -BeNullOrEmpty
         }
 
         $GetReadAttemptException = {
@@ -110,23 +134,38 @@ Describe 'Temp deletion rights: <CommandName>' -ForEach $TempCases -Skip:(-not $
 
     AfterEach {
         # Restore ACLs before Pester removes its isolated TestDrive fixture.
-        if ($AclState.CandidateChanged -and [System.IO.File]::Exists($CandidatePath)) {
-            Set-Acl -LiteralPath $CandidatePath -AclObject $OriginalCandidateAcl
+        $RestoreErrors = [System.Collections.Generic.List[System.Management.Automation.ErrorRecord]]::new()
+        try {
+            try {
+                if ($AclState.CandidateChanged -and [System.IO.File]::Exists($CandidatePath)) {
+                    Set-Acl -LiteralPath $CandidatePath -AclObject $OriginalCandidateAcl -ErrorAction Stop
+                }
+            } catch {
+                $RestoreErrors.Add($_)
+            }
+            try {
+                if ($AclState.RootChanged -and [System.IO.Directory]::Exists($TempRoot)) {
+                    Set-Acl -LiteralPath $TempRoot -AclObject $OriginalRootAcl -ErrorAction Stop
+                }
+            } catch {
+                $RestoreErrors.Add($_)
+            }
+        } finally {
+            $env:TEMP = $PreviousTemp
+            $env:TMP = $PreviousTmp
+            if ($null -ne $Identity) {
+                $Identity.Dispose()
+            }
         }
-        if ($AclState.RootChanged -and [System.IO.Directory]::Exists($TempRoot)) {
-            Set-Acl -LiteralPath $TempRoot -AclObject $OriginalRootAcl
-        }
-        $env:TEMP = $PreviousTemp
-        $env:TMP = $PreviousTmp
-        if ($null -ne $Identity) {
-            $Identity.Dispose()
+        if ($RestoreErrors.Count -gt 0) {
+            throw $RestoreErrors[0]
         }
     }
 
     It 'deletes an old file when content reads are actually denied but DELETE and attributes are allowed' {
         & $SetReadDeniedDeleteAllowed
 
-        $Rules = @((Get-Acl -LiteralPath $CandidatePath).GetAccessRules(
+        $Rules = @((Get-Acl -LiteralPath $CandidatePath -ErrorAction Stop).GetAccessRules(
                 $true,
                 $true,
                 [System.Security.Principal.SecurityIdentifier]
@@ -166,6 +205,7 @@ Describe 'Temp deletion rights: <CommandName>' -ForEach $TempCases -Skip:(-not $
 
     It 'reports denied DELETE through the error stream and reconciles counters' {
         & $SetDeleteDenied
+        & $AssertDeleteDenied
 
         $OpenException = $null
         try {
@@ -194,6 +234,7 @@ Describe 'Temp deletion rights: <CommandName>' -ForEach $TempCases -Skip:(-not $
 
     It 'honors ErrorAction Stop when DELETE is denied' {
         & $SetDeleteDenied
+        & $AssertDeleteDenied
 
         { & $CommandName -Days 30 -Confirm:$false -ErrorAction Stop } |
             Should -Throw -ErrorId 'TempFileRemovalFailed,*'
@@ -226,7 +267,7 @@ Describe 'Temp deletion rights: <CommandName>' -ForEach $TempCases -Skip:(-not $
         Mock Get-TheCleanersTempPlan {
             $Plan = & $OriginalTempPlan -Root $Root -TraversalRootPath $TraversalRootPath -CutoffUtc $CutoffUtc -RemoveEmptyDirectory:$RemoveEmptyDirectory -CaptureIdentity:$CaptureIdentity -ValidatedRootIdentity $ValidatedRootIdentity
             [System.IO.File]::Delete($CandidatePath)
-            $null = New-Item -Path $CandidatePath -ItemType Directory
+            $null = New-Item -Path $CandidatePath -ItemType Directory -ErrorAction Stop
             $Plan
         }
 

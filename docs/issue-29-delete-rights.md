@@ -47,8 +47,10 @@ The command reads `FILE_ID_INFO`, `FILE_STANDARD_INFO`, `FILE_BASIC_INFO`, and
 number plus all 16 file-ID bytes with the discovery snapshot, rejects a
 directory, reparse point, different identity, or now-recent file, and only then
 calls `SetFileInformationByHandle(FileDispositionInfo)`. It never reopens the
-path between validation and disposition. Any native open, identity, metadata,
-or disposition failure throws and is reported through the command error stream.
+path between validation and disposition. Missing-candidate errors, including
+native codes 2, 3, 53, and 123, are intentionally reconciled as skips. Other
+native open, identity, metadata, or disposition failures are reported through
+the command error stream.
 
 Microsoft's Win32 documentation defines
 [`FILE_ID_INFO`](https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-file_id_info)
@@ -77,7 +79,11 @@ isolated fixture beneath Pester's temporary directory:
 
 The ACL is restored before fixture cleanup whenever the denied candidate remains.
 Every opened stream, safe handle, Windows identity, and redirected `TEMP`/`TMP`
-value is disposed or restored in test cleanup.
+value is disposed or restored in test cleanup. ACL discovery, mutation, and
+restoration use terminating errors. The positive fixture verifies its `ReadData`
+deny and `Delete` allow rules; the negative fixture verifies both the file
+`Delete` deny and parent `DeleteSubdirectoriesAndFiles` deny before invoking a
+cleaner, so an ACL setup failure cannot pass as command behavior.
 
 The same-type recent/old replacement, post-preflight reparse substitution,
 rename/relink, and concurrent content/timestamp observation cases are owned by
@@ -107,6 +113,28 @@ cases, results, and recovery. No ReFS volume was provisioned or substituted for
 this non-lab issue packet.
 
 ## Local validation
+
+The standalone-setup review working tree based on exact head
+`1bd434564823640c8a2eb8e3f7c3641bce4abf89` passed **12/12** focused tests
+under PowerShell **7.6.6** and Windows PowerShell **5.1.26100.9444** with pinned
+Pester **5.7.1**. Each test run started in a fresh process, imported Pester, and
+invoked this test file without dot-sourcing or calling the native initializer in
+the parent process. The test's own `BeforeAll` loaded and initialized native
+interop. Both runs had zero failures/skips/not-run. Reports are
+`TestResults/issue-29-standalone-pwsh7.xml` and
+`TestResults/issue-29-standalone-winps51.xml`; their SHA-256 digests are
+`dfecaa40d7fe92e5850ad2c696cdef2e16bc39da25c9c2000d645030898c55a2` and
+`391126446d7c751a3f8a0ea9bb29ff0942e9318cafcb2612abc3ff1284977a8d`.
+The tested CRLF-normalized test-file SHA-256 is
+`d439b0d1fc4edc0ab2eb4f11fca87dd6a523c5667f6411169e2105e90581c082`.
+This remains dirty-working-tree evidence pending an immutable follow-up commit.
+
+Immediately before this setup-only follow-up, exact clean PR head
+`1bd434564823640c8a2eb8e3f7c3641bce4abf89` passed **16/16** tests in both
+hosts: 12 focused deletion-rights cases plus four documentation contracts, with
+zero failures/skips/not-run. That result is historical evidence for the clean
+all-byte-equality head; it does not include this standalone initialization and
+ACL fail-fast delta.
 
 The PR review follow-up working tree based on exact head
 `5f93ae011e1117eb1030b814ca6e059829708f8f` passed **12/12** focused
