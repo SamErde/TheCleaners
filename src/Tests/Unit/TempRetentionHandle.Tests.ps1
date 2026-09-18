@@ -324,4 +324,3 @@ Describe 'Native retention observation contract' -Skip:(-not $WindowsHost) -Tag 
         $CandidatePath | Should -Not -Exist
     }
 }
-
