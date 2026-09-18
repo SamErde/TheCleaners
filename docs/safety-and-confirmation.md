@@ -25,6 +25,8 @@ Clear-WindowsTemp -Days 60 -WhatIf -PassThru
 
 An enumeration failure reports an error, makes no deletions, and returns `Status = DiscoveryFailed` with unknown candidate counts under `-PassThru`. Individual removal failures use the error stream and continue by default; `-ErrorAction Stop` terminates. `PrivilegeStatus` reports whether the process is elevated, but does not grant access or predict a per-file ACL outcome. System-owned files generally require an elevated session. Actual client/server elevation acceptance remains a release gate.
 
+The candidate handle requests deletion and metadata rights without content-read permission. The [deletion-rights and identity evidence](issue-29-delete-rights.md) proves both commands can remove an old NTFS fixture whose ACL denies reading its contents but permits deletion. Denied deletion remains a surfaced `PermissionDenied` error, including when read access is separately denied; elevation is not evidence that a particular file can be deleted. Documented 128-bit ReFS identity semantics do not establish an executed ReFS acceptance result.
+
 ## Result summaries
 
 `-PassThru` returns `TheCleaners.CleanupResult` objects. The complete shared field list and stable error IDs are in [1.0 command contracts](command-contracts.md).

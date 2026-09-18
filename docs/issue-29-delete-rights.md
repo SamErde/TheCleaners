@@ -81,11 +81,14 @@ value is disposed or restored in test cleanup.
 
 The same-type recent/old replacement, post-preflight reparse substitution,
 rename/relink, and concurrent content/timestamp observation cases are owned by
-issue #30 rather than duplicated here. They are implemented in pending PR #42
-at reviewed head `d6b15192d041b9986408b5ff8a0a95f03a9847a4`; this #29 packet does not
-credit that unmerged head as merged evidence. Integration must replace this
-pointer with PR #42's exact merge and green evidence before closing the combined
-owner-comment scope.
+issue #30 rather than duplicated here. [PR #42](https://github.com/SamErde/TheCleaners/pull/42)
+merged them as `3d07e9ccbfd441c388b1a3a69edc92fc326a4a66` and closed issue #30.
+Its exact reviewed head `719750ce8c7fd3142b24261b8b75d09499e9f840` passed
+[build 35330950539](https://github.com/SamErde/TheCleaners/actions/runs/35330950539):
+333 unit plus four integration tests on each supported PS7 lane and 337 combined
+tests on PS5.1, with zero failures/skips/not-run. That is PR-head evidence;
+merge-source verification remains separate. This packet is based on the merge
+and will run the combined suite on its own final head before closure.
 
 ## ReFS disposition
 
