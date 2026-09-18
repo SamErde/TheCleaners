@@ -50,6 +50,12 @@ The previous next stage (DELETE-PENDING, ROOT-RACE, HANDLE-RECOVERY fixture driv
 
 See [publishing controls](publishing.md) and the [copy-ready next-stage prompts](next-stage-prompts.md). Supporting both URL cases remains an open issue #26 deployment gate and does not alter the completed beta publication evidence.
 
+## September 18 issue #30 retention packet
+
+**Implemented in draft:** [Issue #30's deterministic contract packet](issue-30-retention-handle.md) adds 28 native/public-command regression cases for both temp commands and updates source help, command references and safety guidance. The same-handle runtime behavior is unchanged. The documented retention decision uses the timestamp observed from the deletion handle; attribute-only updates after that observation are outside an atomic guarantee.
+
+Exact clean integration commit `1f6a28e1da328440f1942c66648e9991ba3c5522` passed 28 new fixture cases and four documentation contracts (**32/32**) under PowerShell **7.6.6** and Windows PowerShell **5.1.26100.9444**, with Pester **5.7.1** on Windows **10.0.26200.0**. Both runs had zero failures/skips/not-run tests; strict Zensical **0.0.62** and configuration validation passed. The [issue evidence](issue-30-retention-handle.md) records the test hash and scope. Final-head hosted runtime evidence must be verified before merge; this checkpoint is not merged evidence. Issues #28 and #29 remain in progress. TC-001 product acceptance, TC-003 through TC-007 lab acceptance, and final TC-008/009 release acceptance remain open.
+
 ## Issue #26 Zensical migration checkpoint
 
 [PR #41](https://github.com/SamErde/TheCleaners/pull/41) opened from exact initial head [`1063c8400609c68c9fe1348d24a191a25905a321`](https://github.com/SamErde/TheCleaners/commit/1063c8400609c68c9fe1348d24a191a25905a321). Local evidence for that head used Python 3.14.6 and Zensical 0.0.62. The Python suite reported 29 tests: 28 passed, 0 failed, and 1 symbolic-link test skipped because this host did not permit symbolic links. The focused documentation contract passed 4/4 with zero failures, skips, or not-run tests under PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444. Configuration validation, the strict clean build, `actionlint`, `git diff --check`, and old/new eight-entry navigation comparison passed. The exact local site manifest (`local-site-manifest.json`) verified 36 files, 1,574,983 bytes, empty `.nojekyll`, and tree SHA-256 `a6c1740cbd8a4965229385e38bf79939bbd0608a5a8de7ff43758392337251a0`; `local-validation-summary.json` records the full checkpoint.

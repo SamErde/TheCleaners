@@ -6,6 +6,8 @@ Following the `0.0.15-beta` prerelease, Windows client/server, IIS, Exchange, pr
 
 ### Changed
 
+- Complete the bounded issue #30 retention contract with deterministic acquisition-barrier fixtures for both temp commands. Cover recent/old replacements, renamed paths, directory/junction substitution, same-object relinking, current length and timestamp observations, writer failures and handle recovery. Document that attribute-only timestamp updates are not excluded by read-only sharing and retention validation is not atomic with deletion; runtime behavior and deferred acceptance gates remain unchanged.
+
 - Implement the issue #26 Zensical migration in PR #41: replace the active MkDocs/Material configuration and direct dependencies with pinned Zensical 0.0.62, preserve the classic navigation and generated command references, and retain the single-build manifest-to-`gh-pages` byte-verification controls. Review, merge, deployment, and lowercase-path acceptance remain open.
 
 ## 0.0.15-beta - 2026-09-17
