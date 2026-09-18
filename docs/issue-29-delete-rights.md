@@ -19,7 +19,7 @@ identity. After `ShouldProcess`, the command opens the current literal path with
 
 | Field | Value | Reason |
 | --- | --- | --- |
-| Desired access | `DELETE | FILE_READ_ATTRIBUTES` | Permit same-handle metadata validation and disposition without `FILE_READ_DATA`. |
+| Desired access | `DELETE` and `FILE_READ_ATTRIBUTES` | Permit same-handle metadata validation and disposition without `FILE_READ_DATA`. |
 | Share mode | `FILE_SHARE_READ` | Permit readers while preventing content/data-write, rename, or other delete opens during validation and disposition. |
 | Creation disposition | `OPEN_EXISTING` | Never create a missing candidate. |
 | Flags | `FILE_FLAG_OPEN_REPARSE_POINT` | Inspect the link itself and reject reparse points instead of following them. |
