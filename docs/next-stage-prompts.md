@@ -1,6 +1,6 @@
-**Completed:** Non-lab delivery and protected 0.0.15-beta publication are verified. Zensical PR #41 and retention PR #42 are merged; issues #26 and #30 are closed. PR #43's 14 directory-identity cases and PR #44's deletion-rights fixtures are implemented and locally validated. Canonical Zensical deployment from af330858b41335366476f0b845e3f73a3c1497d1 and PR #42's exact reviewed-head artifacts have been verified separately.
+**Completed:** Non-lab delivery and protected 0.0.15-beta publication are verified. Zensical PR #41 and retention PR #42 are merged; issues #26 and #30 are closed. PR #43's 14 directory-identity cases and PR #44's deletion-rights fixtures are implemented and locally validated. Canonical Zensical deployment from af330858b41335366476f0b845e3f73a3c1497d1 and PR #42's exact reviewed-head and merged-source runtime/artifact results have been verified separately; its merged documentation deployment and live bytes also passed.
 
-**Remaining:** Finish independent and hosted review, exact-head validation and merge for #28 PR #43 and #29 PR #44; verify all three merged-source results; then complete the final documentation sweep. TC-001 product acceptance, TC-003 through TC-007 lab acceptance and final TC-008/009 release acceptance remain open. Lab validation is deferred future work, not underway.
+**Remaining:** Finish independent and hosted review, exact-head validation and merge for #28 PR #43 and #29 PR #44; verify #28/#29 merged-source results; then complete the final documentation sweep. TC-001 product acceptance, TC-003 through TC-007 lab acceptance and final TC-008/009 release acceptance remain open. Lab validation is deferred future work, not underway.
 
 # Recovery: finish the authorized temp-issue sequence
 

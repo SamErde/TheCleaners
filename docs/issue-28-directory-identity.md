@@ -4,7 +4,7 @@
 
 This packet closes the remaining deterministic fixture gap in [issue #28](https://github.com/SamErde/TheCleaners/issues/28). The runtime already retains native Windows directory handles through candidate mutation and compares volume/file identity before non-recursive pruning. No runtime defect was found, so this packet adds a dedicated public-command regression suite without changing production behavior.
 
-The local evidence applies to base commit `af330858b41335366476f0b845e3f73a3c1497d1` plus the uncommitted changes in `src/Tests/Unit/TempDirectoryIdentity.Tests.ps1` and this document. It does not claim an exact candidate commit. Exact-head CI and post-merge evidence remain separate checks.
+The initial implementation checkpoint used base commit `af330858b41335366476f0b845e3f73a3c1497d1` plus uncommitted test/documentation changes. It is retained below as historical evidence. The later clean-commit checkpoint establishes local committed validation; final-head hosted CI across all supported runtimes and post-merge evidence remain separate checks.
 
 ## Deterministic fixture design
 
@@ -28,18 +28,18 @@ The second case demonstrates defense in depth when the primary handle barrier is
 | Preserve root, unrelated empty branches, recent files, and reparse points | The end-to-end boundary case retains the fixture root, an unrelated empty directory, a recent-file branch, a junction, and the junction target outside the cleanup root. |
 | Avoid path/timestamp-only identity proof | Tests use `FILE_ID_INFO` identities from the native interop. The fallback fixture records unequal original and replacement identities while confirming the displaced original retains its planned identity. |
 | Keep `ShouldProcess` and error behavior | `-WhatIf` reports candidates and performs no mutation; mutation cases use explicit `-Confirm:$false`; a locked candidate with `-ErrorAction Stop` terminates with `TempFileRemovalFailed` and preserves directory ancestry. |
-| Validate supported local runtime boundaries | The dedicated 14-test suite passed under PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444 with Pester 5.7.1. |
+| Validate the supported runtime matrix | Local coverage passed on PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444 with Pester 5.7.1. Full-matrix acceptance remains pending inspection of exact final-head hosted results, including PowerShell 7.4.20 and 7.5.11. |
 
 ## Validation evidence
 
-Validation ran on Microsoft Windows NT 10.0.26200.0 using isolated NTFS fixtures. Native interop was initialized before Pester under Windows PowerShell 5.1, matching the hosted workflow's runspace requirement.
+The historical implementation checkpoint ran on Microsoft Windows NT 10.0.26200.0 using isolated NTFS fixtures. Native interop was initialized before Pester under Windows PowerShell 5.1, matching the hosted workflow's runspace requirement.
 
 | Runtime | Pester | Result | Counts | Machine-readable report |
 | --- | --- | --- | --- | --- |
 | PowerShell 7.6.6 Core | 5.7.1 | Passed | 14 passed, 0 failed, 0 skipped, 0 not run | `%TEMP%\TheCleaners-issue28-evidence\pester-ps766.xml` |
 | Windows PowerShell 5.1.26100.9444 Desktop | 5.7.1 | Passed | 14 passed, 0 failed, 0 skipped, 0 not run | `%TEMP%\TheCleaners-issue28-evidence\pester-ps51.xml` |
 
-Both PowerShell parsers accepted the dedicated test file. `git diff --cached --check` passed after staging both owned files; exact-head checks must be repeated after the packet is committed or rebased.
+At that staged checkpoint, both PowerShell parsers accepted the dedicated test file and `git diff --cached --check` passed. The later clean-commit result below supersedes its then-outstanding local commit validation. Any subsequent change or rebase still requires checks at its own final head.
 
 ## Limitations
 
