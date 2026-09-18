@@ -72,7 +72,7 @@ isolated fixture beneath Pester's temporary directory:
 | Report denied deletion and honor `-ErrorAction Stop` | The file denies `Delete` and its parent denies `DeleteSubdirectoriesAndFiles`, closing both Windows authorization routes. The non-terminating case reports one `PermissionDenied` error and reconciles failure/removal/skip/byte counters; the terminating case must throw `TempFileRemovalFailed`. |
 | Preserve a directory replacement | The read-denied file is removed after real discovery and replaced by a directory. The command preserves it and reports one skip. |
 | Reconcile disappearance | The read-denied file disappears after real discovery. The command reports one skip, no failure, and no reclaimed bytes. |
-| Use a 128-bit identity and fail closed | A real native identity is required to expose 32 hexadecimal file-ID digits, and the source contract requires a 16-byte `FILE_ID_INFO` buffer and a thrown `Win32Exception` when the identity query fails. |
+| Use a 128-bit identity and fail closed | A real native identity must expose 32 hexadecimal file-ID digits. Synthetic identities prove equality compares the volume serial and every one of the 16 file-ID bytes, including each byte in the upper 64 bits; otherwise identical IDs compare unequal when any byte changes. Equal cloned arrays compare equal, while length, timestamp, and attribute differences do not change the intentionally volume-plus-file-ID equality contract. The source contract requires a 16-byte `FILE_ID_INFO` buffer, and an invalid handle must produce the underlying `Win32Exception` instead of a path or partial identity fallback. |
 | Avoid provider path deletion | The existing `TempCandidateSafety.Tests.ps1` AST regression verifies that neither owning command calls `Remove-Item` for candidate deletion and that both use `OpenForDeletion` plus `MarkForDeletion`. |
 
 The ACL is restored before fixture cleanup whenever the denied candidate remains.
@@ -107,6 +107,17 @@ cases, results, and recovery. No ReFS volume was provisioned or substituted for
 this non-lab issue packet.
 
 ## Local validation
+
+The PR review follow-up working tree based on exact head
+`5f93ae011e1117eb1030b814ca6e059829708f8f` passed **12/12** focused
+`TempDeletionRights` tests on PowerShell **7.6.6** and Windows PowerShell
+**5.1.26100.9444** with pinned Pester **5.7.1**. Both runs had zero
+failures/skips/not-run. The machine-readable reports are
+`TestResults/issue-29-review-pwsh7.xml` and
+`TestResults/issue-29-review-winps51.xml`. The tested CRLF-normalized test file
+SHA-256 is `50d67f3a8cbe8e008815b02045c58183e2afaf4e505edee28cb2598884e90037`.
+This is dirty-working-tree review evidence until the follow-up is committed and
+validated at its immutable PR head.
 
 After integration onto issue #30's merge, exact clean commit `51ef3783f8f89c15b870042579c09a6073e816f3` passed **15/15** tests (11 new cases plus four documentation contracts) on PowerShell **7.6.6** and Windows PowerShell **5.1.26100.9444**, with Pester **5.7.1** on Windows **10.0.26200.0**. Both runs had zero failures/skips/not-run. Strict Zensical **0.0.62** and the complete PR-range whitespace check passed. The tested new file's SHA-256 was `29fb813d9d3cccab6599fd8fcdc7bbbedbfc98700e8bc91a2d6dd455cf331764`. Final-head hosted validation and merged-source verification remain separate gates.
 

@@ -243,6 +243,59 @@ Describe 'Temp deletion rights: <CommandName>' -ForEach $TempCases -Skip:(-not $
 }
 
 Describe 'Native FILE_ID_INFO contract' -Skip:(-not $WindowsHost) -Tag Unit {
+    It 'compares every byte of the 128-bit file ID and the volume serial' {
+        $FileId = [byte[]](0..15)
+        $Identity = [TheCleaners.NativeFileIdentity]::new(
+            [uint64]42,
+            $FileId,
+            [int64]100,
+            [DateTime]::UtcNow.ToFileTimeUtc(),
+            [uint32][System.IO.FileAttributes]::Archive
+        )
+        $EqualIdentity = [TheCleaners.NativeFileIdentity]::new(
+            [uint64]42,
+            [byte[]]$FileId.Clone(),
+            [int64]100,
+            $Identity.LastWriteTimeUtcFileTime,
+            [uint32][System.IO.FileAttributes]::Archive
+        )
+        $DifferentMetadata = [TheCleaners.NativeFileIdentity]::new(
+            [uint64]42,
+            [byte[]]$FileId.Clone(),
+            [int64]999,
+            $Identity.LastWriteTimeUtc.AddDays(1).ToFileTimeUtc(),
+            [uint32][System.IO.FileAttributes]::Hidden
+        )
+        $DifferentVolume = [TheCleaners.NativeFileIdentity]::new(
+            [uint64]43,
+            [byte[]]$FileId.Clone(),
+            $Identity.Length,
+            $Identity.LastWriteTimeUtcFileTime,
+            $Identity.Attributes
+        )
+
+        $Identity.Equals($EqualIdentity) | Should -BeTrue
+        $EqualIdentity.Equals($Identity) | Should -BeTrue
+        $Identity.GetHashCode() | Should -Be $EqualIdentity.GetHashCode()
+        $Identity.Equals($DifferentMetadata) | Should -BeTrue
+        $Identity.GetHashCode() | Should -Be $DifferentMetadata.GetHashCode()
+        $Identity.Equals($DifferentVolume) | Should -BeFalse
+
+        foreach ($Index in 0..15) {
+            $DifferentFileId = [byte[]]$FileId.Clone()
+            $DifferentFileId[$Index] = [byte]($DifferentFileId[$Index] -bxor 0xFF)
+            $DifferentIdentity = [TheCleaners.NativeFileIdentity]::new(
+                [uint64]42,
+                $DifferentFileId,
+                $Identity.Length,
+                $Identity.LastWriteTimeUtcFileTime,
+                $Identity.Attributes
+            )
+
+            $Identity.Equals($DifferentIdentity) | Should -BeFalse -Because "file-ID byte $Index changed"
+        }
+    }
+
     It 'uses the documented 128-bit file identifier and fails when native identity reads fail' {
         $InteropPath = Join-Path -Path $ModuleRoot -ChildPath 'Private/Initialize-TheCleanersNativeFileInterop.ps1'
         $InteropText = [System.IO.File]::ReadAllText($InteropPath)
