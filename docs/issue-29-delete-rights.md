@@ -108,6 +108,10 @@ this non-lab issue packet.
 
 ## Local validation
 
+After integration onto issue #30's merge, exact clean commit `51ef3783f8f89c15b870042579c09a6073e816f3` passed **15/15** tests (11 new cases plus four documentation contracts) on PowerShell **7.6.6** and Windows PowerShell **5.1.26100.9444**, with Pester **5.7.1** on Windows **10.0.26200.0**. Both runs had zero failures/skips/not-run. Strict Zensical **0.0.62** and the complete PR-range whitespace check passed. The tested new file's SHA-256 was `29fb813d9d3cccab6599fd8fcdc7bbbedbfc98700e8bc91a2d6dd455cf331764`. Final-head hosted validation and merged-source verification remain separate gates.
+
+The earlier implementation checkpoint below is retained as historical evidence.
+
 The tested boundary starts at base commit
 `af330858b41335366476f0b845e3f73a3c1497d1` with only this issue's new test and
 evidence document dirty. Both focused runs used the exact Pester 5.7.1 module
