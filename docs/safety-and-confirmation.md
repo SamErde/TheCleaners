@@ -14,6 +14,8 @@ Cleanup roots and literal filesystem paths must use fully qualified Windows synt
 
 By default, no directories are removed. `-RemoveEmptyDirectory` permits only directories emptied by this invocation and now-empty ancestors. It does not authorize the cleanup root, an unrelated pre-existing empty branch, or a directory containing a retained file. Pruning is deepest-first. Empty directories are deleted using a non-recursive API inside the owning command's approved `ShouldProcess` branch; a file appearing after the emptiness check causes deletion to fail, not become recursive.
 
+The plan retains directory handles through pruning, preventing an ordinary rename/replacement of the touched directory while those handles remain open. Pruning also compares native volume/file identity, so a different directory at the same path is not authorized by path equality alone. The [directory-identity regression evidence](issue-28-directory-identity.md) separately records production handle-lock tests and an injected handle-loss case that verifies this defensive identity check.
+
 ```powershell
 Clear-CurrentUserTemp -Days 30 -RemoveEmptyDirectory -WhatIf -PassThru -Verbose
 Clear-WindowsTemp -Days 60 -WhatIf -PassThru
