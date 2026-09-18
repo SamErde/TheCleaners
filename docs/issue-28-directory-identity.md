@@ -4,7 +4,7 @@
 
 This packet closes the remaining deterministic fixture gap in [issue #28](https://github.com/SamErde/TheCleaners/issues/28). The runtime already retains native Windows directory handles through candidate mutation and compares volume/file identity before non-recursive pruning. No runtime defect was found, so this packet adds a dedicated public-command regression suite without changing production behavior.
 
-The initial implementation checkpoint used base commit `af330858b41335366476f0b845e3f73a3c1497d1` plus uncommitted test/documentation changes. It is retained below as historical evidence. The later clean-commit checkpoint establishes local committed validation; final-head hosted CI across all supported runtimes and post-merge evidence remain separate checks.
+The initial implementation checkpoint used base commit `af330858b41335366476f0b845e3f73a3c1497d1` plus uncommitted test/documentation changes. It is retained below as historical evidence. The clean metadata-correction checkpoint records local committed fixture validation; final-head hosted CI across all supported runtimes and post-merge evidence remain separate checks.
 
 ## Deterministic fixture design
 
@@ -32,19 +32,16 @@ The second case demonstrates defense in depth when the primary handle barrier is
 
 ## Validation evidence
 
-The historical implementation checkpoint ran on Microsoft Windows NT 10.0.26200.0 using isolated NTFS fixtures. Native interop was initialized before Pester under Windows PowerShell 5.1, matching the hosted workflow's runspace requirement.
+Local fixture runs used Windows **10.0.26200.0**, PowerShell **7.6.6** and Windows PowerShell **5.1.26100.9444**, with pinned Pester **5.7.1**. Native interop was initialized before Pester under Windows PowerShell 5.1, matching the hosted workflow's runspace requirement. Each result below belongs only to its stated checkpoint; an older run does not validate a later correction.
 
-| Runtime | Pester | Result | Counts | Machine-readable report |
-| --- | --- | --- | --- | --- |
-| PowerShell 7.6.6 Core | 5.7.1 | Passed | 14 passed, 0 failed, 0 skipped, 0 not run | `%TEMP%\TheCleaners-issue28-evidence\pester-ps766.xml` |
-| Windows PowerShell 5.1.26100.9444 Desktop | 5.7.1 | Passed | 14 passed, 0 failed, 0 skipped, 0 not run | `%TEMP%\TheCleaners-issue28-evidence\pester-ps51.xml` |
+| Checkpoint | Result on each local runtime | Scope |
+| --- | --- | --- |
+| Initial base `af330858b41335366476f0b845e3f73a3c1497d1` plus uncommitted implementation | 14 passed, zero failed/skipped/not-run | Historical initial fixture suite. Reports: `%TEMP%\TheCleaners-issue28-evidence\pester-ps766.xml` and `pester-ps51.xml`. |
+| Clean integration `171b4cc558b875f72ffedd68aa051d6aeac6e43e` | 18/18 passed, zero failed/skipped/not-run | Original 14 fixtures plus four documentation contracts; predates the metadata-matching refinement. Strict Zensical 0.0.62 and PR-range whitespace checks also passed. |
+| Review base `581907e7d83c283de423c0f36d02b735c7153876` plus uncommitted refinement | 14 passed, zero failed/skipped/not-run | Historical first run with matching replacement metadata; reports `pester-review-followup-ps766.xml` and `pester-review-followup-ps51.xml` in the same temporary evidence directory. |
+| Clean correction `2372a218d04354df100c2d9188bc30c419764151` | 18/18 passed, zero failed/skipped/not-run | Includes the metadata-matching assertions and four documentation contracts. Retained reports: `issue28-final2372-ps7.json/.xml` and `issue28-final2372-ps51.json/.xml`. Test-file SHA-256: `d6f2c31c5625cec86cabee0fb5d9f856a40ed2f43ff3e479dbe326a2a8f8a6fa`. Strict Zensical 0.0.62 passed. |
 
-The PR review follow-up used head `581907e7d83c283de423c0f36d02b735c7153876` plus the uncommitted test and documentation correction. After the replacement metadata was matched explicitly, the same 14 tests passed with zero failures/skips/not-run on PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444 using Pester 5.7.1. The machine-readable follow-up reports are `pester-review-followup-ps766.xml` and `pester-review-followup-ps51.xml` in the same temporary evidence directory.
-
-At that staged checkpoint, both PowerShell parsers accepted the dedicated test file and `git diff --cached --check` passed. The later clean-commit result below supersedes its then-outstanding local commit validation. Any subsequent change or rebase still requires checks at its own final head.
+The clean correction's hosted build failed test-source analysis because two display-only `Article` parameters were unused; it did not pass the full build. Commit `da99d4ebdd0e8c76cba332eb506e06d2eda43691` removed those unused parameters and simplified the test descriptions without changing fixture logic. Its PowerShell parsers and PR-range whitespace check passed. Final-head hosted runtime reports, artifact inspection and post-merge results remain separate gates and are recorded in the PR and release ledger when verified.
 
 ## Limitations
-
-After integration on issue #30's merge, exact clean commit `171b4cc558b875f72ffedd68aa051d6aeac6e43e` passed **18/18** tests (14 new cases and four documentation contracts) on PowerShell **7.6.6** and Windows PowerShell **5.1.26100.9444**, with Pester **5.7.1** on Windows **10.0.26200.0**. Both runs had zero failures/skips/not-run; strict Zensical **0.0.62** and the full PR-range whitespace check passed. This is local committed evidence; the PR's exact final-head hosted reports and post-merge results are verified separately.
-
 This is deterministic local NTFS fixture evidence, not Windows client/server, ReFS, real-system-root, elevated/non-elevated, hostile-filter, or product lab acceptance. Issue #28 does not require ReFS validation, and the production help already states that the checks cannot provide an atomic defense when a filesystem or filter does not provide stable file IDs. Deferred lab gates and final 1.0 acceptance remain open.
