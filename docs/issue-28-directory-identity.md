@@ -13,7 +13,7 @@ Every test redirects the current-user and Windows temp roots to a unique Pester 
 The replacement regressions distinguish two safety layers:
 
 1. The production-reachable test deletes the old candidate, then attempts to move the touched directory aside and install a staged empty or populated replacement at the same path. The retained DELETE-capable handle denies the move, so the replacement cannot occur while the plan remains active. The staged directory and any new file remain intact outside the cleanup root.
-2. The defensive identity test uses an explicitly labeled isolated fault injection at the same pre-prune boundary. It releases only the touched directory's retained handle, moves the now-empty original to a displaced path, and installs a real empty or populated directory at the original path. The displaced original stays alive to prevent file-ID reuse. The command opens the replacement, observes that its native volume/file identity differs from the planned identity, skips it and its ancestor, and reports no directory-removal failure.
+2. The defensive identity test uses an explicitly labeled isolated fault injection at the same pre-prune boundary. It releases only the touched directory's retained handle, moves the now-empty original to a displaced path, and installs a real empty or populated directory at the original path. The displaced original stays alive to prevent file-ID reuse. Before reading the replacement identity, the fixture sets its creation time, last-write time, and attributes to the values captured for the planned original and asserts those mutable fields match. The command still observes that the native volume/file identity differs, skips the replacement and its ancestor, and reports no directory-removal failure.
 
 The second case demonstrates defense in depth when the primary handle barrier is unavailable. It is not a claim that production planning normally releases that handle or permits the physical replacement.
 
@@ -26,7 +26,7 @@ The second case demonstrates defense in depth when the primary handle barrier is
 | Cover recreated directories with and without new contents | The fallback fixture installs one empty replacement and one replacement containing `new.tmp` for each command; all four replacements remain. The primary handle test also stages and attempts both payloads. |
 | Preserve normal deepest-first pruning | Each command removes an old file, its child directory, and its parent in that order-sensitive plan, with two directory candidates and two removals. |
 | Preserve root, unrelated empty branches, recent files, and reparse points | The end-to-end boundary case retains the fixture root, an unrelated empty directory, a recent-file branch, a junction, and the junction target outside the cleanup root. |
-| Avoid path/timestamp-only identity proof | Tests use `FILE_ID_INFO` identities from the native interop. The fallback fixture records unequal original and replacement identities while confirming the displaced original retains its planned identity. |
+| Avoid path/timestamp-only identity proof | Tests use `FILE_ID_INFO` identities from the native interop. The fallback fixture explicitly matches creation time, last-write time, and attributes, then records unequal original and replacement identities while confirming the displaced original retains its planned identity. |
 | Keep `ShouldProcess` and error behavior | `-WhatIf` reports candidates and performs no mutation; mutation cases use explicit `-Confirm:$false`; a locked candidate with `-ErrorAction Stop` terminates with `TempFileRemovalFailed` and preserves directory ancestry. |
 | Validate the supported runtime matrix | Local coverage passed on PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444 with Pester 5.7.1. Full-matrix acceptance remains pending inspection of exact final-head hosted results, including PowerShell 7.4.20 and 7.5.11. |
 
@@ -38,6 +38,8 @@ The historical implementation checkpoint ran on Microsoft Windows NT 10.0.26200.
 | --- | --- | --- | --- | --- |
 | PowerShell 7.6.6 Core | 5.7.1 | Passed | 14 passed, 0 failed, 0 skipped, 0 not run | `%TEMP%\TheCleaners-issue28-evidence\pester-ps766.xml` |
 | Windows PowerShell 5.1.26100.9444 Desktop | 5.7.1 | Passed | 14 passed, 0 failed, 0 skipped, 0 not run | `%TEMP%\TheCleaners-issue28-evidence\pester-ps51.xml` |
+
+The PR review follow-up used head `581907e7d83c283de423c0f36d02b735c7153876` plus the uncommitted test and documentation correction. After the replacement metadata was matched explicitly, the same 14 tests passed with zero failures/skips/not-run on PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444 using Pester 5.7.1. The machine-readable follow-up reports are `pester-review-followup-ps766.xml` and `pester-review-followup-ps51.xml` in the same temporary evidence directory.
 
 At that staged checkpoint, both PowerShell parsers accepted the dedicated test file and `git diff --cached --check` passed. The later clean-commit result below supersedes its then-outstanding local commit validation. Any subsequent change or rebase still requires checks at its own final head.
 

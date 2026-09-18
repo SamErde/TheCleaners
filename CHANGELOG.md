@@ -10,7 +10,7 @@ Following the `0.0.15-beta` prerelease, Windows client/server, IIS, Exchange, pr
 
 - Complete the bounded issue #30 retention contract with deterministic acquisition-barrier fixtures for both temp commands. Cover recent/old replacements, renamed paths, directory/junction substitution, same-object relinking, current length and timestamp observations, writer failures and handle recovery. Document that attribute-only timestamp updates are not excluded by read-only sharing and retention validation is not atomic with deletion; runtime behavior and deferred acceptance gates remain unchanged.
 
-- Implement the issue #26 Zensical migration in PR #41: replace the active MkDocs/Material configuration and direct dependencies with pinned Zensical 0.0.62, preserve the classic navigation and generated command references, and retain the single-build manifest-to-`gh-pages` byte-verification controls. Review, merge, deployment, and lowercase-path acceptance remain open.
+- Complete the issue #26 Zensical migration in merged PR #41: replace the active MkDocs/Material configuration and direct dependencies with pinned Zensical 0.0.62, preserve the classic navigation and generated command references, and retain the single-build manifest-to-`gh-pages` byte-verification controls. Exact merged-source deployment and live canonical bytes are verified in the release ledger. The merged account-root companion supplies a JavaScript fallback for lowercase paths from its 404 page; it is not an HTTP redirect.
 
 ## 0.0.15-beta - 2026-09-17
 
@@ -34,7 +34,7 @@ Version `0.0.15-beta` was published from exact source `345f06c861b6d4074e5896e0b
 ### Changed
 
 - Prioritize non-lab documentation/delivery readiness and an optional approved prerelease; Windows, IIS, Exchange, and profile lab validation is deferred future work, not underway. Require succinct Completed / Remaining summaries in every successor prompt.
-- Use the working title-case `https://day3bits.com/TheCleaners/` URL consistently in configuration, manifest, source help, and documentation. Track support for both URL cases in Zensical issue #26.
+- Use the working title-case `https://day3bits.com/TheCleaners/` URL consistently in configuration, manifest, source help, and documentation. At this beta checkpoint, support for both URL cases was tracked in Zensical issue #26; the later completion is recorded in Unreleased above.
 - Configure the GitHub `powershell-gallery` environment with SamErde review, disabled administrator bypass and `v*` tag restrictions. Update the publishing workflow to use the dedicated `PSGALLERY_PUBLISH_API_KEY` environment secret, fail clearly when absent, and stop passing repository secrets to the build matrix. The protected `0.0.15-beta` run exercised the environment approval and credential through the exact-artifact publisher.
 - Add a closed local-rehearsal publisher mode that uses an existing local filesystem repository and an internal placeholder key. Preserve the exact-artifact guards shared with the fixed PSGallery production path and require an explicit valid source commit in both modes.
 - Bind publication to the maintainer-approved archive digest and verify the published version's installed payload, metadata, import, help, aliases and preview locks on fresh supported-runtime runners.
@@ -72,4 +72,4 @@ Protected publication run [35268852573](https://github.com/SamErde/TheCleaners/a
 
 ### Still pending
 
-Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; and Windows profile-inventory acceptance are deferred future work, not underway. Final 1.0 release acceptance remains open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. The published beta does not close them. The Zensical framework migration is open in PR #41 under issue #26; review, merge, deployment, and the account-root lowercase redirect remain open.
+Windows client/server, broader elevated/non-elevated, real-system-root, ReFS and adversarial/concurrency acceptance; IIS and Exchange product/build preview labs; and Windows profile-inventory acceptance are deferred future work, not underway. Final 1.0 release acceptance remains open. The bounded baseline uncovered-command review merged in PR #35; its remaining native/platform/product cases remain lab gates. The published beta does not close them. The Zensical migration and account-root compatibility work were still pending at this beta checkpoint; their subsequent completion in PR #41 and the account-root companion is recorded in Unreleased above and the current release ledger.

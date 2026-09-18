@@ -5,8 +5,8 @@ BeforeDiscovery {
         @{ CommandName = 'Clear-WindowsTemp' }
     )
     $ReplacementCases = @(
-        @{ ReplacementKind = 'empty'; HasReplacementContent = $false }
-        @{ ReplacementKind = 'populated'; HasReplacementContent = $true }
+        @{ Article = 'an'; ReplacementKind = 'empty'; HasReplacementContent = $false }
+        @{ Article = 'a'; ReplacementKind = 'populated'; HasReplacementContent = $true }
     )
 }
 
@@ -80,8 +80,8 @@ Describe 'Temp directory identity closure: <CommandName>' -ForEach $TempCases -S
         $env:SystemRoot = $PreviousSystemRoot
     }
 
-    It 'prevents a same-path replacement attempt with an <ReplacementKind> payload while the planned handle is retained' -TestCases $ReplacementCases {
-        param($ReplacementKind, $HasReplacementContent)
+    It 'prevents a same-path replacement attempt with <Article> <ReplacementKind> payload while the planned handle is retained' -TestCases $ReplacementCases {
+        param($Article, $ReplacementKind, $HasReplacementContent)
 
         $ReplacementSource = Join-Path -Path $FixtureRoot -ChildPath "Replacement-$ReplacementKind"
         $DisplacedPath = Join-Path -Path $FixtureRoot -ChildPath "Displaced-$ReplacementKind"
@@ -146,8 +146,8 @@ Describe 'Temp directory identity closure: <CommandName>' -ForEach $TempCases -S
         @($State.Handles | Where-Object { -not $_.IsClosed }) | Should -HaveCount 0
     }
 
-    It 'rejects and preserves an injected same-path replacement with an <ReplacementKind> payload by native identity' -TestCases $ReplacementCases {
-        param($ReplacementKind, $HasReplacementContent)
+    It 'rejects and preserves an injected same-path replacement with <Article> <ReplacementKind> payload by native identity' -TestCases $ReplacementCases {
+        param($Article, $ReplacementKind, $HasReplacementContent)
 
         $ReplacementSource = Join-Path -Path $FixtureRoot -ChildPath "InjectedReplacement-$ReplacementKind"
         $DisplacedPath = Join-Path -Path $FixtureRoot -ChildPath "OriginalDirectory-$ReplacementKind"
@@ -156,7 +156,11 @@ Describe 'Temp directory identity closure: <CommandName>' -ForEach $TempCases -S
             [System.IO.File]::WriteAllText((Join-Path -Path $ReplacementSource -ChildPath 'new.tmp'), 'new')
         }
         $script:ReplacementInjected = $false
+        $script:OriginalCreationTimeUtc = $null
+        $script:OriginalAttributes = $null
         $script:OriginalIdentity = $null
+        $script:ReplacementCreationTimeUtc = $null
+        $script:ReplacementAttributes = $null
         $script:ReplacementIdentity = $null
         $script:ChildPlan = $null
 
@@ -165,6 +169,8 @@ Describe 'Temp directory identity closure: <CommandName>' -ForEach $TempCases -S
             $State.Handles = @($Plan.HeldDirectoryHandles | ForEach-Object { $_.Handle })
             $script:ChildPlan = @($Plan.Directories | Where-Object Path -EQ $ChildPath)[0]
             $script:OriginalIdentity = $script:ChildPlan.Identity
+            $script:OriginalCreationTimeUtc = [System.IO.Directory]::GetCreationTimeUtc($ChildPath)
+            $script:OriginalAttributes = [System.IO.File]::GetAttributes($ChildPath)
             $Plan
         }
         Mock Get-Item {
@@ -178,6 +184,13 @@ Describe 'Temp directory identity closure: <CommandName>' -ForEach $TempCases -S
                 $script:ChildPlan.Handle = $null
                 [System.IO.Directory]::Move($ChildPath, $DisplacedPath)
                 [System.IO.Directory]::Move($ReplacementSource, $ChildPath)
+                # Match mutable metadata before the identity read so path,
+                # timestamps and attributes cannot explain the rejection.
+                [System.IO.Directory]::SetCreationTimeUtc($ChildPath, $script:OriginalCreationTimeUtc)
+                [System.IO.Directory]::SetLastWriteTimeUtc($ChildPath, $script:OriginalIdentity.LastWriteTimeUtc)
+                [System.IO.File]::SetAttributes($ChildPath, $script:OriginalAttributes)
+                $script:ReplacementCreationTimeUtc = [System.IO.Directory]::GetCreationTimeUtc($ChildPath)
+                $script:ReplacementAttributes = [System.IO.File]::GetAttributes($ChildPath)
                 $script:ReplacementIdentity = Get-TheCleanersFileIdentity -LiteralPath $ChildPath -Directory
                 $script:ReplacementInjected = $true
             }
@@ -198,6 +211,10 @@ Describe 'Temp directory identity closure: <CommandName>' -ForEach $TempCases -S
         $Result = & $CommandName -Days 30 -RemoveEmptyDirectory -Confirm:$false -PassThru -ErrorAction Stop
 
         $script:ReplacementInjected | Should -BeTrue
+        $script:ReplacementCreationTimeUtc.ToFileTimeUtc() | Should -Be $script:OriginalCreationTimeUtc.ToFileTimeUtc()
+        $script:ReplacementIdentity.LastWriteTimeUtc.ToFileTimeUtc() | Should -Be $script:OriginalIdentity.LastWriteTimeUtc.ToFileTimeUtc()
+        [uint32]$script:ReplacementAttributes | Should -Be ([uint32]$script:OriginalAttributes)
+        [uint32]$script:ReplacementIdentity.Attributes | Should -Be ([uint32]$script:OriginalIdentity.Attributes)
         $script:OriginalIdentity.Equals($script:ReplacementIdentity) | Should -BeFalse
         $script:OriginalIdentity.Equals((Get-TheCleanersFileIdentity -LiteralPath $DisplacedPath -Directory)) | Should -BeTrue
         $ChildPath | Should -Exist
