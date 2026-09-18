@@ -1068,10 +1068,10 @@
 
 <h1 id="temp-retention-and-deletion-handle-contract">Temp retention and deletion-handle contract</h1>
 <p>This packet records the bounded deterministic fixture and contract work in
-<a href="https://github.com/SamErde/TheCleaners/issues/30">issue #30</a>. The runtime already
-uses native same-handle deletion at source base
-<code>af330858b41335366476f0b845e3f73a3c1497d1</code>; this packet adds evidence and states its
-concurrency limits. It does not enable stable status or replace the deferred
+<a href="https://github.com/SamErde/TheCleaners/issues/30">issue #30</a>. <a href="https://github.com/SamErde/TheCleaners/pull/42">PR #42</a>
+merged as <code>3d07e9ccbfd441c388b1a3a69edc92fc326a4a66</code> and closed the issue. The runtime
+already used native same-handle deletion before this packet; the merged work adds
+evidence and states its concurrency limits. It does not enable stable status or replace the deferred
 Windows client/server, actual-root, ReFS, filesystem-filter, or hostile-driver labs.
 See the <a href="../release-plan-1.0/">release ledger</a> for current acceptance gates.</p>
 <h2 id="retention-decision">Retention decision</h2>
@@ -1209,7 +1209,7 @@ are removed as links before fixture teardown.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="local-checkpoint">Local checkpoint</h3>
+<h3 id="historical-local-checkpoint">Historical local checkpoint</h3>
 <p>Local evidence is recorded against base <code>af330858b41335366476f0b845e3f73a3c1497d1</code>
 plus the uncommitted new test and this document, using isolated Pester <strong>5.7.1</strong>.
 It is draft fixture evidence, not an exact merged-commit or hosted-matrix claim.
@@ -1249,11 +1249,12 @@ PowerShell 5.1 process. Both runtimes are launched with <code>-NoProfile -NonInt
 <code>a8d0a1be296e8618ae7ce47174218b777506913b9711d88381529c9af887d429</code>.
 <code>git diff --check</code> and the new files' whitespace checks passed. No runtime source
 behavior was changed; the integration also clarifies comment-based help. This local checkpoint does not claim execution on PowerShell 7.4 or
-7.5; the exact-head hosted matrix remains the integrator's next validation gate.</p>
+7.5; the later exact-head and merged-source hosted results are recorded in the
+<a href="../release-plan-1.0/">release ledger</a>.</p>
 <p>The retained machine-readable reports are <code>src/Reports/issue30/ps7-final.xml</code>,
 <code>ps7-final.json</code>, <code>ps51-final.xml</code>, and <code>ps51-final.json</code> (ignored local evidence).
-The integrator records exact final-commit and hosted runtime evidence in the
-release ledger before issue closure or any stability decision.</p>
+The later final-head and merged-source evidence was recorded in the release
+ledger. Command stability still requires the applicable product and release gates.</p>
 <h3 id="committed-integration-checkpoint">Committed integration checkpoint</h3>
 <p>Exact clean commit <code>1f6a28e1da328440f1942c66648e9991ba3c5522</code> passed the 28 new
 cases plus four documentation-contract tests: <strong>32/32</strong> on PowerShell <strong>7.6.6</strong>
@@ -1261,7 +1262,8 @@ and Windows PowerShell <strong>5.1.26100.9444</strong>, using Pester <strong>5.7
 <strong>10.0.26200.0</strong>. Both runs had zero failures, skips and not-run tests. The new
 test hash remained the value above. The strict clean Zensical <strong>0.0.62</strong> build
 and configuration validation passed. This is local exact-commit evidence; the
-PR's final-head hosted matrix and merge results must be verified separately.</p>
+PR's later final-head hosted matrix and merge results are recorded in the release
+ledger; this checkpoint remains local evidence only.</p>
 
 
 

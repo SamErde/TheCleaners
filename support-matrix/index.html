@@ -1200,9 +1200,9 @@
 
 <h1 id="support-policy-and-validation-matrix">Support policy and validation matrix</h1>
 <p><strong>Windows client/server, IIS, Exchange, and profile lab validation is deferred future work, not underway.</strong> Hosted fixture/package results below remain scoped to their exact tested commits and do not establish product acceptance.</p>
-<p>The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Current exact runtime evidence is for merged commit <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>; it does not apply automatically to a later commit.</p>
+<p>The 1.0 support contract is Windows-only: Windows PowerShell 5.1 plus Microsoft-supported PowerShell 7 releases on Windows. The manifest minimum remains 5.1. Core and Desktop edition compatibility does not imply Linux or macOS support. Current exact merged runtime evidence is for <code>6fd8af169da631d17579a3c7eb3fa0aa8b285be0</code>; it does not apply automatically to later commits.</p>
 <h2 id="current-exact-merged-runtime-evidence">Current exact merged runtime evidence</h2>
-<p><a href="https://github.com/SamErde/TheCleaners/actions/runs/35257555108">Build run 35257555108</a> and independent artifact inspection validate the current candidate:</p>
+<p><a href="https://github.com/SamErde/TheCleaners/actions/runs/35340908362">Build run 35340908362</a> and independent inspection of all eleven retained artifacts validate exact merged source <code>6fd8af169da631d17579a3c7eb3fa0aa8b285be0</code>:</p>
 <table>
 <thead>
 <tr>
@@ -1213,23 +1213,23 @@
 <tbody>
 <tr>
 <td>Windows PowerShell 5.1</td>
-<td><code>5.1.26100.33296</code> Desktop passed 309 combined tests with zero failures, skips or not-run tests and consumed the canonical 7.6.6 artifact.</td>
+<td><code>5.1.26100.33296</code> Desktop passed 363 combined tests with zero failures, skips or not-run tests and consumed the canonical 7.6.6 artifact.</td>
 </tr>
 <tr>
 <td>PowerShell 7.4 LTS</td>
-<td><code>7.4.20</code> passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858).</td>
+<td><code>7.4.20</code> passed 359 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 88.05% (1,636/1,858).</td>
 </tr>
 <tr>
 <td>PowerShell 7.5 stable</td>
-<td><code>7.5.11</code> passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858).</td>
+<td><code>7.5.11</code> passed 359 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 88.05% (1,636/1,858).</td>
 </tr>
 <tr>
 <td>PowerShell 7.6 LTS</td>
-<td><code>7.6.6</code> passed 305 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 87.51% (1,626/1,858).</td>
+<td><code>7.6.6</code> passed 359 unit and 4 integration tests with zero failures, skips or not-run tests; coverage was 88.05% (1,636/1,858).</td>
 </tr>
 </tbody>
 </table>
-<p>All three PS7 producers generated identical original and repeated 19-file archives: 224,050 bytes, SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code>. Protected run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35268852573">35268852573</a> used that archive for <code>0.0.15-beta</code> publication and fresh-install verification; independent verification matched all 15 retained artifact wrappers and four installed-package reports. The bounded PR #35 baseline review is complete, while its native, platform and product cases remain assigned to deferred labs. Final 1.0 release acceptance remains open.</p>
+<p>All three PS7 producers generated identical original and repeated 19-file archives: 224,558 bytes, SHA-256 <code>5153966aaef9f194fdf60fe8793989f4693dcd3310b10c4223d6208865d0135f</code>. Independent inspection matched all eleven artifact wrappers, source/runtime reports, NUnit results, ACL and local-feed evidence, and repeated/cross-runtime archives. Merged-source analyzer run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35340908372">35340908372</a> and documentation run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35340908280">35340908280</a> also passed. The distinct published <code>0.0.15-beta</code> artifact remains 224,050 bytes with SHA-256 <code>1c8e061278e68c2e1537186709f79606735c6dda2e48b5cf65a4a877699e3383</code> from exact source <code>345f06c861b6d4074e5896e0b27a19f869dfa7e3</code>; current untagged source changes are not part of that Gallery package. The bounded PR #35 baseline review is complete, while its native, platform and product cases remain assigned to deferred labs. Final 1.0 release acceptance remains open.</p>
 <h2 id="historical-runtime-evidence">Historical runtime evidence</h2>
 <table>
 <thead>

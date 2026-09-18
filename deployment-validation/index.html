@@ -1214,8 +1214,8 @@
 
 
 <h1 id="documentation-deployment-gate">Documentation deployment gate</h1>
-<p>The canonical documentation URL is <code>https://day3bits.com/TheCleaners/</code>, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links must use that casing. The Zensical migration is open in <a href="https://github.com/SamErde/TheCleaners/pull/41">PR #41</a>; review, merge, fresh deployment, and lowercase-path acceptance remain open under <a href="https://github.com/SamErde/TheCleaners/issues/26">issue #26</a>.</p>
-<p>The lowercase project-prefix request is handled by the account-root Pages site before this project's generated files are selected. Zensical's native redirects map paths within the documentation output, so they cannot repair that missing project prefix. Case-only alias directories would also collide with canonical mixed-case directories on Windows. A companion account-root redirect is the remaining hosting-level option; this repository does not add ineffective redirect maps.</p>
+<p>The canonical documentation URL is <code>https://day3bits.com/TheCleaners/</code>, including the title-case path. Configuration, source help, the manifest, generated references, and canonical links use that casing. Zensical <a href="https://github.com/SamErde/TheCleaners/pull/41">PR #41</a> merged as <code>af330858b41335366476f0b845e3f73a3c1497d1</code>, and <a href="https://github.com/SamErde/TheCleaners/issues/26">issue #26</a> is closed. Deployment run <a href="https://github.com/SamErde/TheCleaners/actions/runs/35282935445">35282935445</a> and an independent live recheck verified its 36 canonical files and required navigation. Later deployments supersede that byte snapshot and require their own source-bound evidence.</p>
+<p>The lowercase project-prefix request is handled by the separately owned account-root Pages site before this project's generated files are selected. Companion <a href="https://github.com/SamErde/samerde.github.io/pull/13">SamErde/samerde.github.io#13</a> merged as <code>0b096e19b6058a0c60119d20b57ba7de7aa3236c</code>. Its account-root 404 page uses JavaScript to send the lowercase project prefix to the canonical title-case path; this is a fallback from an HTTP 404 response, not an HTTP 301/302 redirect. Zensical's native redirects map paths only within this documentation output, and case-only alias directories would collide on Windows.</p>
 <p>A documentation deployment is accepted only when the workflow proves all of the following for one source commit:</p>
 <ol>
 <li>Zensical completes one strict, clean build into the configured <code>site</code> directory.</li>
@@ -1313,7 +1313,7 @@
 </tr>
 </tbody>
 </table>
-<p>This closes exact deployed-byte and representative-navigation verification for that source commit only. The Zensical migration changes the generated site and therefore requires a fresh merged-source deployment and retained evidence before it can replace this baseline. Lowercase <code>/thecleaners/</code> acceptance also remains open in issue #26.</p>
+<p>This closes exact deployed-byte and representative-navigation verification for that source commit only. It is a historical pre-Zensical baseline. The Zensical migration checkpoint is the 36-file verification for <code>af330858b41335366476f0b845e3f73a3c1497d1</code> above; later source changes and deployments need fresh retained evidence. Lowercase compatibility is supplied by the separately owned account-root 404/JavaScript fallback described above.</p>
 <p>Before this gate was implemented, the September 17, 2026 live check found title-case <code>/TheCleaners/</code> HTTP 200 and lowercase <code>/thecleaners/</code> HTTP 404. GitHub Pages reported the title-case site URL, and the maintainer selected that working path as canonical.</p>
 <p>For merged commit <code>037c27a81234361620a633f68a33bfb370f0a03e</code>, <a href="https://github.com/SamErde/TheCleaners/actions/runs/35129434855">GitHub Actions run 35129434855</a> completed <code>mkdocs build --strict --site-dir site</code> and checked <code>site/index.html</code> and <code>site/sitemap.xml</code>. Its later <code>mkdocs gh-deploy --strict --force</code> command performed a second strict build and pushed <code>gh-pages</code> commit <code>2ea8bf4</code>; that historical workflow did not establish byte identity between the checked <code>site</code> directory and deployed output.</p>
 <p>The historical live check on September 16, 2026 found:</p>
@@ -1339,7 +1339,7 @@
 </tr>
 </tbody>
 </table>
-<p>The historical run above remains useful only as the pre-gate baseline. Run 35257555130 and its independently checked retained evidence establish the current exact-source deployment claim.</p>
+<p>The historical run above remains useful only as the pre-gate baseline. Run 35257555130 established the later exact-source pre-Zensical deployment claim; the merged Zensical checkpoint and subsequent source-bound deployments supersede it.</p>
 
 
 

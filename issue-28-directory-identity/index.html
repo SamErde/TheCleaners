@@ -1068,8 +1068,8 @@
 
 <h1 id="issue-28-directory-identity-closure">Issue #28 directory-identity closure</h1>
 <h2 id="scope-and-result">Scope and result</h2>
-<p>This packet closes the remaining deterministic fixture gap in <a href="https://github.com/SamErde/TheCleaners/issues/28">issue #28</a>. The runtime already retains native Windows directory handles through candidate mutation and compares volume/file identity before non-recursive pruning. No runtime defect was found, so this packet adds a dedicated public-command regression suite without changing production behavior.</p>
-<p>The initial implementation checkpoint used base commit <code>af330858b41335366476f0b845e3f73a3c1497d1</code> plus uncommitted test/documentation changes. It is retained below as historical evidence. The clean metadata-correction checkpoint records local committed fixture validation; final-head hosted CI across all supported runtimes and post-merge evidence remain separate checks.</p>
+<p>This packet closes the remaining deterministic fixture gap in <a href="https://github.com/SamErde/TheCleaners/issues/28">issue #28</a>. <a href="https://github.com/SamErde/TheCleaners/pull/43">PR #43</a> merged as <code>0829d076ac13095ed016c54ea96c4a8b6abd8287</code> and closed the issue. The runtime already retains native Windows directory handles through candidate mutation and compares volume/file identity before non-recursive pruning. No runtime defect was found, so the packet adds a dedicated public-command regression suite without changing production behavior.</p>
+<p>The initial implementation checkpoint used base commit <code>af330858b41335366476f0b845e3f73a3c1497d1</code> plus uncommitted test/documentation changes. It is retained below as historical evidence. Exact reviewed head <code>12db558565d39e1a52c726160a6b4014b72cf5ff</code> and the merged-source workflow results are recorded in the <a href="../release-plan-1.0/">release ledger</a>; they supersede the pending language in the historical checkpoints below.</p>
 <h2 id="deterministic-fixture-design">Deterministic fixture design</h2>
 <p>Every test redirects the current-user and Windows temp roots to a unique Pester fixture. <code>Clear-WindowsTemp</code> uses a controlled root resolver mock; the original environment is restored after each case. No cleaner targets actual user, Windows, IIS, Exchange, or other product data.</p>
 <p>The replacement regressions distinguish two safety layers:</p>
@@ -1117,7 +1117,7 @@
 </tr>
 <tr>
 <td>Validate the supported runtime matrix</td>
-<td>Local coverage passed on PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444 with Pester 5.7.1. Full-matrix acceptance remains pending inspection of exact final-head hosted results, including PowerShell 7.4.20 and 7.5.11.</td>
+<td>Local coverage passed on PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444 with Pester 5.7.1. Exact final-head and merged-source hosted evidence for PowerShell 7.4.20, 7.5.11, 7.6.6 and Windows PowerShell 5.1 is recorded in the release ledger.</td>
 </tr>
 </tbody>
 </table>
@@ -1154,7 +1154,7 @@
 </tr>
 </tbody>
 </table>
-<p>The clean correction's hosted build failed test-source analysis because two display-only <code>Article</code> parameters were unused; it did not pass the full build. Commit <code>da99d4ebdd0e8c76cba332eb506e06d2eda43691</code> removed those unused parameters and simplified the test descriptions without changing fixture logic. Its PowerShell parsers and PR-range whitespace check passed. Final-head hosted runtime reports, artifact inspection and post-merge results remain separate gates and are recorded in the PR and release ledger when verified.</p>
+<p>The clean correction's hosted build failed test-source analysis because two display-only <code>Article</code> parameters were unused; it did not pass the full build. Commit <code>da99d4ebdd0e8c76cba332eb506e06d2eda43691</code> removed those unused parameters and simplified the test descriptions without changing fixture logic. Its PowerShell parsers and PR-range whitespace check passed. These are historical correction checkpoints; the final-head and merged-source runtime, artifact and deployment results are recorded in the PR and release ledger.</p>
 <h2 id="limitations">Limitations</h2>
 <p>This is deterministic local NTFS fixture evidence, not Windows client/server, ReFS, real-system-root, elevated/non-elevated, hostile-filter, or product lab acceptance. Issue #28 does not require ReFS validation, and the production help already states that the checks cannot provide an atomic defense when a filesystem or filter does not provide stable file IDs. Deferred lab gates and final 1.0 acceptance remain open.</p>
 

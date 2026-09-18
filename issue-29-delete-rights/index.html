@@ -1072,6 +1072,13 @@
 exact source and test results recorded below. It does not establish Windows
 client/server product acceptance, actual Windows-root cleanup, or ReFS runtime
 acceptance; those remain TC-003/004 release gates.</p>
+<p><a href="https://github.com/SamErde/TheCleaners/pull/44">PR #44</a> merged as
+<code>6fd8af169da631d17579a3c7eb3fa0aa8b285be0</code> and closed the issue. Exact reviewed
+head <code>abe5f4275b2d5b9a7a510aa0759413dbcf91a727</code> and merged source
+<code>6fd8af169da631d17579a3c7eb3fa0aa8b285be0</code> passed the supported hosted
+runtime/artifact matrix; merged-source analyzer and 39-file documentation
+deployment verification also passed. The <a href="../release-plan-1.0/">release ledger</a>
+records the immutable runs, counts, digests and review boundary.</p>
 <p>No executable runtime source changed in this packet. The base implementation
 already met the selected native contract; the new work supplies the missing
 both-command ACL, error, identity, and reconciliation evidence.</p>
@@ -1200,8 +1207,8 @@ Its merged source passed
 tests on PS5.1, with zero failures/skips/not-run. All eleven artifact wrappers,
 source/runtime reports and archives were independently verified. Issue #28's
 directory-identity packet also merged in <a href="https://github.com/SamErde/TheCleaners/pull/43">PR #43</a>
-as <code>0829d076ac13095ed016c54ea96c4a8b6abd8287</code>. This packet is rebased onto both
-merges and will run the combined suite on its own final head before closure.</p>
+as <code>0829d076ac13095ed016c54ea96c4a8b6abd8287</code>. This packet was rebased onto both
+merges before its own reviewed-head and merged-source verification.</p>
 <h2 id="refs-disposition">ReFS disposition</h2>
 <p>The implementation does not use the legacy 64-bit file index. It marshals the
 documented 16-byte <code>FILE_ID_128</code>, combines it with the volume serial number, and
@@ -1224,8 +1231,8 @@ contracts, under PowerShell <strong>7.6.6</strong> and Windows PowerShell
 JSON/XML evidence is named <code>issue29-rebased-ps7</code> and <code>issue29-rebased-ps51</code>.
 The test-file SHA-256 is
 <code>d439b0d1fc4edc0ab2eb4f11fca87dd6a523c5667f6411169e2105e90581c082</code>.
-Final-head hosted validation and merged-source verification remain separate
-gates; these local results do not establish either one.</p>
+These local results do not establish final-head hosted or merged-source
+verification; the later exact evidence is recorded above and in the release ledger.</p>
 <p>Independent Astra high review also ran exact clean pre-rebase head
 <code>7ce8c0f6796617c47c046a4d4c90ca2ed86d4a96</code> in fresh processes, with the native
 type verified absent before Pester. The dedicated file passed <strong>12/12</strong> on both
