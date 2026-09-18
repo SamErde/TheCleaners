@@ -43,4 +43,6 @@ Both PowerShell parsers accepted the dedicated test file. `git diff --cached --c
 
 ## Limitations
 
+After integration on issue #30's merge, exact clean commit `171b4cc558b875f72ffedd68aa051d6aeac6e43e` passed **18/18** tests (14 new cases and four documentation contracts) on PowerShell **7.6.6** and Windows PowerShell **5.1.26100.9444**, with Pester **5.7.1** on Windows **10.0.26200.0**. Both runs had zero failures/skips/not-run; strict Zensical **0.0.62** and the full PR-range whitespace check passed. This is local committed evidence; the PR's exact final-head hosted reports and post-merge results are verified separately.
+
 This is deterministic local NTFS fixture evidence, not Windows client/server, ReFS, real-system-root, elevated/non-elevated, hostile-filter, or product lab acceptance. Issue #28 does not require ReFS validation, and the production help already states that the checks cannot provide an atomic defense when a filesystem or filter does not provide stable file IDs. Deferred lab gates and final 1.0 acceptance remain open.
