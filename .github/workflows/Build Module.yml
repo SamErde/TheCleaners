@@ -202,7 +202,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
           ref: ${{ env.TC_BUILD_COMMIT }}
-      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
         with:
           python-version: '3.x'
       - run: python -m pip install -r docs/requirements.txt
