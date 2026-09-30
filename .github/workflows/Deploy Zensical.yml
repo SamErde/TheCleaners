@@ -25,6 +25,7 @@ jobs:
       contents: read
 
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: ✅ Checkout Repository
@@ -83,6 +84,7 @@ jobs:
       contents: write
 
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       deployment_commit: ${{ steps.publish.outputs.deployment_commit }}
 
@@ -138,6 +140,7 @@ jobs:
       contents: read
 
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: ✅ Checkout Repository
