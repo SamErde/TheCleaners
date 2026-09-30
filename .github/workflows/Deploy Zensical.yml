@@ -11,6 +11,9 @@ on:
       - 'zensical.toml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: documentation-gh-pages
   cancel-in-progress: false
@@ -25,10 +28,12 @@ jobs:
 
     steps:
       - name: ✅ Checkout Repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: 🐍 Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.x'
 
@@ -62,7 +67,7 @@ jobs:
             --workflow-run-attempt "$GITHUB_RUN_ATTEMPT"
 
       - name: 📦 Retain Checked Site and Manifest
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: zensical-site-${{ github.sha }}
           path: |
@@ -83,12 +88,13 @@ jobs:
 
     steps:
       - name: ✅ Checkout Repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: 🐍 Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.x'
 
@@ -109,16 +115,20 @@ jobs:
 
       - name: 🚀 Publish Exact Checked Site
         id: publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch --no-tags origin gh-pages:refs/remotes/origin/gh-pages
           python -m ghp_import \
-            --push \
             --force \
             --branch gh-pages \
             --message "Deploy documentation from $GITHUB_SHA" \
             deploy-input/site
+          basic_auth="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w 0)"
+          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $basic_auth" \
+            push --force origin gh-pages
           deployment_commit="$(git rev-parse gh-pages)"
           echo "deployment_commit=$deployment_commit" >> "$GITHUB_OUTPUT"
 
@@ -131,10 +141,12 @@ jobs:
 
     steps:
       - name: ✅ Checkout Repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: 🐍 Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.x'
 
@@ -167,7 +179,7 @@ jobs:
 
       - name: 📦 Retain Deployment Verification
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: zensical-deployment-verification-${{ github.sha }}
           path: |
