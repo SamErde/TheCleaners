@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.62">
+      <meta name="generator" content="zensical-0.0.64">
     
     
       
@@ -36,7 +36,7 @@
       
         
       
-      <link rel="stylesheet" href="../assets/stylesheets/classic/main.e0592429.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/classic/main.1470d0a1.min.css">
       
         
           
@@ -594,18 +594,19 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
-            <span class="md-nav__icon md-icon"></span>
-            
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_7">
+              <span class="md-nav__icon md-icon"></span>
+              
   
   Functions
 
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
               
                 
+                  
   
   
   
@@ -629,10 +630,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -656,10 +657,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -683,10 +684,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -710,10 +711,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -737,10 +738,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -764,10 +765,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -791,10 +792,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -818,10 +819,11 @@
     </li>
   
 
+                
               
-            
-          </ul>
-        </nav>
+            </ul>
+          </nav>
+        
       
     </li>
   
@@ -872,18 +874,19 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_8">
-            <span class="md-nav__icon md-icon"></span>
-            
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+            <label class="md-nav__title" for="__nav_8">
+              <span class="md-nav__icon md-icon"></span>
+              
   
   Development
 
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
               
                 
+                  
   
   
   
@@ -907,10 +910,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -934,10 +937,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
     
@@ -1247,10 +1250,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -1274,10 +1277,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -1301,10 +1304,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -1328,10 +1331,11 @@
     </li>
   
 
+                
               
-            
-          </ul>
-        </nav>
+            </ul>
+          </nav>
+        
       
     </li>
   
@@ -1413,7 +1417,7 @@
 <h2 id="status-conventions">Status conventions</h2>
 <p><strong>Open</strong> means work has not been completed. <strong>Implemented in draft</strong> is reserved for code in an unmerged branch or pull request. <strong>Merged implementation</strong> means the code is on <code>main</code>, but applicable validation may still be open. <strong>Validated</strong> requires passing evidence for the exact referenced commit and scope. <strong>Release accepted</strong> additionally requires every applicable product, artifact, deployment, metadata, and maintainer gate.</p>
 <p>Reviews naming Astra, Sol or Terra below are independent model reviews posted as GitHub <code>COMMENT</code> reviews. Their model-approval judgments do not assert a separate human GitHub approval or replace maintainer release acceptance.</p>
-<p>Issue #53 is a maintenance fix <strong>implemented in draft</strong>: the strict documentation dependency validator accepts a single pinned Zensical release with a matching PyPI URL instead of hard-coding 0.0.62. The actual dependency remains at 0.0.62 on this branch. Dependabot PR #47 proposes 0.0.64 but its URL comment still points at 0.0.62; update that comment and obtain green exact-head documentation CI after integrating this validator before approving or merging #47. This maintenance work does not resume deferred labs or change product/release acceptance.</p>
+<p>Issue #53 is a maintenance fix <strong>merged</strong> in PR #54 (<code>72b1c1faab5c56a4a0d54b52174c5965b38d6102</code>): the strict documentation dependency validator accepts a single pinned Zensical release with a matching PyPI URL instead of hard-coding 0.0.62. The dependency update in PR #47 is <strong>implemented in draft</strong>: it pins 0.0.64 and corrects the URL comment to match. Require green exact-head strict documentation CI and ordinary review/merge gates for #47 before calling that update validated or merged. This maintenance work does not resume deferred labs or change product/release acceptance.</p>
 <p>The manifest stays on the current prerelease version during this packet. No command is advertised as stable merely because it is exported. The plan is milestone/gate-driven, not a promised calendar deadline.</p>
 <h2 id="accepted-decisions">Accepted decisions</h2>
 <ul>
@@ -1922,7 +1926,7 @@ Exact clean integration commit <code>1f6a28e1da328440f1942c66648e9991ba3c5522</c
       <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["navigation.tabs","navigation.tabs.sticky","navigation.path","navigation.instant","navigation.instant.prefetch","navigation.tracking","navigation.sections","navigation.top","toc.follow","toc.integrate"],"redirect":null,"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="../assets/javascripts/bundle.8dcc8e9c.min.js"></script>
+      <script src="../assets/javascripts/bundle.c04ba553.min.js"></script>
       
     
   </body>
