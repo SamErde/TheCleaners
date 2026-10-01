@@ -8,7 +8,7 @@ Updated September 18, 2026. Non-lab delivery readiness and the approved `0.0.15-
 
 Reviews naming Astra, Sol or Terra below are independent model reviews posted as GitHub `COMMENT` reviews. Their model-approval judgments do not assert a separate human GitHub approval or replace maintainer release acceptance.
 
-Issue #53 is a maintenance fix **implemented in draft**: the strict documentation dependency validator accepts a single pinned Zensical release with a matching PyPI URL instead of hard-coding 0.0.62. The actual dependency remains at 0.0.62 on this branch. Dependabot PR #47 proposes 0.0.64 but its URL comment still points at 0.0.62; update that comment and obtain green exact-head documentation CI after integrating this validator before approving or merging #47. This maintenance work does not resume deferred labs or change product/release acceptance.
+Issue #53 is a maintenance fix **merged** in PR #54 (`72b1c1faab5c56a4a0d54b52174c5965b38d6102`): the strict documentation dependency validator accepts a single pinned Zensical release with a matching PyPI URL instead of hard-coding 0.0.62. The dependency update in PR #47 is **implemented in draft**: it pins 0.0.64 and corrects the URL comment to match. Require green exact-head strict documentation CI and ordinary review/merge gates for #47 before calling that update validated or merged. This maintenance work does not resume deferred labs or change product/release acceptance.
 
 The manifest stays on the current prerelease version during this packet. No command is advertised as stable merely because it is exported. The plan is milestone/gate-driven, not a promised calendar deadline.
 
