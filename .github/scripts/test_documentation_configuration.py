@@ -29,6 +29,34 @@ class DocumentationConfigurationTests(unittest.TestCase):
         """Accept the checked-in Zensical configuration and dependency pin."""
         validator.validate_configuration(REPOSITORY_ROOT)
 
+    def test_updated_zensical_pin_is_valid(self) -> None:
+        """Accept a Dependabot pin when its PyPI reference also advances."""
+        requirements_path = self.fixture_root / "docs" / "requirements.txt"
+        requirements_path.write_text(
+            "# Documentation framework and its transitive rendering dependencies.\n"
+            "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.64/\n",
+            encoding="utf-8",
+        )
+
+        validator.validate_configuration(self.fixture_root)
+
+    def test_invalid_zensical_requirements_are_rejected(self) -> None:
+        """Keep the exact pin, single dependency, and matching URL contract."""
+        requirements_path = self.fixture_root / "docs" / "requirements.txt"
+        invalid_requirements = {
+            "stale URL": "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.62/",
+            "unpinned": "zensical>=0.0.64  # https://pypi.org/project/zensical/0.0.64/",
+            "extra dependency": (
+                "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.64/\n"
+                "another-package==1.0.0"
+            ),
+        }
+        for name, content in invalid_requirements.items():
+            with self.subTest(name=name):
+                requirements_path.write_text(content + "\n", encoding="utf-8")
+                with self.assertRaisesRegex(validator.ConfigurationError, "pinned Zensical"):
+                    validator.validate_configuration(self.fixture_root)
+
     def test_malformed_navigation_is_rejected(self) -> None:
         """Reject a navigation item containing more than one label."""
         config_path = self.fixture_root / "zensical.toml"

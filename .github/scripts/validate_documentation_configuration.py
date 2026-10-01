@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path, PurePosixPath
+import re
 
 try:
     import tomllib
@@ -16,7 +17,10 @@ class ConfigurationError(ValueError):
 
 
 EXPECTED_SITE_URL = "https://day3bits.com/TheCleaners/"
-EXPECTED_REQUIREMENT = "zensical==0.0.62"
+ZENSICAL_REQUIREMENT = re.compile(
+    r"zensical==(?P<version>\d+(?:\.\d+){2,})\s+#\s+"
+    r"https://pypi\.org/project/zensical/(?P=version)/"
+)
 COMMAND_REFERENCE_PAGES = {
     "TheCleaners.md",
     "Get-TheCleaners.md",
@@ -138,15 +142,16 @@ def validate_configuration(repository_root: Path) -> None:
     requirements_path = repository_root / "docs" / "requirements.txt"
     try:
         requirements = [
-            line.split("#", 1)[0].strip().lower()
+            line.strip()
             for line in requirements_path.read_text(encoding="utf-8").splitlines()
             if line.split("#", 1)[0].strip()
         ]
     except OSError as error:
         raise ConfigurationError(f"cannot load {requirements_path}: {error}") from error
-    if requirements != [EXPECTED_REQUIREMENT]:
+    if len(requirements) != 1 or not ZENSICAL_REQUIREMENT.fullmatch(requirements[0]):
         raise ConfigurationError(
-            f"documentation requirements must contain only {EXPECTED_REQUIREMENT}"
+            "documentation requirements must contain only a pinned Zensical release "
+            "with a matching PyPI version URL"
         )
 
 
