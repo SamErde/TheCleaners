@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-module-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   NO_COLOR: '1'
   TC_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -32,7 +36,7 @@ jobs:
             version: 7.4.20
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: ${{ env.TC_BUILD_COMMIT }}
@@ -56,20 +60,20 @@ jobs:
         run: ./.github/scripts/Invoke-LocalPublicationRehearsal.ps1 -ArtifactPath ./src/Artifacts -ArchiveDirectory ./src/Archive -OutputPath ./src/Reports/LocalPublicationRehearsal.json
       - name: Upload Pester results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pester-results-pwsh-${{ matrix.version }}
           path: ./src/Reports
           if-no-files-found: error
       - name: Upload module artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: module-artifact-pwsh-${{ matrix.version }}
           path: ./src/Artifacts
           include-hidden-files: true
           if-no-files-found: error
       - name: Upload build
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: zip-archive-pwsh-${{ matrix.version }}
           path: ./src/Archive/*
@@ -82,7 +86,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: ${{ env.TC_BUILD_COMMIT }}
@@ -163,7 +167,7 @@ jobs:
           }
       - name: Upload Windows PowerShell results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pester-results-windows-powershell-51
           path: ./TestResults
@@ -175,7 +179,7 @@ jobs:
     needs: powershell-7
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: ${{ env.TC_BUILD_COMMIT }}
@@ -186,7 +190,7 @@ jobs:
       - name: Verify content, metadata, sidecars, repeated bytes, and cross-runtime bytes
         shell: pwsh
         run: python .github/scripts/Compare-Archives.py ./downloaded-archives --commit $env:TC_BUILD_COMMIT --versions 7.4.20 7.5.11 7.6.6 --output ArchiveComparison.json
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: archive-comparison
           path: ArchiveComparison.json
@@ -197,12 +201,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
           ref: ${{ env.TC_BUILD_COMMIT }}
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.x'
       - run: python -m pip install -r docs/requirements.txt
