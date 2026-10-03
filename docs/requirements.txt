@@ -1,2 +1,2 @@
 # Documentation framework and its transitive rendering dependencies.
-zensical==0.0.64  # https://pypi.org/project/zensical/0.0.64/
+zensical==0.0.66  # https://pypi.org/project/zensical/0.0.64/
