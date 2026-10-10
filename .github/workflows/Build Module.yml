@@ -60,20 +60,20 @@ jobs:
         run: ./.github/scripts/Invoke-LocalPublicationRehearsal.ps1 -ArtifactPath ./src/Artifacts -ArchiveDirectory ./src/Archive -OutputPath ./src/Reports/LocalPublicationRehearsal.json
       - name: Upload Pester results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pester-results-pwsh-${{ matrix.version }}
           path: ./src/Reports
           if-no-files-found: error
       - name: Upload module artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: module-artifact-pwsh-${{ matrix.version }}
           path: ./src/Artifacts
           include-hidden-files: true
           if-no-files-found: error
       - name: Upload build
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: zip-archive-pwsh-${{ matrix.version }}
           path: ./src/Archive/*
@@ -167,7 +167,7 @@ jobs:
           }
       - name: Upload Windows PowerShell results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pester-results-windows-powershell-51
           path: ./TestResults
@@ -190,7 +190,7 @@ jobs:
       - name: Verify content, metadata, sidecars, repeated bytes, and cross-runtime bytes
         shell: pwsh
         run: python .github/scripts/Compare-Archives.py ./downloaded-archives --commit $env:TC_BUILD_COMMIT --versions 7.4.20 7.5.11 7.6.6 --output ArchiveComparison.json
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: archive-comparison
           path: ArchiveComparison.json
