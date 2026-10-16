@@ -19,7 +19,8 @@ class ConfigurationError(ValueError):
 EXPECTED_SITE_URL = "https://day3bits.com/TheCleaners/"
 ZENSICAL_REQUIREMENT = re.compile(r"zensical==\d+(?:\.\d+){2,}")
 VERSIONED_PYPI_URL = re.compile(
-    r"https://pypi\.org/project/zensical/\d+(?:\.\d+){2,}/"
+    r"https?://pypi\.org/project/zensical/\d+(?:\.\d+){2,}",
+    re.IGNORECASE,
 )
 COMMAND_REFERENCE_PAGES = {
     "TheCleaners.md",

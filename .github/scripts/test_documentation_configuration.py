@@ -46,6 +46,10 @@ class DocumentationConfigurationTests(unittest.TestCase):
         invalid_requirements = {
             "stale URL": "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.62/",
             "redundant URL": "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.64/",
+            "URL without trailing slash": "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.64",
+            "HTTP URL with mixed case": "zensical==0.0.64  # http://PyPI.org/PROJECT/Zensical/0.0.64",
+            "URL with query": "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.64?source=docs",
+            "URL in parentheses": "zensical==0.0.64  # (https://pypi.org/project/zensical/0.0.64)",
             "unpinned": "zensical>=0.0.64",
             "extra dependency": (
                 "zensical==0.0.64\n"
