@@ -30,24 +30,25 @@ class DocumentationConfigurationTests(unittest.TestCase):
         validator.validate_configuration(REPOSITORY_ROOT)
 
     def test_updated_zensical_pin_is_valid(self) -> None:
-        """Accept a Dependabot pin when its PyPI reference also advances."""
+        """Accept a Dependabot pin without requiring a second version update."""
         requirements_path = self.fixture_root / "docs" / "requirements.txt"
         requirements_path.write_text(
             "# Documentation framework and its transitive rendering dependencies.\n"
-            "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.64/\n",
+            "zensical==0.0.69\n",
             encoding="utf-8",
         )
 
         validator.validate_configuration(self.fixture_root)
 
     def test_invalid_zensical_requirements_are_rejected(self) -> None:
-        """Keep the exact pin, single dependency, and matching URL contract."""
+        """Keep one exact pin without a redundant versioned URL."""
         requirements_path = self.fixture_root / "docs" / "requirements.txt"
         invalid_requirements = {
             "stale URL": "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.62/",
-            "unpinned": "zensical>=0.0.64  # https://pypi.org/project/zensical/0.0.64/",
+            "redundant URL": "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.64/",
+            "unpinned": "zensical>=0.0.64",
             "extra dependency": (
-                "zensical==0.0.64  # https://pypi.org/project/zensical/0.0.64/\n"
+                "zensical==0.0.64\n"
                 "another-package==1.0.0"
             ),
         }

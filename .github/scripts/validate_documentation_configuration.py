@@ -17,10 +17,7 @@ class ConfigurationError(ValueError):
 
 
 EXPECTED_SITE_URL = "https://day3bits.com/TheCleaners/"
-ZENSICAL_REQUIREMENT = re.compile(
-    r"zensical==(?P<version>\d+(?:\.\d+){2,})\s+#\s+"
-    r"https://pypi\.org/project/zensical/(?P=version)/"
-)
+ZENSICAL_REQUIREMENT = re.compile(r"zensical==\d+(?:\.\d+){2,}")
 COMMAND_REFERENCE_PAGES = {
     "TheCleaners.md",
     "Get-TheCleaners.md",
@@ -151,7 +148,7 @@ def validate_configuration(repository_root: Path) -> None:
     if len(requirements) != 1 or not ZENSICAL_REQUIREMENT.fullmatch(requirements[0]):
         raise ConfigurationError(
             "documentation requirements must contain only a pinned Zensical release "
-            "with a matching PyPI version URL"
+            "without an inline versioned URL"
         )
 
 
