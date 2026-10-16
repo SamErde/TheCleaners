@@ -55,8 +55,9 @@ class DocumentationDeployWorkflowTests(unittest.TestCase):
 
     def test_pull_request_preflights_cannot_cancel_main_deployments(self) -> None:
         self.assertIn(
-            "group: documentation-gh-pages-${{ github.event.pull_request.number "
-            "&& format('pr-{0}', github.event.pull_request.number) || 'main' }}",
+            "group: ${{ github.event_name == 'pull_request' && "
+            "format('documentation-gh-pages-pr-{0}', github.event.pull_request.number) "
+            "|| 'documentation-gh-pages' }}",
             self.workflow,
         )
         self.assertIn(

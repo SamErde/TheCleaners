@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: documentation-gh-pages-${{ github.event.pull_request.number && format('pr-{0}', github.event.pull_request.number) || 'main' }}
+  group: ${{ github.event_name == 'pull_request' && format('documentation-gh-pages-pr-{0}', github.event.pull_request.number) || 'documentation-gh-pages' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
