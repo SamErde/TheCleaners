@@ -34,7 +34,7 @@ class DocumentationConfigurationTests(unittest.TestCase):
         requirements_path = self.fixture_root / "docs" / "requirements.txt"
         requirements_path.write_text(
             "# Documentation framework and its transitive rendering dependencies.\n"
-            "zensical==0.0.69\n",
+            "zensical==0.0.69  # documentation framework\n",
             encoding="utf-8",
         )
 
