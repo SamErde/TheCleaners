@@ -1,6 +1,14 @@
 name: 📖 Deploy Zensical to GitHub Pages
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - '.github/scripts/*documentation*.py'
+      - '.github/workflows/Deploy Zensical.yml'
+      - 'zensical.toml'
   push:
     branches:
       - main
@@ -15,12 +23,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: documentation-gh-pages
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('documentation-gh-pages-pr-{0}', github.event.pull_request.number) || 'documentation-gh-pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     permissions:
       contents: read
 
@@ -80,6 +88,7 @@ jobs:
 
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     permissions:
       contents: write
 
