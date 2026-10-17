@@ -1243,7 +1243,7 @@
 <tr>
 <td><code>build</code></td>
 <td><code>contents: read</code></td>
-<td>Test the delivery helpers and configuration, build once with <code>zensical build --strict --clean</code>, create the byte manifest, and retain the site plus manifest for 90 days. <code>site_dir = "site"</code> is fixed in <code>zensical.toml</code>.</td>
+<td>On documentation pull requests and <code>main</code>, test the delivery helpers and configuration, build once with <code>zensical build --strict --clean</code>, create the byte manifest, and retain the site plus manifest for 90 days. <code>site_dir = "site"</code> is fixed in <code>zensical.toml</code>.</td>
 </tr>
 <tr>
 <td><code>deploy</code></td>
@@ -1257,7 +1257,7 @@
 </tr>
 </tbody>
 </table>
-<p>The workflow uses the repository-scoped <code>GITHUB_TOKEN</code> through the checked-out remote. It does not require a separate deployment secret and does not change the repository's existing GitHub Pages hosting source. All third-party actions are pinned to full commit SHAs. Automatic and manual runs are restricted to <code>main</code> and share one <code>gh-pages</code> destination concurrency group. A newer request does not cancel an in-progress deployment/verification chain.</p>
+<p>The workflow uses the repository-scoped <code>GITHUB_TOKEN</code> through the checked-out remote. It does not require a separate deployment secret and does not change the repository's existing GitHub Pages hosting source. All third-party actions are pinned to full commit SHAs. Pull requests to <code>main</code> that change documentation or its delivery configuration run the read-only build, helper tests, strict build, manifest creation, and artifact retention before merge. Their <code>deploy</code> and <code>verify</code> jobs are skipped; a passing PR preflight is not deployment acceptance. Automatic and manual publishing runs remain restricted to <code>main</code>. Publishing runs share one <code>gh-pages</code> destination concurrency group and do not cancel each other; PR preflights have separate per-PR groups so they cannot block publishing and newer revisions can cancel obsolete preflights.</p>
 <p>Read the Docs runs a separate custom Zensical job and copies the generated HTML into its required output directory. The configuration sets <code>formats: []</code> because this repository has no offline-output generator. The removed <code>formats: all</code> setting did not produce a supported PDF, ePub, or HTMLZip for the prior MkDocs project; <a href="https://docs.readthedocs.com/platform/stable/config-file/v2.html#formats">Read the Docs documents those formats as unsupported with MkDocs</a>.</p>
 <p>The site artifact is named <code>zensical-site-&lt;source-commit&gt;</code>. It contains the complete <code>site</code> directory and <code>deployment-evidence/site-manifest.json</code>. The later <code>zensical-deployment-verification-&lt;source-commit&gt;</code> artifact contains that manifest and <code>deployment-report.json</code>. The report records the source identity, content-tree digest, <code>gh-pages</code> commit, canonical URL, required navigation routes, number of attempts used, and final pass or failure.</p>
 <h2 id="propagation-and-failure-behavior">Propagation and failure behavior</h2>
