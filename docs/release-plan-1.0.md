@@ -10,6 +10,8 @@ Reviews naming Astra, Sol or Terra below are independent model reviews posted as
 
 Issue #53 is a maintenance fix **merged** in PR #54 (`72b1c1faab5c56a4a0d54b52174c5965b38d6102`): the strict documentation dependency validator accepts a single pinned Zensical release with a matching PyPI URL instead of hard-coding 0.0.62. The dependency update in PR #47 is **implemented in draft**: it pins 0.0.64 and corrects the URL comment to match. Require green exact-head strict documentation CI and ordinary review/merge gates for #47 before calling that update validated or merged. This maintenance work does not resume deferred labs or change product/release acceptance.
 
+October 2026 CI maintenance is **implemented in draft**: Dependabot's Zensical 0.0.68 update changed the pin but not its versioned URL comment, causing both the module-build documentation job and the Pages build job to fail. Remove the redundant URL and continue requiring a single exact Zensical pin, so future pin-only updates cannot recreate this failure. Hosted exact-head CI and ordinary review/merge gates remain required; this does not establish a new deployment, product acceptance, or release readiness.
+
 The manifest stays on the current prerelease version during this packet. No command is advertised as stable merely because it is exported. The plan is milestone/gate-driven, not a promised calendar deadline.
 
 ## Accepted decisions
