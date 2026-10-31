@@ -1,2 +1,2 @@
 # Documentation framework and its transitive rendering dependencies.
-zensical==0.0.70
+zensical==0.0.73
